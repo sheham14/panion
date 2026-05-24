@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { Analytics } from "@vercel/analytics/next";
 import { SessionProvider } from "next-auth/react";
+import ServiceWorkerRegistrar from "@/components/ServiceWorkerRegistrar";
 import "./globals.css";
 
 const geistSans = localFont({
@@ -23,6 +24,12 @@ export const metadata: Metadata = {
   },
   description:
     "Find the best grocery prices at stores in St. John's, Newfoundland. Compare prices, track your pantry, and get AI-powered meal suggestions with Clove.",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Panion",
+  },
   openGraph: {
     title: "Panion — Grocery Price Intelligence",
     description:
@@ -53,6 +60,7 @@ export default function RootLayout({
         <SessionProvider>
           {children}
         </SessionProvider>
+        <ServiceWorkerRegistrar />
         <Analytics />
       </body>
     </html>
