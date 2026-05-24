@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { signIn } from "next-auth/react";
 import Link from "next/link";
@@ -45,7 +45,7 @@ const GUEST_CAN = ["Browse prices", "View flyers", "Use barcode scanner"];
 
 export default function SignInPage() {
   function handleGoogle() {
-    signIn("google", { callbackUrl: "/onboarding" });
+    signIn("google", { callbackUrl: "/" });
   }
 
   function handleGuest() {

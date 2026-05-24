@@ -11,6 +11,7 @@ import {
   LayoutGrid,
   LayoutList,
   Bell,
+  Package2,
 } from "lucide-react";
 import AddToListSheet from "@/components/search/AddToListSheet";
 
@@ -591,6 +592,12 @@ export default function HomeClient({
             </span>
           </Link>
 
+          <Link
+            href="/browse"
+            className="w-[34px] h-[34px] rounded-full bg-[#f4f4f4] dark:bg-[#242b2e] flex items-center justify-center flex-shrink-0"
+          >
+            <Package2 size={16} strokeWidth={1.5} className="text-[#888] dark:text-[#aaa]" />
+          </Link>
           <Link
             href="/alerts"
             className="relative w-[34px] h-[34px] rounded-full bg-[#f4f4f4] dark:bg-[#242b2e] flex items-center justify-center flex-shrink-0"

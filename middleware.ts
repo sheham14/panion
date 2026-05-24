@@ -11,31 +11,32 @@ export default auth((req) => {
     nextUrl.pathname.startsWith("/signin") ||
     nextUrl.pathname.startsWith("/welcome");
   const isApiRoute = nextUrl.pathname.startsWith("/api");
-  const isPublicRoute = [
-    "/",
-    "/privacy",
-    "/feedback",
-    "/terms",
-    "/welcome",
-  ].includes(nextUrl.pathname);
+  const isPublicRoute = ["/privacy", "/feedback", "/terms", "/welcome"].includes(
+    nextUrl.pathname,
+  );
+  const isOnboarding = nextUrl.pathname === "/onboarding";
 
-  // Thread pathname through so (main)/layout can read it for onboarding checks
-  const requestHeaders = new Headers(req.headers);
-  requestHeaders.set("x-pathname", nextUrl.pathname);
-  const next = () =>
-    NextResponse.next({ request: { headers: requestHeaders } });
-
-  if (isApiRoute || isPublicRoute) return next();
+  if (isApiRoute || isPublicRoute) return NextResponse.next();
 
   if (isLoggedIn && isAuthPage) {
     return NextResponse.redirect(new URL("/", nextUrl));
   }
 
-  if (!isLoggedIn && !isAuthPage && !isPublicRoute) {
+  if (!isLoggedIn && !isAuthPage) {
     return NextResponse.redirect(new URL("/signin", nextUrl));
   }
 
-  return next();
+  if (isLoggedIn) {
+    const onboardingCompleted = session?.user?.onboardingCompleted ?? false;
+    if (!onboardingCompleted && !isOnboarding) {
+      return NextResponse.redirect(new URL("/onboarding", nextUrl));
+    }
+    if (onboardingCompleted && isOnboarding) {
+      return NextResponse.redirect(new URL("/", nextUrl));
+    }
+  }
+
+  return NextResponse.next();
 });
 
 export const config = {

@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
-import { ArrowLeft, ChevronDown, ChevronRight } from "lucide-react";
+import { ArrowLeft, ChevronRight, LogOut } from "lucide-react";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -206,6 +206,16 @@ export default function ProfileSettingsClient({
   } | null>(null);
 
   const allergyInputRef = useRef<HTMLInputElement>(null);
+
+  const isDirty = useMemo(() => {
+    if (name !== initialData.name) return true;
+    if (emailNotifications !== initialData.emailNotifications) return true;
+    const sortedStr = (a: string[]) => JSON.stringify([...a].sort());
+    if (sortedStr(dietaryRestrictions) !== sortedStr(initialData.dietaryRestrictions)) return true;
+    if (sortedStr(allergies) !== sortedStr(initialData.allergies)) return true;
+    if (sortedStr(preferredStoreIds) !== sortedStr(initialData.preferredStoreIds)) return true;
+    return false;
+  }, [name, emailNotifications, dietaryRestrictions, allergies, preferredStoreIds, initialData]);
 
   const showToast = (message: string, type: "success" | "error") => {
     setToast({ message, type });
@@ -570,6 +580,13 @@ export default function ProfileSettingsClient({
           <span className="text-[14px] text-[#111] dark:text-[#e0e0e0]">Privacy policy</span>
           <ChevronRight size={14} className="text-[#ccc]" />
         </Link>
+        <Link
+          href="/terms"
+          className="w-full flex items-center justify-between px-4 py-3.5 border-b border-[#efefef] dark:border-[#2a3044]"
+        >
+          <span className="text-[14px] text-[#111] dark:text-[#e0e0e0]">Terms of service</span>
+          <ChevronRight size={14} className="text-[#ccc]" />
+        </Link>
         <button
           onClick={() => setShowDeleteModal(true)}
           className="w-full flex items-center px-4 py-3.5"
@@ -578,16 +595,29 @@ export default function ProfileSettingsClient({
         </button>
       </SettingsCard>
 
-      {/* ── Save button ── */}
-      <div className="px-4 mt-8">
+      {/* ── Sign out ── */}
+      <div className="px-4 mt-6">
         <button
-          onClick={save}
-          disabled={isSaving}
-          className="w-full py-3.5 bg-[#00E5C3] rounded-[14px] text-[14px] font-medium text-[#004d40] disabled:opacity-50 transition-opacity"
+          onClick={() => signOut({ callbackUrl: "/signin" })}
+          className="w-full py-3.5 rounded-[14px] text-[14px] font-medium text-[#ef4444] border border-[#fecaca] dark:border-[#3a2020] bg-[#fff8f8] dark:bg-[#1e1212] flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
         >
-          {isSaving ? "Saving…" : "Save changes"}
+          <LogOut size={15} strokeWidth={1.8} />
+          Sign out
         </button>
       </div>
+
+      {/* ── Save button ── */}
+      {isDirty && (
+        <div className="px-4 mt-3">
+          <button
+            onClick={save}
+            disabled={isSaving}
+            className="w-full py-3.5 bg-[#00E5C3] rounded-[14px] text-[14px] font-medium text-[#004d40] disabled:opacity-50 transition-opacity"
+          >
+            {isSaving ? "Saving…" : "Save changes"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -8,10 +8,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   adapter: PrismaAdapter(prisma) as Adapter,
   callbacks: {
-    session({ session, user }) {
-      session.user.id = user.id;
-      session.user.onboardingCompleted = user.onboardingCompleted ?? false;
-      return session;
+    ...authConfig.callbacks,
+    async jwt({ token, trigger, session: sessionData }) {
+      if (trigger === "signIn" || trigger === "signUp") {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.sub! },
+          select: { onboardingCompleted: true },
+        });
+        token.onboardingCompleted = dbUser?.onboardingCompleted ?? false;
+      }
+      if (trigger === "update") {
+        const s = sessionData as { onboardingCompleted?: boolean } | undefined;
+        if (s?.onboardingCompleted !== undefined) {
+          token.onboardingCompleted = s.onboardingCompleted;
+        }
+      }
+      return token;
     },
   },
   events: {
