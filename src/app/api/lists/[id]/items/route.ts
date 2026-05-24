@@ -188,6 +188,15 @@ export async function PATCH(
 
   const { itemId, ...data } = parsed.data;
 
+  // Verify item belongs to the verified list before updating
+  const listItem = await prisma.listItem.findFirst({
+    where: { id: itemId, listId: id },
+    select: { id: true },
+  });
+  if (!listItem) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   // Only update fields that were provided
   const updateData: Record<string, unknown> = {};
   if (data.isChecked !== undefined) updateData.isChecked = data.isChecked;
@@ -236,6 +245,14 @@ export async function DELETE(
       where: { listId: id, isChecked: true },
     });
   } else {
+    // Verify item belongs to the verified list before deleting
+    const listItem = await prisma.listItem.findFirst({
+      where: { id: parsed.data.itemId, listId: id },
+      select: { id: true },
+    });
+    if (!listItem) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
     await prisma.listItem.delete({ where: { id: parsed.data.itemId } });
   }
 
