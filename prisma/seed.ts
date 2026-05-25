@@ -115,12 +115,12 @@ async function main() {
     // ── DAIRY & EGGS (12) ────────────────────────────────────
     {
       id: "prod_milk_natrel",
-      name: "Natrel Milk 2%",
-      brand: "Natrel",
+      name: "Central Dairies 2% Milk",
+      brand: "Central Dairies",
       category: ProductCategory.dairy,
-      unitSize: "4L",
+      unitSize: "2L",
       unitMeasure: "L",
-      unitQuantity: 4,
+      unitQuantity: 2,
       barcode: "068700100012",
     },
     {
@@ -153,10 +153,10 @@ async function main() {
     },
     {
       id: "prod_eggs_burnbrae",
-      name: "Burnbrae Eggs Large",
-      brand: "Burnbrae",
+      name: "Newfoundland Eggs Large",
+      brand: null,
       category: ProductCategory.dairy,
-      unitSize: "12 pack",
+      unitSize: "12pk",
       unitMeasure: "unit",
       unitQuantity: 12,
       barcode: "055742300018",
@@ -875,7 +875,13 @@ async function main() {
     productData.map((p) =>
       prisma.product.upsert({
         where: { id: p.id },
-        update: {},
+        update: {
+          name: p.name,
+          brand: p.brand ?? null,
+          unitSize: p.unitSize,
+          unitMeasure: p.unitMeasure,
+          unitQuantity: p.unitQuantity,
+        },
         create: {
           id: p.id,
           name: p.name,
@@ -907,11 +913,11 @@ async function main() {
 
   const priceMatrix: Record<string, (number | null)[]> = {
     // ── DAIRY & EGGS
-    prod_milk_natrel:             [5.47, 6.29, 5.99, null],
+    prod_milk_natrel:             [4.87, 4.78, 5.39, null], // Walmart, Dominion, Sobeys — Dominion cheapest
     prod_butter_lactantia:        [5.97, 6.79, 6.49, null],
     prod_cheddar_cracker_barrel:  [6.97, 7.99, 7.49, null],
     prod_yogurt_liberte:          [5.47, 6.29, 5.99, null],
-    prod_eggs_burnbrae:           [3.97, 4.69, 4.29, null], // Costco sells 60-pk — different product
+    prod_eggs_burnbrae:           [5.50, 5.28, 5.79, null], // Walmart, Dominion, Sobeys — Dominion cheapest; Costco sells 60-pk (different product)
     prod_d001:                    [3.47, 3.99, 3.79, null],
     prod_d002:                    [3.47, 3.99, 3.79, null],
     prod_d003:                    [4.97, 5.79, 5.49, null],
@@ -1088,8 +1094,8 @@ async function main() {
   await prisma.watchlist.createMany({
     skipDuplicates: true,
     data: [
-      { userId: testUser.id, productId: "prod_milk_natrel",        targetPrice: 5.00 },
-      { userId: testUser.id, productId: "prod_eggs_burnbrae",      targetPrice: 3.50 },
+      { userId: testUser.id, productId: "prod_milk_natrel",        targetPrice: 4.50 },
+      { userId: testUser.id, productId: "prod_eggs_burnbrae",      targetPrice: 5.00 },
       { userId: testUser.id, productId: "prod_chicken_maple_leaf"                    },
       { userId: testUser.id, productId: "prod_salmon_atlantic"                        },
       { userId: testUser.id, productId: "prod_butter_lactantia",   targetPrice: 5.50 },
@@ -1105,8 +1111,8 @@ async function main() {
       isDefault: true,
       items: {
         create: [
-          { productId: "prod_milk_natrel",       name: "Natrel Milk 2% 4L",     quantity: 1,   sortOrder: 0 },
-          { productId: "prod_eggs_burnbrae",     name: "Burnbrae Eggs 12pk",    quantity: 1,   sortOrder: 1 },
+          { productId: "prod_milk_natrel",       name: "Central Dairies 2% Milk 2L", quantity: 1,   sortOrder: 0 },
+          { productId: "prod_eggs_burnbrae",     name: "Newfoundland Eggs 12pk",     quantity: 1,   sortOrder: 1 },
           { productId: "prod_bread_wonder",      name: "Wonder White Bread",    quantity: 1,   sortOrder: 2 },
           { productId: "prod_bananas",           name: "Bananas",               quantity: 500, unit: "g", sortOrder: 3 },
           { productId: "prod_chicken_maple_leaf",name: "Chicken Breast",        quantity: 1,   sortOrder: 4 },
@@ -1305,10 +1311,10 @@ async function main() {
         type: "price_drop",
         channel: "push",
         payload: {
-          productName: "Milk — Natrel 2% 4L",
+          productName: "Central Dairies 2% Milk 2L",
           emoji: "🥛",
-          oldPrice: 6.29,
-          newPrice: 5.47,
+          oldPrice: 5.39,
+          newPrice: 4.87,
           storeName: "Walmart",
           storeColor: "#0071ce",
           productId: "prod_milk_natrel",
@@ -1354,12 +1360,12 @@ async function main() {
         type: "price_drop",
         channel: "push",
         payload: {
-          productName: "Eggs — Burnbrae Large 12pk",
+          productName: "Newfoundland Eggs Large 12pk",
           emoji: "🥚",
-          oldPrice: 4.69,
-          newPrice: 3.97,
-          storeName: "Walmart",
-          storeColor: "#0071ce",
+          oldPrice: 5.79,
+          newPrice: 5.28,
+          storeName: "Dominion",
+          storeColor: "#e31837",
           productId: "prod_eggs_burnbrae",
         },
         sentAt: daysAgo(2),

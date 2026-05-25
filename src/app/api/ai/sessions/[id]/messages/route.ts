@@ -8,8 +8,8 @@ import Anthropic from "@anthropic-ai/sdk";
 const GUEST_LIMIT = 5;
 
 const GUEST_PANTRY = [
-  { name: "Natrel Milk 2%", quantity: 1, unit: "L" },
-  { name: "Burnbrae Eggs Large", quantity: 4, unit: null },
+  { name: "Central Dairies 2% Milk", quantity: 1, unit: "L" },
+  { name: "Newfoundland Eggs Large", quantity: 4, unit: null },
   { name: "Barilla Spaghetti", quantity: 500, unit: "g" },
   { name: "Hunt's Tomato Sauce", quantity: 2, unit: null },
   { name: "Uncle Ben's White Rice", quantity: 1, unit: "kg" },

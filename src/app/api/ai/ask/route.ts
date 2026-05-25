@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
   // Fetch pantry for context — guest gets mock pantry, real users get DB pantry
   const pantryItems = isGuest
     ? [
-        { name: "Natrel Milk 2%", quantity: 1, unit: "L" },
+        { name: "Central Dairies 2% Milk", quantity: 1, unit: "L" },
         { name: "Eggs", quantity: 4, unit: null },
         { name: "Barilla Spaghetti", quantity: 500, unit: "g" },
         { name: "Hunt's Tomato Sauce", quantity: 2, unit: null },
