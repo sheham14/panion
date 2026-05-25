@@ -372,8 +372,10 @@ export default function AIChatClient() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const currentSessionIdRef = useRef<string | null>(null);
+  const messagesRef = useRef<ChatMessage[]>([]);
   const accRef = useRef("");
   currentSessionIdRef.current = currentSessionId;
+  messagesRef.current = messages;
 
   // Load sessions + restore last active session on mount
   useEffect(() => {
@@ -381,7 +383,8 @@ export default function AIChatClient() {
 
     fetch("/api/ai/sessions")
       .then((r) => r.json())
-      .then((data: ChatSession[]) => {
+      .then((data) => {
+        if (!Array.isArray(data)) { setIsLoadingSession(false); return; }
         setSessions(data);
         const target = lastId
           ? (data.find((s) => s.id === lastId) ?? data[0])
@@ -423,7 +426,7 @@ export default function AIChatClient() {
   const refreshSessions = useCallback(() => {
     fetch("/api/ai/sessions")
       .then((r) => r.json())
-      .then(setSessions)
+      .then((data) => { if (Array.isArray(data)) setSessions(data); })
       .catch(() => {});
   }, []);
 
@@ -436,6 +439,9 @@ export default function AIChatClient() {
       setIsStreaming(true);
       setStreamingText("");
       accRef.current = "";
+
+      // Capture history before optimistic update — server uses this for guest context
+      const historySnapshot = messagesRef.current.map((m) => ({ role: m.role, content: m.content }));
 
       // Optimistic user message (temp ID replaced when session loads)
       const tempUserId = `temp-user-${Date.now()}`;
@@ -470,7 +476,7 @@ export default function AIChatClient() {
         const response = await fetch(`/api/ai/sessions/${sessionId}/messages`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ content }),
+          body: JSON.stringify({ content, history: historySnapshot }),
         });
 
         if (!response.ok) {
@@ -640,20 +646,21 @@ export default function AIChatClient() {
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const weekStart = new Date(todayStart.getTime() - 6 * 24 * 60 * 60 * 1000);
+  const sessionArr = Array.isArray(sessions) ? sessions : [];
 
-  const todaySessions = sessions.filter(
+  const todaySessions = sessionArr.filter(
     (s) => new Date(s.updatedAt) >= todayStart,
   );
-  const weekSessions = sessions.filter((s) => {
+  const weekSessions = sessionArr.filter((s) => {
     const d = new Date(s.updatedAt);
     return d >= weekStart && d < todayStart;
   });
-  const olderSessions = sessions.filter(
+  const olderSessions = sessionArr.filter(
     (s) => new Date(s.updatedAt) < weekStart,
   );
 
   // Current session display title (strip emoji prefix for header)
-  const currentSession = sessions.find((s) => s.id === currentSessionId);
+  const currentSession = sessionArr.find((s) => s.id === currentSessionId);
   const rawTitle = currentSession?.title ?? null;
   let headerTitle = "Clove";
   if (rawTitle) {
@@ -699,7 +706,7 @@ export default function AIChatClient() {
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          {sessions.length === 0 && (
+          {sessionArr.length === 0 && (
             <p className="px-4 py-8 text-center text-[12px] text-[#aaa]">
               No chat history yet
             </p>

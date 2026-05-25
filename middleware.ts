@@ -7,6 +7,8 @@ const { auth } = NextAuth(authConfig);
 export default auth((req) => {
   const { nextUrl, auth: session } = req;
   const isLoggedIn = !!session?.user;
+  const isGuest = req.cookies.get("panion-guest")?.value === "1";
+
   const isAuthPage =
     nextUrl.pathname.startsWith("/signin") ||
     nextUrl.pathname.startsWith("/welcome");
@@ -15,27 +17,30 @@ export default auth((req) => {
     nextUrl.pathname,
   );
   const isOnboarding = nextUrl.pathname === "/onboarding";
+  const isProfileSettings = nextUrl.pathname.startsWith("/profile-settings");
 
   if (isApiRoute || isPublicRoute) return NextResponse.next();
 
-  if (isLoggedIn && isAuthPage) {
-    return NextResponse.redirect(new URL("/", nextUrl));
-  }
-
-  if (!isLoggedIn && !isAuthPage) {
-    return NextResponse.redirect(new URL("/signin", nextUrl));
-  }
-
+  // Real authenticated user
   if (isLoggedIn) {
+    if (isAuthPage) return NextResponse.redirect(new URL("/", nextUrl));
     const onboardingCompleted = session?.user?.onboardingCompleted ?? false;
-    if (!onboardingCompleted && !isOnboarding) {
+    if (!onboardingCompleted && !isOnboarding)
       return NextResponse.redirect(new URL("/onboarding", nextUrl));
-    }
-    if (onboardingCompleted && isOnboarding) {
+    if (onboardingCompleted && isOnboarding)
       return NextResponse.redirect(new URL("/", nextUrl));
-    }
+    return NextResponse.next();
   }
 
+  // Guest user — let through most routes, block a few
+  if (isGuest) {
+    if (isOnboarding) return NextResponse.redirect(new URL("/", nextUrl));
+    if (isProfileSettings) return NextResponse.redirect(new URL("/", nextUrl));
+    return NextResponse.next();
+  }
+
+  // Not logged in, not a guest — send to sign in
+  if (!isAuthPage) return NextResponse.redirect(new URL("/signin", nextUrl));
   return NextResponse.next();
 });
 

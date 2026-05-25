@@ -1,7 +1,20 @@
 ﻿import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
+import { redis } from "@/lib/redis";
 import Anthropic from "@anthropic-ai/sdk";
+
+const GUEST_LIMIT = 5;
+
+const GUEST_PANTRY = [
+  { name: "Natrel Milk 2%", quantity: 1, unit: "L" },
+  { name: "Burnbrae Eggs Large", quantity: 4, unit: null },
+  { name: "Barilla Spaghetti", quantity: 500, unit: "g" },
+  { name: "Hunt's Tomato Sauce", quantity: 2, unit: null },
+  { name: "Uncle Ben's White Rice", quantity: 1, unit: "kg" },
+  { name: "Bertolli Olive Oil", quantity: 250, unit: "ml" },
+];
 
 const DAILY_LIMIT = 100;
 const MAX_QUERY_LENGTH = 500;
@@ -164,6 +177,96 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  // ── Guest path ─────────────────────────────────────────────────────────────
+  const cookieStore = await cookies();
+  const isGuest = cookieStore.get("panion-guest")?.value === "1";
+
+  if (isGuest) {
+    const guestId = cookieStore.get("panion-guest-id")?.value;
+    if (!guestId) {
+      return NextResponse.json({ error: "Invalid guest session" }, { status: 400 });
+    }
+
+    const redisKey = `guest:ai:${guestId}`;
+    const used = await redis.incr(redisKey);
+    if (used === 1) await redis.expire(redisKey, 60 * 60 * 24);
+
+    if (used > GUEST_LIMIT) {
+      const enc = new TextEncoder();
+      const stream = new ReadableStream({
+        start(controller) {
+          controller.enqueue(enc.encode(`data: ${JSON.stringify({ type: "error", message: "You've used your 5 free Clove queries. Sign in for unlimited access.", isGuestLimit: true })}\n\n`));
+          controller.close();
+        },
+      });
+      return new Response(stream, { headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" } });
+    }
+
+    let guestBody: { content?: unknown; usePantry?: unknown; budget?: unknown; storeIds?: unknown; history?: unknown } = {};
+    try { guestBody = await request.json(); } catch { /* empty body ok */ }
+
+    const guestContent = typeof guestBody.content === "string" ? sanitizeInput(guestBody.content) : "";
+    if (!guestContent) return NextResponse.json({ error: "content is required" }, { status: 400 });
+
+    const clientHistory = Array.isArray(guestBody.history)
+      ? (guestBody.history as { role: string; content: string }[])
+          .filter((m) => m.role === "user" || m.role === "assistant")
+          .map((m) => ({ role: m.role as "user" | "assistant", content: String(m.content) }))
+      : [];
+
+    const storeIdArray = Array.isArray(guestBody.storeIds) ? (guestBody.storeIds as string[]) : [];
+    const storeProducts = await prisma.storeProduct.findMany({
+      where: { isActive: true, currentPrice: { not: null }, ...(storeIdArray.length ? { storeId: { in: storeIdArray } } : {}) },
+      include: { product: { select: { name: true, brand: true, unitSize: true } }, store: { select: { chain: true } } },
+      orderBy: { currentPrice: "asc" },
+      take: 80,
+    });
+
+    const systemPrompt = buildSystemPrompt({
+      pantryItems: guestBody.usePantry !== false ? GUEST_PANTRY : [],
+      storeProducts,
+      budget: null,
+      usePantry: guestBody.usePantry !== false,
+      excludePantry: false,
+      userProfile: null,
+    });
+
+    const client = new Anthropic();
+    const enc = new TextEncoder();
+
+    const stream = new ReadableStream({
+      async start(controller) {
+        const send = (data: object) => {
+          controller.enqueue(enc.encode(`data: ${JSON.stringify(data)}\n\n`));
+        };
+        try {
+          const anthropicStream = client.messages.stream({
+            model: "claude-haiku-4-5-20251001",
+            max_tokens: 1500,
+            system: systemPrompt,
+            messages: [...clientHistory, { role: "user", content: guestContent }],
+          });
+          for await (const event of anthropicStream) {
+            if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
+              send({ type: "text", text: event.delta.text });
+            }
+          }
+          send({ type: "done", remainingToday: Math.max(0, GUEST_LIMIT - used) });
+        } catch (err) {
+          console.error("[Clove guest] Stream error:", err);
+          send({ type: "error", message: "Something went wrong. Please try again." });
+        } finally {
+          controller.close();
+        }
+      },
+    });
+
+    return new Response(stream, {
+      headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache", Connection: "keep-alive" },
+    });
+  }
+
+  // ── Authenticated path ──────────────────────────────────────────────────────
   const { user, error } = await getAuthenticatedUser();
   if (error) return error;
 

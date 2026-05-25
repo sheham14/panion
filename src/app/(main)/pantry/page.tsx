@@ -1,8 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { Suspense } from "react";
 import PantryClient from "@/components/pantry/PantryClient";
+import { GUEST_PANTRY_ITEMS } from "@/lib/guest-data";
 
 export type SerializedPantryItem = {
   id: string;
@@ -56,6 +58,17 @@ function PantrySkeleton() {
 }
 
 export default async function PantryPage() {
+  const cookieStore = await cookies();
+  const isGuest = cookieStore.get("panion-guest")?.value === "1";
+
+  if (isGuest) {
+    return (
+      <div className="bg-[#f7f7f7] dark:bg-[#161b1e] min-h-screen">
+        <PantryClient initialItems={GUEST_PANTRY_ITEMS} />
+      </div>
+    );
+  }
+
   const { user, error } = await getAuthenticatedUser();
   if (error) redirect("/signin");
 

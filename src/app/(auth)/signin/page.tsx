@@ -2,7 +2,7 @@
 
 import { signIn } from "next-auth/react";
 import Link from "next/link";
-import { User, ArrowRight, Check } from "lucide-react";
+import { User, ArrowRight } from "lucide-react";
 
 function SentinelIcon() {
   return (
@@ -41,14 +41,13 @@ function GoogleIcon() {
   );
 }
 
-const GUEST_CAN = ["Browse prices", "View flyers", "Use barcode scanner"];
-
 export default function SignInPage() {
   function handleGoogle() {
     signIn("google", { callbackUrl: "/" });
   }
 
-  function handleGuest() {
+  async function handleGuest() {
+    await fetch("/api/guest/enter", { method: "POST" });
     window.location.href = "/";
   }
 
@@ -94,27 +93,6 @@ export default function SignInPage() {
           Continue as guest
           <ArrowRight size={14} />
         </button>
-
-        {/* Guest feature callout */}
-        <div className="bg-[#fafafa] dark:bg-[#161b1e] rounded-xl p-3.5 mb-6 border border-[#f0f0f0] dark:border-[#1e2528]">
-          <p className="text-[11px] font-medium text-[#aaa] uppercase tracking-[0.5px] mb-2.5">
-            Guests can
-          </p>
-          <div className="flex flex-col gap-1.5 mb-2.5">
-            {GUEST_CAN.map((item) => (
-              <div key={item} className="flex items-center gap-2">
-                <Check size={12} className="text-[#00b89e] shrink-0" />
-                <span className="text-[12px] text-[#777] dark:text-[#888]">
-                  {item}
-                </span>
-              </div>
-            ))}
-          </div>
-          <p className="text-[11px] text-[#bbb] leading-relaxed">
-            Sign in to unlock watchlists, alerts, grocery lists, Clove, and
-            your pantry.
-          </p>
-        </div>
 
         {/* Legal */}
         <p className="text-[11px] text-[#ccc] dark:text-[#555] text-center leading-relaxed px-2">

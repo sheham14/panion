@@ -1,8 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
 
+const GUEST_SESSION = {
+  id: "guest-session",
+  title: null,
+  isTemp: false,
+  updatedAt: new Date().toISOString(),
+  _count: { messages: 0 },
+};
+
 export async function GET() {
+  const cookieStore = await cookies();
+  if (cookieStore.get("panion-guest")?.value === "1") {
+    return NextResponse.json([]);
+  }
+
   const { user, error } = await getAuthenticatedUser();
   if (error) return error;
 
@@ -19,6 +33,11 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const cookieStore = await cookies();
+  if (cookieStore.get("panion-guest")?.value === "1") {
+    return NextResponse.json(GUEST_SESSION, { status: 201 });
+  }
+
   const { user, error } = await getAuthenticatedUser();
   if (error) return error;
 

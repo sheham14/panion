@@ -1,4 +1,5 @@
 import BottomNav from "@/components/layout/BottomNav";
+import GuestBanner from "@/components/GuestBanner";
 
 export default function MainLayout({
   children,
@@ -7,6 +8,7 @@ export default function MainLayout({
 }) {
   return (
     <div className="relative min-h-screen bg-white dark:bg-[#0f1416] max-w-sm mx-auto">
+      <GuestBanner />
       <main className="pb-[72px]">{children}</main>
       <BottomNav />
     </div>

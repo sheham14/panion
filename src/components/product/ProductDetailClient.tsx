@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ArrowLeft, Bell, BellOff, Plus, Flag } from "lucide-react";
 import AddToListSheet from "@/components/search/AddToListSheet";
 import ReportPriceSheet from "@/components/product/ReportPriceSheet";
+import { useGuest } from "@/hooks/useGuest";
 
 // ── Types ──────────────────────────────────────
 
@@ -142,6 +143,7 @@ export default function ProductDetailClient({
   isLoggedIn: boolean;
 }) {
   const router = useRouter();
+  const { isGuest } = useGuest();
   const [isWatched, setIsWatched] = useState(product.isWatched);
   const [showAddToList, setShowAddToList] = useState(false);
   const [showReportSheet, setShowReportSheet] = useState(false);
@@ -347,6 +349,7 @@ export default function ProductDetailClient({
         <ReportPriceSheet
           productId={product.id}
           storePrices={product.storePrices}
+          isGuest={isGuest}
           defaultStoreId={
             product.storePrices.find((sp) => sp.chain === product.bestStore)?.storeId ??
             product.storePrices[0]?.storeId ??

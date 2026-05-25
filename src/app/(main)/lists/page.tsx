@@ -1,7 +1,9 @@
 import { auth } from "../../../../auth";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import ListsClient from "@/components/lists/ListsClient";
+import { GUEST_LIST, GUEST_ALL_LISTS, GUEST_PREFERRED_STORES } from "@/lib/guest-data";
 import type { ComponentProps } from "react";
 
 const LAST_LIST_KEY = "sentinel_last_list_id";
@@ -43,6 +45,19 @@ async function getListDetail(listId: string, userId: string) {
 }
 
 export default async function ListsPage() {
+  const cookieStore = await cookies();
+  const isGuest = cookieStore.get("panion-guest")?.value === "1";
+
+  if (isGuest) {
+    return (
+      <ListsClient
+        initialList={GUEST_LIST as ComponentProps<typeof ListsClient>["initialList"]}
+        allLists={GUEST_ALL_LISTS}
+        preferredStores={GUEST_PREFERRED_STORES}
+      />
+    );
+  }
+
   const session = await auth();
   if (!session?.user?.id) redirect("/signin");
 

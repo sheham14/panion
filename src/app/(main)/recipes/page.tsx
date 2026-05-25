@@ -1,7 +1,9 @@
 import { auth } from "../../../../auth";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import RecipesClient from "@/components/recipes/RecipesClient";
+import { GUEST_RECIPES } from "@/lib/guest-data";
 
 async function getRecipes(userId: string) {
   return prisma.recipe.findMany({
@@ -32,6 +34,15 @@ async function getRecipes(userId: string) {
 }
 
 export default async function RecipesPage() {
+  const cookieStore = await cookies();
+  const isGuest = cookieStore.get("panion-guest")?.value === "1";
+
+  if (isGuest) {
+    return (
+      <RecipesClient initialRecipes={GUEST_RECIPES} currentUserId="" />
+    );
+  }
+
   const session = await auth();
   if (!session?.user?.id) redirect("/signin");
 

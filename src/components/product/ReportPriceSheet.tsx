@@ -14,6 +14,7 @@ type Props = {
   storePrices: StorePrice[];
   defaultStoreId: string;
   onClose: () => void;
+  isGuest?: boolean;
 };
 
 export default function ReportPriceSheet({
@@ -21,6 +22,7 @@ export default function ReportPriceSheet({
   storePrices,
   defaultStoreId,
   onClose,
+  isGuest = false,
 }: Props) {
   const availableStores = storePrices.filter((sp) => sp.price !== null);
 
@@ -92,71 +94,87 @@ export default function ReportPriceSheet({
 
         {/* Body */}
         <div className="px-5 pt-4 flex flex-col gap-4">
-          {/* Store selector */}
-          <div>
-            <p className="text-[12px] text-[#aaa] mb-2">Store</p>
-            <div className="flex gap-2 flex-wrap">
-              {availableStores.map((sp) => (
-                <button
-                  key={sp.storeId}
-                  onClick={() => handleStoreSelect(sp.storeId)}
-                  className={[
-                    "px-3 py-1.5 rounded-full text-[12px] font-medium border transition-all capitalize",
-                    selectedStoreId === sp.storeId
-                      ? "bg-[#00E5C3] border-[#00E5C3] text-[#004d40]"
-                      : "bg-white dark:bg-[#242b2e] border-[#e0e0e0] dark:border-[#2e3538] text-[#555] dark:text-[#bbb]",
-                  ].join(" ")}
-                >
-                  {sp.chain}
-                </button>
-              ))}
+          {isGuest ? (
+            <div className="bg-[#f9f9f9] dark:bg-[#242b2e] rounded-xl p-4 text-center">
+              <p className="text-[13px] text-[#888] mb-3">
+                Sign in to report prices and help the community.
+              </p>
+              <button
+                onClick={onClose}
+                className="text-[13px] font-medium text-[#00b89e]"
+              >
+                Close
+              </button>
             </div>
-          </div>
-
-          {/* Price input */}
-          <div>
-            <p className="text-[12px] text-[#aaa] mb-2">Price I saw</p>
-            <div className="flex items-center border border-[#e0e0e0] dark:border-[#2e3538] rounded-xl overflow-hidden focus-within:border-[#00E5C3] transition-colors">
-              <span className="px-3 text-[14px] text-[#888] bg-[#f9f9f9] dark:bg-[#242b2e] self-stretch flex items-center border-r border-[#e0e0e0] dark:border-[#2e3538]">
-                $
-              </span>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                className="flex-1 px-3 py-2.5 text-[14px] text-[#111] dark:text-[#e0e0e0] bg-white dark:bg-[#1e2528] outline-none"
-              />
-            </div>
-          </div>
-
-          {/* Notes input */}
-          <div>
-            <p className="text-[12px] text-[#aaa] mb-2">Notes <span className="text-[#ccc]">(optional)</span></p>
-            <input
-              type="text"
-              maxLength={500}
-              placeholder="Any details? e.g. saw this at checkout"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-xl border border-[#e0e0e0] dark:border-[#2e3538] bg-white dark:bg-[#1e2528] text-[13px] text-[#111] dark:text-[#e0e0e0] placeholder-[#bbb] outline-none focus:border-[#00E5C3] transition-colors"
-            />
-          </div>
-
-          {/* Submit */}
-          {submitted ? (
-            <p className="text-center text-[13px] text-[#00b89e] py-3">
-              Thanks for the report!
-            </p>
           ) : (
-            <button
-              onClick={handleSubmit}
-              disabled={!price || isNaN(parseFloat(price)) || loading}
-              className="w-full py-[13px] bg-[#00E5C3] rounded-[13px] text-[14px] font-medium text-[#004d40] active:scale-[0.98] transition-all disabled:opacity-50"
-            >
-              {loading ? "Submitting…" : "Submit report"}
-            </button>
+            <>
+              {/* Store selector */}
+              <div>
+                <p className="text-[12px] text-[#aaa] mb-2">Store</p>
+                <div className="flex gap-2 flex-wrap">
+                  {availableStores.map((sp) => (
+                    <button
+                      key={sp.storeId}
+                      onClick={() => handleStoreSelect(sp.storeId)}
+                      className={[
+                        "px-3 py-1.5 rounded-full text-[12px] font-medium border transition-all capitalize",
+                        selectedStoreId === sp.storeId
+                          ? "bg-[#00E5C3] border-[#00E5C3] text-[#004d40]"
+                          : "bg-white dark:bg-[#242b2e] border-[#e0e0e0] dark:border-[#2e3538] text-[#555] dark:text-[#bbb]",
+                      ].join(" ")}
+                    >
+                      {sp.chain}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Price input */}
+              <div>
+                <p className="text-[12px] text-[#aaa] mb-2">Price I saw</p>
+                <div className="flex items-center border border-[#e0e0e0] dark:border-[#2e3538] rounded-xl overflow-hidden focus-within:border-[#00E5C3] transition-colors">
+                  <span className="px-3 text-[14px] text-[#888] bg-[#f9f9f9] dark:bg-[#242b2e] self-stretch flex items-center border-r border-[#e0e0e0] dark:border-[#2e3538]">
+                    $
+                  </span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value)}
+                    className="flex-1 px-3 py-2.5 text-[14px] text-[#111] dark:text-[#e0e0e0] bg-white dark:bg-[#1e2528] outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Notes input */}
+              <div>
+                <p className="text-[12px] text-[#aaa] mb-2">Notes <span className="text-[#ccc]">(optional)</span></p>
+                <input
+                  type="text"
+                  maxLength={500}
+                  placeholder="Any details? e.g. saw this at checkout"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  className="w-full px-3 py-2.5 rounded-xl border border-[#e0e0e0] dark:border-[#2e3538] bg-white dark:bg-[#1e2528] text-[13px] text-[#111] dark:text-[#e0e0e0] placeholder-[#bbb] outline-none focus:border-[#00E5C3] transition-colors"
+                />
+              </div>
+
+              {/* Submit */}
+              {submitted ? (
+                <p className="text-center text-[13px] text-[#00b89e] py-3">
+                  Thanks for the report!
+                </p>
+              ) : (
+                <button
+                  onClick={handleSubmit}
+                  disabled={!price || isNaN(parseFloat(price)) || loading}
+                  className="w-full py-[13px] bg-[#00E5C3] rounded-[13px] text-[14px] font-medium text-[#004d40] active:scale-[0.98] transition-all disabled:opacity-50"
+                >
+                  {loading ? "Submitting…" : "Submit report"}
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>

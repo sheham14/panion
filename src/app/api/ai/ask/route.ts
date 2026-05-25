@@ -1,9 +1,11 @@
 ﻿import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
+import { redis } from "@/lib/redis";
 import Anthropic from "@anthropic-ai/sdk";
 
 const DAILY_LIMIT = 10;
+const GUEST_LIMIT = 5;
 const MAX_QUERY_LENGTH = 500;
 const MAX_BUDGET = 10000;
 
@@ -15,8 +17,31 @@ function sanitizeInput(input: string): string {
 }
 
 export async function POST(request: NextRequest) {
-  const { user, error } = await getAuthenticatedUser();
-  if (error) return error;
+  // Guest path — identified by cookie, rate-limited via Redis
+  const guestId = request.cookies.get("panion-guest-id")?.value;
+  const isGuest = !!guestId;
+
+  if (isGuest) {
+    const redisKey = `guest:ai:${guestId}`;
+    const used = await redis.incr(redisKey);
+    if (used === 1) await redis.expire(redisKey, 60 * 60 * 24); // 24h TTL on first use
+
+    if (used > GUEST_LIMIT) {
+      return NextResponse.json(
+        {
+          error: "Guest limit reached",
+          message: `You've used your ${GUEST_LIMIT} free Clove queries. Sign in for unlimited access.`,
+          isGuestLimit: true,
+        },
+        { status: 429 },
+      );
+    }
+  }
+
+  const { user, error } = isGuest
+    ? { user: null, error: null }
+    : await getAuthenticatedUser();
+  if (!isGuest && error) return error;
 
   // Validate content type
   const contentType = request.headers.get("content-type");
@@ -74,35 +99,48 @@ export async function POST(request: NextRequest) {
 
   const sanitizedQuery = sanitizeInput(query);
 
-  // Check daily usage limit
-  const startOfDay = new Date();
-  startOfDay.setHours(0, 0, 0, 0);
+  let usageCount = 0;
 
-  const usageCount = await prisma.featureUsage.count({
-    where: {
-      userId: user.id,
-      feature: "recipe_ask",
-      usedAt: { gte: startOfDay },
-    },
-  });
+  if (!isGuest) {
+    // Check daily usage limit for authenticated users
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
 
-  if (usageCount >= DAILY_LIMIT) {
-    return NextResponse.json(
-      {
-        error: "Daily limit reached",
-        message: `You've used your ${DAILY_LIMIT} free recipe queries for today. Upgrade to Pro for unlimited queries.`,
-        resetsAt: new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000),
+    usageCount = await prisma.featureUsage.count({
+      where: {
+        userId: user!.id,
+        feature: "recipe_ask",
+        usedAt: { gte: startOfDay },
       },
-      { status: 429 },
-    );
+    });
+
+    if (usageCount >= DAILY_LIMIT) {
+      return NextResponse.json(
+        {
+          error: "Daily limit reached",
+          message: `You've used your ${DAILY_LIMIT} free recipe queries for today. Upgrade to Pro for unlimited queries.`,
+          resetsAt: new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000),
+        },
+        { status: 429 },
+      );
+    }
   }
 
-  // Fetch user's pantry for context
-  const pantryItems = await prisma.pantryItem.findMany({
-    where: { userId: user.id },
-    select: { name: true, quantity: true, unit: true },
-    take: 50,
-  });
+  // Fetch pantry for context — guest gets mock pantry, real users get DB pantry
+  const pantryItems = isGuest
+    ? [
+        { name: "Natrel Milk 2%", quantity: 1, unit: "L" },
+        { name: "Eggs", quantity: 4, unit: null },
+        { name: "Barilla Spaghetti", quantity: 500, unit: "g" },
+        { name: "Hunt's Tomato Sauce", quantity: 2, unit: null },
+        { name: "Uncle Ben's White Rice", quantity: 1, unit: "kg" },
+        { name: "Bertolli Olive Oil", quantity: 250, unit: "ml" },
+      ]
+    : await prisma.pantryItem.findMany({
+        where: { userId: user!.id },
+        select: { name: true, quantity: true, unit: true },
+        take: 50,
+      });
 
   // Fetch current prices for context — cap at 100 to control input tokens
   const storeProducts = await prisma.storeProduct.findMany({
@@ -132,18 +170,20 @@ export async function POST(request: NextRequest) {
     )
     .join("\n");
 
-  // Log usage before API call so we track attempts not just successes
-  await prisma.featureUsage.create({
-    data: {
-      userId: user.id,
-      feature: "recipe_ask",
-      metadata: {
-        queryLength: sanitizedQuery.length,
-        budget,
-        pantryItemCount: pantryItems.length,
+  // Log usage for authenticated users only
+  if (!isGuest) {
+    await prisma.featureUsage.create({
+      data: {
+        userId: user!.id,
+        feature: "recipe_ask",
+        metadata: {
+          queryLength: sanitizedQuery.length,
+          budget,
+          pantryItemCount: pantryItems.length,
+        },
       },
-    },
-  });
+    });
+  }
 
   // Call Claude Sonnet 4.6
   const client = new Anthropic();
@@ -201,6 +241,8 @@ Suggest 2-3 recipes that fit the user's request and budget. For each recipe:
     budget,
     answer,
     usageToday: usageCount + 1,
-    remainingToday: DAILY_LIMIT - usageCount - 1,
+    remainingToday: isGuest
+      ? GUEST_LIMIT - (parseInt(await redis.get(`guest:ai:${guestId}`) ?? "1", 10))
+      : DAILY_LIMIT - usageCount - 1,
   });
 }

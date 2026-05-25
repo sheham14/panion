@@ -1,8 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { Suspense } from "react";
 import RecipeDetailClient from "@/components/recipes/RecipeDetailClient";
+import { GUEST_RECIPE_DETAILS } from "@/lib/guest-data";
 
 export type RecipeStep = { text: string; timerMinutes: number | null };
 
@@ -49,6 +51,15 @@ function parseSteps(value: unknown): RecipeStep[] {
 }
 
 async function RecipeDetail({ id }: { id: string }) {
+  const cookieStore = await cookies();
+  const isGuest = cookieStore.get("panion-guest")?.value === "1";
+
+  if (isGuest) {
+    const guestRecipe = GUEST_RECIPE_DETAILS[id];
+    if (!guestRecipe) redirect("/recipes");
+    return <RecipeDetailClient recipe={guestRecipe} isOwner={false} />;
+  }
+
   const { user, error } = await getAuthenticatedUser();
   if (!user) redirect("/signin");
 
