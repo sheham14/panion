@@ -63,7 +63,7 @@ export default async function PantryPage() {
 
   if (isGuest) {
     return (
-      <div className="bg-[#f7f7f7] dark:bg-[#161b1e] min-h-screen">
+      <div className="bg-white dark:bg-[#0f1416] min-h-screen">
         <PantryClient initialItems={GUEST_PANTRY_ITEMS} />
       </div>
     );
@@ -73,7 +73,7 @@ export default async function PantryPage() {
   if (error) redirect("/signin");
 
   return (
-    <div className="bg-[#f7f7f7] dark:bg-[#161b1e] min-h-screen">
+    <div className="bg-white dark:bg-[#0f1416] min-h-screen">
       <Suspense fallback={<PantrySkeleton />}>
         <PantryData userId={user!.id} />
       </Suspense>

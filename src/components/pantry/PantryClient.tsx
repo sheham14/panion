@@ -565,7 +565,7 @@ export default function PantryClient({
       <button
         onClick={() => setEditItem(null)}
         className={[
-          "fixed right-4 z-10 w-12 h-12 bg-[#00E5C3] rounded-[16px] shadow-lg flex items-center justify-center active:scale-95 transition-all",
+          "fixed right-4 z-10 w-12 h-12 bg-[#00E5C3] rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-all",
           hasActions ? "bottom-[calc(148px+env(safe-area-inset-bottom,0px))]" : "bottom-above-nav",
         ].join(" ")}
         aria-label="Add pantry item"

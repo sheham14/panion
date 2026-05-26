@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X, Search } from "lucide-react";
 import type { SerializedPantryItem } from "@/app/(main)/pantry/page";
 
@@ -40,6 +40,11 @@ type ProductResult = {
 
 export default function PantryEditSheet({ item, onClose, onSaved }: Props) {
   const isEdit = !!item;
+
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
 
   const [name, setName] = useState(item?.name ?? "");
   const [brand, setBrand] = useState(item?.brand ?? "");
