@@ -278,7 +278,7 @@ function ListItemRow({
         <div className="flex-1 min-w-0">
           <p
             className={[
-              "text-[13px] font-medium truncate",
+              "text-[15px] font-semibold truncate",
               item.isChecked
                 ? "line-through text-[#aaa]"
                 : "text-[#111] dark:text-[#e0e0e0]",
@@ -297,11 +297,11 @@ function ListItemRow({
           {/* Price */}
           <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
             {activeChain && filteredPrice !== null ? (
-              <span className="text-[11px] text-[#00b89e]">
+              <span className="text-[12px] font-medium text-[#00b89e]">
                 ${filteredPrice.toFixed(2)}
               </span>
             ) : priceRange ? (
-              <span className="text-[11px] text-[#00b89e]">
+              <span className="text-[12px] font-medium text-[#00b89e]">
                 ${priceRange.min.toFixed(2)}
                 {priceRange.min !== priceRange.max &&
                   ` – $${priceRange.max.toFixed(2)}`}
@@ -632,7 +632,7 @@ export default function ListsClient({
             />
           </svg>
         </div>
-        <p className="text-[15px] font-medium text-[#111] dark:text-[#e0e0e0] mb-2">
+        <p className="text-[15px] font-semibold text-[#111] dark:text-[#e0e0e0] mb-2">
           No lists yet
         </p>
         <p className="text-[13px] text-[#aaa] leading-relaxed mb-6">
@@ -856,7 +856,7 @@ export default function ListsClient({
         {checked.length > 0 && (
           <>
             <div className="flex items-center justify-between px-4 py-2">
-              <p className="text-[10px] font-medium text-[#ccc] dark:text-[#444] uppercase tracking-[0.8px]">
+              <p className="text-[10px] font-semibold text-[#ccc] dark:text-[#444] uppercase tracking-wider">
                 Completed
               </p>
               <button
@@ -902,7 +902,7 @@ export default function ListsClient({
                 />
               </svg>
             </div>
-            <p className="text-[15px] font-medium text-[#111] dark:text-[#e0e0e0] mb-2">
+            <p className="text-[15px] font-semibold text-[#111] dark:text-[#e0e0e0] mb-2">
               Your list is empty
             </p>
             <p className="text-[13px] text-[#aaa] leading-relaxed mb-6">
@@ -961,7 +961,7 @@ export default function ListsClient({
                     <p className="text-[10px] text-[#888] dark:text-[#555] mb-0.5 capitalize">
                       {chain}
                     </p>
-                    <p className="text-[13px] font-medium text-[#111] dark:text-[#e0e0e0]">
+                    <p className="text-[13px] font-semibold text-[#111] dark:text-[#e0e0e0]">
                       ${total.toFixed(2)}
                     </p>
                     {isBest && (
@@ -979,7 +979,7 @@ export default function ListsClient({
             <span className="text-[12px] text-[#aaa]">
               Subtotal · {unchecked.length} items
             </span>
-            <span className="text-[20px] font-medium text-[#111] dark:text-[#e0e0e0]">
+            <span className="text-[20px] font-bold text-[#111] dark:text-[#e0e0e0]">
               ${(activeTotal ?? sortedTotals[0]?.[1] ?? 0).toFixed(2)}
             </span>
           </div>

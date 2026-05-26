@@ -44,7 +44,7 @@ export default function BottomNav() {
             key={href}
             href={href}
             className={[
-              "flex flex-col items-center gap-[3px] pt-3 pb-0 text-[10px] font-medium transition-colors min-w-[52px]",
+              "flex flex-col items-center gap-[3px] pt-3 pb-0 text-[11px] font-medium transition-colors min-w-[52px]",
               active
                 ? "text-[#00b89e]"
                 : "text-[#bbb] dark:text-[#444] hover:text-[#00b89e] dark:hover:text-[#00b89e]",

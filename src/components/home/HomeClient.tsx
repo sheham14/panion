@@ -257,7 +257,7 @@ function ProductCard({
         {/* Info */}
         <div className="p-2.5">
           <Link href={`/product/${item.productId}`}>
-            <p className="text-[12px] font-medium text-[#111] dark:text-[#e0e0e0] line-clamp-2 leading-tight mb-1.5">
+            <p className="text-[13px] font-semibold text-[#111] dark:text-[#e0e0e0] line-clamp-2 leading-tight mb-1.5">
               {item.name}
             </p>
           </Link>
@@ -271,7 +271,7 @@ function ProductCard({
                 <p className="text-[11px] text-[#aaa]">No price</p>
               )}
               {displayStore && (
-                <p className="text-[10px] text-[#888] dark:text-[#555] capitalize">
+                <p className="text-[11px] text-[#888] dark:text-[#555] capitalize">
                   {displayStore}
                 </p>
               )}
@@ -352,12 +352,12 @@ function ProductCard({
 
         {/* Info */}
         <Link href={`/product/${item.productId}`} className="flex-1 min-w-0">
-          <p className="text-[13px] font-medium text-[#111] dark:text-[#e0e0e0] truncate">
+          <p className="text-[15px] font-semibold text-[#111] dark:text-[#e0e0e0] truncate">
             {item.name}
           </p>
           <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
             {item.brand && (
-              <span className="text-[11px] text-[#aaa] dark:text-[#555]">
+              <span className="text-[12px] text-[#aaa] dark:text-[#555]">
                 {item.brand}
               </span>
             )}
@@ -365,7 +365,7 @@ function ProductCard({
               <span
                 className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${freshness.color}`}
               />
-              <span className="text-[10px] text-[#aaa] dark:text-[#555]">
+              <span className="text-[11px] text-[#aaa] dark:text-[#555]">
                 {freshness.label}
               </span>
             </div>
@@ -376,11 +376,11 @@ function ProductCard({
         <div className="text-right flex-shrink-0">
           {displayPrice != null ? (
             <>
-              <p className="text-[17px] font-medium text-[#00b89e]">
+              <p className="text-[17px] font-semibold text-[#00b89e]">
                 ${displayPrice.toFixed(2)}
               </p>
               {displayStore && (
-                <p className="text-[10px] text-[#888] dark:text-[#555] mt-0.5 capitalize">
+                <p className="text-[11px] text-[#888] dark:text-[#555] mt-0.5 capitalize">
                   {displayStore}
                 </p>
               )}
@@ -615,7 +615,7 @@ export default function HomeClient({
 
         {stores.length > 0 && (
           <div className="pb-3">
-            <p className="text-[11px] font-medium text-[#aaa] dark:text-[#555] tracking-[0.8px] uppercase px-4 mb-2">
+            <p className="text-[11px] font-semibold text-[#aaa] dark:text-[#555] tracking-wider uppercase px-4 mb-2">
               Your stores
             </p>
             <div className="flex gap-2 px-4 overflow-x-auto scrollbar-subtle">
@@ -653,7 +653,7 @@ export default function HomeClient({
       <div className="pt-2">
         {/* Price tracking header */}
         <div className="flex items-center justify-between px-4 mb-2">
-          <p className="text-[11px] font-medium text-[#aaa] dark:text-[#555] tracking-[0.8px] uppercase">
+          <p className="text-[11px] font-semibold text-[#aaa] dark:text-[#555] tracking-wider uppercase">
             Price tracking
           </p>
           {items.length > 0 && (

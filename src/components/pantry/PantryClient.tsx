@@ -159,10 +159,10 @@ function GridItem({
 
       {/* Info */}
       <div className="px-[10px] py-2">
-        <p className="text-[12px] font-medium text-[#111] dark:text-[#e0e0e0] truncate">
+        <p className="text-[13px] font-semibold text-[#111] dark:text-[#e0e0e0] truncate">
           {item.name}
         </p>
-        <p className="text-[10px] text-[#aaa] truncate mb-1">
+        <p className="text-[11px] text-[#aaa] truncate mb-1">
           {item.brand ?? categoryLabel(item.category)}
         </p>
         {expiry && (
@@ -181,7 +181,7 @@ function GridItem({
           <p className="text-[11px] font-medium text-[#111] dark:text-[#e0e0e0]">
             {formatQty(item.quantity, item.unit) || "—"}
           </p>
-          <p className="text-[10px] text-[#ccc]">
+          <p className="text-[11px] text-[#ccc]">
             {relativeDate(item.updatedAt)}
           </p>
         </div>
@@ -239,7 +239,7 @@ function ListItem({
       </div>
 
       <div className="flex-1 min-w-0">
-        <p className="text-[13px] font-medium text-[#111] dark:text-[#e0e0e0] truncate">
+        <p className="text-[15px] font-semibold text-[#111] dark:text-[#e0e0e0] truncate">
           {item.name}
         </p>
         <div className="flex items-center gap-1.5 text-[11px] text-[#aaa]">
@@ -404,7 +404,7 @@ export default function PantryClient({
     <div className="bg-white dark:bg-[#0f1416]">
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-3 pb-1">
-        <p className="text-[20px] font-medium text-[#111] dark:text-[#e0e0e0]">
+        <p className="text-[20px] font-bold text-[#111] dark:text-[#e0e0e0]">
           Pantry
         </p>
         <div className="flex items-center gap-3">
@@ -510,7 +510,7 @@ export default function PantryClient({
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center py-20 px-8 text-center">
             <div className="text-[48px] mb-4">🛒</div>
-            <p className="text-[15px] font-medium text-[#111] dark:text-[#e0e0e0] mb-2">
+            <p className="text-[15px] font-semibold text-[#111] dark:text-[#e0e0e0] mb-2">
               {searchQuery ? "No items found" : "Your pantry is empty"}
             </p>
             <p className="text-[13px] text-[#aaa]">
@@ -523,7 +523,7 @@ export default function PantryClient({
           [...grouped.entries()].map(([catKey, catItems]) => (
             <div key={catKey}>
               {/* Category label */}
-              <p className="text-[10px] font-medium text-[#aaa] uppercase tracking-[0.8px] px-4 pt-[10px] pb-[6px]">
+              <p className="text-[10px] font-semibold text-[#aaa] uppercase tracking-wider px-4 pt-[10px] pb-[6px]">
                 {catKey === "__none__"
                   ? "Uncategorized"
                   : categoryLabel(catKey)}
