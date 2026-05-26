@@ -60,7 +60,7 @@ export default function SignInPage() {
             <SentinelIcon />
           </div>
           <h1 className="text-[24px] font-medium text-[#111] dark:text-[#e8e8e8] mb-2">
-            Welcome to Sentinel
+            Welcome to Panion
           </h1>
           <p className="text-[14px] text-[#aaa] text-center leading-relaxed max-w-[260px]">
             Track grocery prices, get alerts, and plan smarter trips across St.

@@ -415,6 +415,17 @@ export default function AIChatClient() {
     });
   }, [messages, streamingText]);
 
+  // Scroll to bottom when iOS keyboard opens/closes (visualViewport resize)
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    function onVVResize() {
+      messagesEndRef.current?.scrollIntoView({ behavior: "instant", block: "nearest" });
+    }
+    vv.addEventListener("resize", onVVResize);
+    return () => vv.removeEventListener("resize", onVVResize);
+  }, []);
+
   // Auto-grow textarea
   useEffect(() => {
     const el = textareaRef.current;

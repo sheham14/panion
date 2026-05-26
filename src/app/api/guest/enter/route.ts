@@ -5,9 +5,7 @@ const GUEST_TTL_SECONDS = 60 * 60 * 24; // 24 hours
 export async function POST() {
   const guestId = crypto.randomUUID();
 
-  const res = NextResponse.redirect(
-    new URL("/", process.env.NEXTAUTH_URL ?? "http://localhost:3000"),
-  );
+  const res = NextResponse.json({ ok: true });
 
   const cookieOpts = {
     httpOnly: true,
