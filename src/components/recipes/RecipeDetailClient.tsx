@@ -25,6 +25,25 @@ function formatTimer(seconds: number): string {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
+function playTimerDone() {
+  try {
+    const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    const ctx = new Ctx();
+    [0, 0.3, 0.6].forEach((t) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = 880;
+      gain.gain.setValueAtTime(0.35, ctx.currentTime + t);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.25);
+      osc.start(ctx.currentTime + t);
+      osc.stop(ctx.currentTime + t + 0.25);
+    });
+  } catch {}
+  if ("vibrate" in navigator) navigator.vibrate([200, 100, 200, 100, 200]);
+}
+
 // ─── SVG Icons ───────────────────────────────────────────────────────────────
 
 function BackIcon() {
@@ -93,6 +112,7 @@ function TimerIcon() {
 type ActiveTimer = {
   stepIndex: number;
   secondsLeft: number;
+  totalSeconds: number;
   running: boolean;
 };
 
@@ -123,6 +143,8 @@ export default function RecipeDetailClient({
 
   // Timer: only one active at a time
   const [activeTimer, setActiveTimer] = useState<ActiveTimer | null>(null);
+  // Per-step custom duration (overrides step.timerMinutes before starting)
+  const [timerMins, setTimerMins] = useState<Record<number, number>>({});
 
   // ── Derived ──────────────────────────────────────────────────────────────
   const scale = recipe.servings > 0 ? servings / recipe.servings : 1;
@@ -145,7 +167,12 @@ export default function RecipeDetailClient({
 
   // ── Timer countdown ──────────────────────────────────────────────────────
   useEffect(() => {
-    if (!activeTimer?.running || activeTimer.secondsLeft <= 0) return;
+    if (!activeTimer?.running) return;
+    if (activeTimer.secondsLeft <= 0) {
+      setActiveTimer((t) => (t ? { ...t, running: false } : null));
+      playTimerDone();
+      return;
+    }
     const id = setTimeout(() => {
       setActiveTimer((t) =>
         t ? { ...t, secondsLeft: t.secondsLeft - 1 } : null,
@@ -171,19 +198,38 @@ export default function RecipeDetailClient({
     });
   }
 
-  function handleTimer(
-    stepIndex: number,
-    minutes: number,
-    e: React.MouseEvent,
-  ) {
+  function getTimerMins(stepIndex: number, defaultMins: number): number {
+    return timerMins[stepIndex] ?? defaultMins;
+  }
+
+  function adjustTimerMins(stepIndex: number, defaultMins: number, delta: number, e: React.MouseEvent) {
+    e.stopPropagation();
+    const current = getTimerMins(stepIndex, defaultMins);
+    setTimerMins((prev) => ({ ...prev, [stepIndex]: Math.max(1, current + delta) }));
+  }
+
+  function adjustActiveTimer(delta: number, e: React.MouseEvent) {
+    e.stopPropagation();
+    setActiveTimer((t) =>
+      t ? { ...t, secondsLeft: Math.max(0, t.secondsLeft + delta * 60) } : null,
+    );
+  }
+
+  function handleTimer(stepIndex: number, minutes: number, e: React.MouseEvent) {
     e.stopPropagation();
     if (activeTimer?.stepIndex === stepIndex) {
-      // Toggle pause/resume on same step
+      if (activeTimer.secondsLeft === 0) return; // done — use reset
       setActiveTimer((t) => (t ? { ...t, running: !t.running } : null));
     } else {
-      // Start new timer
-      setActiveTimer({ stepIndex, secondsLeft: minutes * 60, running: true });
+      const mins = getTimerMins(stepIndex, minutes);
+      setActiveTimer({ stepIndex, secondsLeft: mins * 60, totalSeconds: mins * 60, running: true });
     }
+  }
+
+  function handleReset(stepIndex: number, minutes: number, e: React.MouseEvent) {
+    e.stopPropagation();
+    const mins = getTimerMins(stepIndex, minutes);
+    setActiveTimer({ stepIndex, secondsLeft: mins * 60, totalSeconds: mins * 60, running: false });
   }
 
   // ── Collapsed banner content ──────────────────────────────────────────────
@@ -469,17 +515,75 @@ export default function RecipeDetailClient({
                     </p>
 
                     {step.timerMinutes !== null && !done && (
-                      <button
-                        onClick={(e) => handleTimer(i, step.timerMinutes!, e)}
-                        className="inline-flex items-center gap-1 mt-2 px-[10px] py-[5px] bg-[#f0fdf9] dark:bg-[#1a2e2a] border border-[#b2f0e4] dark:border-[#1e4a3a] rounded-[8px] text-[11px] font-medium text-[#0a7a62] dark:text-[#6ee7c7]"
-                      >
-                        <TimerIcon />
-                        {isThisTimer
-                          ? activeTimer!.running
-                            ? formatTimer(activeTimer!.secondsLeft)
-                            : `Paused · ${formatTimer(activeTimer!.secondsLeft)}`
-                          : `Timer · ${step.timerMinutes} min`}
-                      </button>
+                      <div className="flex items-center gap-1.5 mt-2" onClick={(e) => e.stopPropagation()}>
+                        {!isThisTimer ? (
+                          // Not started — show adjustable duration
+                          <>
+                            <button
+                              onClick={(e) => adjustTimerMins(i, step.timerMinutes!, -1, e)}
+                              className="w-[26px] h-[26px] rounded-[7px] border border-[#e0e0e0] dark:border-[#2e3538] bg-white dark:bg-[#1e2528] flex items-center justify-center text-[13px] text-[#888]"
+                            >
+                              −
+                            </button>
+                            <button
+                              onClick={(e) => handleTimer(i, step.timerMinutes!, e)}
+                              className="inline-flex items-center gap-1 px-[10px] py-[5px] bg-[#f0fdf9] dark:bg-[#1a2e2a] border border-[#b2f0e4] dark:border-[#1e4a3a] rounded-[8px] text-[11px] font-medium text-[#0a7a62] dark:text-[#6ee7c7]"
+                            >
+                              <TimerIcon />
+                              {getTimerMins(i, step.timerMinutes!)} min
+                            </button>
+                            <button
+                              onClick={(e) => adjustTimerMins(i, step.timerMinutes!, 1, e)}
+                              className="w-[26px] h-[26px] rounded-[7px] border border-[#e0e0e0] dark:border-[#2e3538] bg-white dark:bg-[#1e2528] flex items-center justify-center text-[13px] text-[#888]"
+                            >
+                              +
+                            </button>
+                          </>
+                        ) : (
+                          // Active — countdown / paused / done
+                          <>
+                            <button
+                              onClick={(e) => handleTimer(i, step.timerMinutes!, e)}
+                              className={[
+                                "inline-flex items-center gap-1 px-[10px] py-[5px] border rounded-[8px] text-[11px] font-medium transition-colors",
+                                activeTimer!.secondsLeft === 0
+                                  ? "bg-[#00E5C3]/20 border-[#00E5C3] text-[#0a7a62] dark:text-[#6ee7c7]"
+                                  : "bg-[#f0fdf9] dark:bg-[#1a2e2a] border-[#b2f0e4] dark:border-[#1e4a3a] text-[#0a7a62] dark:text-[#6ee7c7]",
+                              ].join(" ")}
+                            >
+                              <TimerIcon />
+                              {activeTimer!.secondsLeft === 0
+                                ? "Done!"
+                                : activeTimer!.running
+                                  ? formatTimer(activeTimer!.secondsLeft)
+                                  : `Paused · ${formatTimer(activeTimer!.secondsLeft)}`}
+                            </button>
+                            {!activeTimer!.running && activeTimer!.secondsLeft > 0 && (
+                              <>
+                                <button
+                                  onClick={(e) => adjustActiveTimer(-1, e)}
+                                  className="w-[26px] h-[26px] rounded-[7px] border border-[#e0e0e0] dark:border-[#2e3538] bg-white dark:bg-[#1e2528] flex items-center justify-center text-[13px] text-[#888]"
+                                >
+                                  −
+                                </button>
+                                <button
+                                  onClick={(e) => adjustActiveTimer(1, e)}
+                                  className="w-[26px] h-[26px] rounded-[7px] border border-[#e0e0e0] dark:border-[#2e3538] bg-white dark:bg-[#1e2528] flex items-center justify-center text-[13px] text-[#888]"
+                                >
+                                  +
+                                </button>
+                              </>
+                            )}
+                            <button
+                              onClick={(e) => handleReset(i, step.timerMinutes!, e)}
+                              className="inline-flex items-center px-[8px] py-[5px] border border-[#e0e0e0] dark:border-[#2e3538] rounded-[8px] text-[13px] text-[#888] bg-white dark:bg-[#1e2528]"
+                              aria-label="Reset timer"
+                            >
+                              ↺
+                            </button>
+                          </>
+                        )}
+                      </div>
                     )}
                   </div>
 

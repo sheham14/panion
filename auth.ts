@@ -13,8 +13,11 @@ async function sendVerificationRequest({
   identifier: string;
   url: string;
 }) {
-  sgMail.setApiKey(process.env.SENDGRID_API_KEY!);
-  await sgMail.send({
+  if (!process.env.SENDGRID_API_KEY) throw new Error("SENDGRID_API_KEY is not set");
+  if (!process.env.EMAIL_FROM) throw new Error("EMAIL_FROM is not set");
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+  try {
+    await sgMail.send({
     to,
     from: { email: process.env.EMAIL_FROM!, name: "Panion" },
     subject: "Your Panion sign-in link",
@@ -34,7 +37,12 @@ async function sendVerificationRequest({
         <p style="font-size:12px;color:#ccc;text-align:center;margin:0;">This link expires in 24 hours and can only be used once.<br>If you didn't request this, you can safely ignore this email.</p>
       </div>
     `,
-  });
+    });
+  } catch (err: unknown) {
+    const body = (err as { response?: { body?: unknown } })?.response?.body;
+    console.error("[sendVerificationRequest] SendGrid error:", body ?? err);
+    throw err;
+  }
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -69,6 +77,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   events: {
     async createUser({ user }) {
+      // Notify admin of new signup
+      if (process.env.SENDGRID_API_KEY && process.env.EMAIL_FROM && process.env.ADMIN_EMAIL) {
+        sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+        sgMail.send({
+          to: process.env.ADMIN_EMAIL,
+          from: { email: process.env.EMAIL_FROM, name: "Panion" },
+          subject: `New signup: ${user.email ?? "unknown"}`,
+          text: `New user signed up on Panion.\n\nEmail: ${user.email ?? "—"}\nName: ${user.name ?? "—"}\nID: ${user.id}\nTime: ${new Date().toUTCString()}`,
+        }).catch((err) => console.error("[createUser] Failed to send admin notification:", err));
+      }
+
       try {
         const systemRecipes = await prisma.recipe.findMany({
           where: { userId: null, isActive: true },
