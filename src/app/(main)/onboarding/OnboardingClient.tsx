@@ -30,7 +30,6 @@ const FEATURE_PILLS = [
   "Build grocery lists",
   "Get price alerts",
   "AI meal planning",
-  "Browse flyers",
   "Pantry tracker",
 ];
 

@@ -130,6 +130,13 @@ export default function SignInPage() {
           Continue with Google
         </button>
 
+        {/* Divider */}
+        <div className="flex items-center gap-3 mb-3">
+          <div className="flex-1 h-px bg-[#e0e0e0] dark:bg-[#2e3538]" />
+          <span className="text-[12px] text-[#bbb]">or</span>
+          <div className="flex-1 h-px bg-[#e0e0e0] dark:bg-[#2e3538]" />
+        </div>
+
         {/* Magic link form */}
         <form onSubmit={handleMagicLink} className="mb-3">
           <div className="flex gap-2">
