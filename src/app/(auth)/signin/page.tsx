@@ -1,8 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
-import { User, ArrowRight } from "lucide-react";
+import { User, ArrowRight, Mail, ArrowLeft, Loader2 } from "lucide-react";
 
 function SentinelIcon() {
   return (
@@ -42,6 +43,11 @@ function GoogleIcon() {
 }
 
 export default function SignInPage() {
+  const [email, setEmail] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sentTo, setSentTo] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
   function handleGoogle() {
     signIn("google", { callbackUrl: "/" });
   }
@@ -49,6 +55,53 @@ export default function SignInPage() {
   async function handleGuest() {
     await fetch("/api/guest/enter", { method: "POST" });
     window.location.href = "/";
+  }
+
+  async function handleMagicLink(e: React.FormEvent) {
+    e.preventDefault();
+    const trimmed = email.trim();
+    if (!trimmed) return;
+    setSending(true);
+    setError(null);
+    try {
+      await signIn("email", { email: trimmed, callbackUrl: "/", redirect: false });
+      setSentTo(trimmed);
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setSending(false);
+    }
+  }
+
+  if (sentTo) {
+    return (
+      <div className="min-h-screen bg-white dark:bg-[#0f1416] flex flex-col items-center justify-center px-6">
+        <div className="w-full max-w-sm text-center">
+          <div className="w-16 h-16 rounded-[22px] bg-[#00E5C3] flex items-center justify-center mb-5 mx-auto shadow-[0_4px_24px_rgba(0,229,195,0.25)]">
+            <Mail size={28} className="text-[#004d40]" strokeWidth={1.8} />
+          </div>
+          <h1 className="text-[22px] font-bold text-[#111] dark:text-[#e8e8e8] mb-2">
+            Check your email
+          </h1>
+          <p className="text-[14px] text-[#aaa] leading-relaxed mb-1">
+            We sent a sign-in link to
+          </p>
+          <p className="text-[14px] font-semibold text-[#111] dark:text-[#e0e0e0] mb-6">
+            {sentTo}
+          </p>
+          <p className="text-[13px] text-[#bbb] leading-relaxed mb-8">
+            Click the link in the email to sign in. It expires in 24 hours.
+          </p>
+          <button
+            onClick={() => { setSentTo(null); setEmail(""); }}
+            className="flex items-center gap-2 text-[13px] text-[#00b89e] mx-auto"
+          >
+            <ArrowLeft size={14} />
+            Use a different email
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -64,21 +117,52 @@ export default function SignInPage() {
           </h1>
           <p className="text-[14px] text-[#aaa] text-center leading-relaxed max-w-[260px]">
             Track grocery prices, get alerts, and plan smarter trips across St.
-            John's stores.
+            John&apos;s stores.
           </p>
         </div>
 
         {/* Google */}
         <button
           onClick={handleGoogle}
-          className="w-full py-[14px] px-4 border border-[#e0e0e0] dark:border-[#2e3538] rounded-[14px] flex items-center justify-center gap-2.5 text-[14px] font-medium text-[#111] dark:text-[#e0e0e0] bg-white dark:bg-[#1e2528] hover:bg-[#fafafa] dark:hover:bg-[#242b2e] transition-colors active:scale-[0.98] mb-4"
+          className="w-full py-[14px] px-4 border border-[#e0e0e0] dark:border-[#2e3538] rounded-[14px] flex items-center justify-center gap-2.5 text-[14px] font-medium text-[#111] dark:text-[#e0e0e0] bg-white dark:bg-[#1e2528] hover:bg-[#fafafa] dark:hover:bg-[#242b2e] transition-colors active:scale-[0.98] mb-3"
         >
           <GoogleIcon />
           Continue with Google
         </button>
 
+        {/* Magic link form */}
+        <form onSubmit={handleMagicLink} className="mb-3">
+          <div className="flex gap-2">
+            <input
+              type="email"
+              placeholder="Enter your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="flex-1 h-[50px] px-4 border border-[#e0e0e0] dark:border-[#2e3538] rounded-[14px] text-[14px] text-[#111] dark:text-[#e0e0e0] bg-white dark:bg-[#1e2528] placeholder-[#bbb] outline-none focus:border-[#00b89e] dark:focus:border-[#00b89e] transition-colors"
+            />
+            <button
+              type="submit"
+              disabled={sending || !email.trim()}
+              className="h-[50px] px-4 bg-[#00E5C3] rounded-[14px] text-[14px] font-semibold text-[#004d40] disabled:opacity-50 active:scale-[0.98] transition-all flex items-center gap-1.5 flex-shrink-0"
+            >
+              {sending ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                <>
+                  <Mail size={15} />
+                  Send link
+                </>
+              )}
+            </button>
+          </div>
+          {error && (
+            <p className="text-[12px] text-red-500 mt-2 px-1">{error}</p>
+          )}
+        </form>
+
         {/* Divider */}
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center gap-3 mb-3">
           <div className="flex-1 h-px bg-[#e0e0e0] dark:bg-[#2e3538]" />
           <span className="text-[12px] text-[#bbb]">or</span>
           <div className="flex-1 h-px bg-[#e0e0e0] dark:bg-[#2e3538]" />
