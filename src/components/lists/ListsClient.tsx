@@ -925,7 +925,7 @@ export default function ListsClient({
         className={[
           "fixed right-4 z-10 w-12 h-12 bg-[#00E5C3] rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-all",
           unchecked.length > 0
-            ? "bottom-[calc(180px+env(safe-area-inset-bottom,0px))]"
+            ? "bottom-[calc(220px+env(safe-area-inset-bottom,0px))]"
             : "bottom-above-nav",
         ].join(" ")}
         aria-label="Add item"
@@ -935,7 +935,7 @@ export default function ListsClient({
 
       {/* Bottom panel — store totals */}
       {unchecked.length > 0 && (
-        <div className="fixed bottom-[calc(72px+env(safe-area-inset-bottom,0px))] left-1/2 -translate-x-1/2 w-full max-w-md bg-white dark:bg-[#161b1e] border-t border-[#ebebeb] dark:border-[#2e3538] px-4 pt-3 pb-3 z-10">
+        <div className="fixed bottom-[calc(47px+env(safe-area-inset-bottom,0px))] left-1/2 -translate-x-1/2 w-full max-w-md bg-white dark:bg-[#161b1e] border-t border-[#ebebeb] dark:border-[#2e3538] px-4 pt-3 pb-3 z-10">
           {/* Store total cards */}
           <div className="flex gap-2 overflow-x-auto scrollbar-none mb-3">
             {Object.entries(storeTotals)
