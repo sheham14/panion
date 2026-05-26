@@ -458,6 +458,7 @@ export type UserWhereInput = {
   priceSubmissions?: Prisma.PriceHistoryListRelationFilter
   preferredStores?: Prisma.UserPreferredStoreListRelationFilter
   aiChatSessions?: Prisma.AiChatSessionListRelationFilter
+  pushSubscriptions?: Prisma.PushSubscriptionListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -512,6 +513,7 @@ export type UserOrderByWithRelationInput = {
   priceSubmissions?: Prisma.PriceHistoryOrderByRelationAggregateInput
   preferredStores?: Prisma.UserPreferredStoreOrderByRelationAggregateInput
   aiChatSessions?: Prisma.AiChatSessionOrderByRelationAggregateInput
+  pushSubscriptions?: Prisma.PushSubscriptionOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -569,6 +571,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   priceSubmissions?: Prisma.PriceHistoryListRelationFilter
   preferredStores?: Prisma.UserPreferredStoreListRelationFilter
   aiChatSessions?: Prisma.AiChatSessionListRelationFilter
+  pushSubscriptions?: Prisma.PushSubscriptionListRelationFilter
 }, "id" | "email" | "stripeCustomerId">
 
 export type UserOrderByWithAggregationInput = {
@@ -702,6 +705,7 @@ export type UserCreateInput = {
   priceSubmissions?: Prisma.PriceHistoryCreateNestedManyWithoutSubmitterInput
   preferredStores?: Prisma.UserPreferredStoreCreateNestedManyWithoutUserInput
   aiChatSessions?: Prisma.AiChatSessionCreateNestedManyWithoutUserInput
+  pushSubscriptions?: Prisma.PushSubscriptionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -755,6 +759,7 @@ export type UserUncheckedCreateInput = {
   priceSubmissions?: Prisma.PriceHistoryUncheckedCreateNestedManyWithoutSubmitterInput
   preferredStores?: Prisma.UserPreferredStoreUncheckedCreateNestedManyWithoutUserInput
   aiChatSessions?: Prisma.AiChatSessionUncheckedCreateNestedManyWithoutUserInput
+  pushSubscriptions?: Prisma.PushSubscriptionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserUpdateInput = {
@@ -808,6 +813,7 @@ export type UserUpdateInput = {
   priceSubmissions?: Prisma.PriceHistoryUpdateManyWithoutSubmitterNestedInput
   preferredStores?: Prisma.UserPreferredStoreUpdateManyWithoutUserNestedInput
   aiChatSessions?: Prisma.AiChatSessionUpdateManyWithoutUserNestedInput
+  pushSubscriptions?: Prisma.PushSubscriptionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -861,6 +867,7 @@ export type UserUncheckedUpdateInput = {
   priceSubmissions?: Prisma.PriceHistoryUncheckedUpdateManyWithoutSubmitterNestedInput
   preferredStores?: Prisma.UserPreferredStoreUncheckedUpdateManyWithoutUserNestedInput
   aiChatSessions?: Prisma.AiChatSessionUncheckedUpdateManyWithoutUserNestedInput
+  pushSubscriptions?: Prisma.PushSubscriptionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -1218,6 +1225,20 @@ export type UserUpdateOneRequiredWithoutSessionsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutSessionsInput, Prisma.UserUpdateWithoutSessionsInput>, Prisma.UserUncheckedUpdateWithoutSessionsInput>
 }
 
+export type UserCreateNestedOneWithoutPushSubscriptionsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutPushSubscriptionsInput, Prisma.UserUncheckedCreateWithoutPushSubscriptionsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutPushSubscriptionsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutPushSubscriptionsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutPushSubscriptionsInput, Prisma.UserUncheckedCreateWithoutPushSubscriptionsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutPushSubscriptionsInput
+  upsert?: Prisma.UserUpsertWithoutPushSubscriptionsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutPushSubscriptionsInput, Prisma.UserUpdateWithoutPushSubscriptionsInput>, Prisma.UserUncheckedUpdateWithoutPushSubscriptionsInput>
+}
+
 export type UserCreateNestedOneWithoutPantryItemsInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutPantryItemsInput, Prisma.UserUncheckedCreateWithoutPantryItemsInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutPantryItemsInput
@@ -1510,6 +1531,7 @@ export type UserCreateWithoutPreferredStoresInput = {
   contentFlags?: Prisma.ContentFlagCreateNestedManyWithoutReporterInput
   priceSubmissions?: Prisma.PriceHistoryCreateNestedManyWithoutSubmitterInput
   aiChatSessions?: Prisma.AiChatSessionCreateNestedManyWithoutUserInput
+  pushSubscriptions?: Prisma.PushSubscriptionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutPreferredStoresInput = {
@@ -1562,6 +1584,7 @@ export type UserUncheckedCreateWithoutPreferredStoresInput = {
   contentFlags?: Prisma.ContentFlagUncheckedCreateNestedManyWithoutReporterInput
   priceSubmissions?: Prisma.PriceHistoryUncheckedCreateNestedManyWithoutSubmitterInput
   aiChatSessions?: Prisma.AiChatSessionUncheckedCreateNestedManyWithoutUserInput
+  pushSubscriptions?: Prisma.PushSubscriptionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutPreferredStoresInput = {
@@ -1630,6 +1653,7 @@ export type UserUpdateWithoutPreferredStoresInput = {
   contentFlags?: Prisma.ContentFlagUpdateManyWithoutReporterNestedInput
   priceSubmissions?: Prisma.PriceHistoryUpdateManyWithoutSubmitterNestedInput
   aiChatSessions?: Prisma.AiChatSessionUpdateManyWithoutUserNestedInput
+  pushSubscriptions?: Prisma.PushSubscriptionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutPreferredStoresInput = {
@@ -1682,6 +1706,7 @@ export type UserUncheckedUpdateWithoutPreferredStoresInput = {
   contentFlags?: Prisma.ContentFlagUncheckedUpdateManyWithoutReporterNestedInput
   priceSubmissions?: Prisma.PriceHistoryUncheckedUpdateManyWithoutSubmitterNestedInput
   aiChatSessions?: Prisma.AiChatSessionUncheckedUpdateManyWithoutUserNestedInput
+  pushSubscriptions?: Prisma.PushSubscriptionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutAccountsInput = {
@@ -1734,6 +1759,7 @@ export type UserCreateWithoutAccountsInput = {
   priceSubmissions?: Prisma.PriceHistoryCreateNestedManyWithoutSubmitterInput
   preferredStores?: Prisma.UserPreferredStoreCreateNestedManyWithoutUserInput
   aiChatSessions?: Prisma.AiChatSessionCreateNestedManyWithoutUserInput
+  pushSubscriptions?: Prisma.PushSubscriptionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutAccountsInput = {
@@ -1786,6 +1812,7 @@ export type UserUncheckedCreateWithoutAccountsInput = {
   priceSubmissions?: Prisma.PriceHistoryUncheckedCreateNestedManyWithoutSubmitterInput
   preferredStores?: Prisma.UserPreferredStoreUncheckedCreateNestedManyWithoutUserInput
   aiChatSessions?: Prisma.AiChatSessionUncheckedCreateNestedManyWithoutUserInput
+  pushSubscriptions?: Prisma.PushSubscriptionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutAccountsInput = {
@@ -1854,6 +1881,7 @@ export type UserUpdateWithoutAccountsInput = {
   priceSubmissions?: Prisma.PriceHistoryUpdateManyWithoutSubmitterNestedInput
   preferredStores?: Prisma.UserPreferredStoreUpdateManyWithoutUserNestedInput
   aiChatSessions?: Prisma.AiChatSessionUpdateManyWithoutUserNestedInput
+  pushSubscriptions?: Prisma.PushSubscriptionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutAccountsInput = {
@@ -1906,6 +1934,7 @@ export type UserUncheckedUpdateWithoutAccountsInput = {
   priceSubmissions?: Prisma.PriceHistoryUncheckedUpdateManyWithoutSubmitterNestedInput
   preferredStores?: Prisma.UserPreferredStoreUncheckedUpdateManyWithoutUserNestedInput
   aiChatSessions?: Prisma.AiChatSessionUncheckedUpdateManyWithoutUserNestedInput
+  pushSubscriptions?: Prisma.PushSubscriptionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutSessionsInput = {
@@ -1958,6 +1987,7 @@ export type UserCreateWithoutSessionsInput = {
   priceSubmissions?: Prisma.PriceHistoryCreateNestedManyWithoutSubmitterInput
   preferredStores?: Prisma.UserPreferredStoreCreateNestedManyWithoutUserInput
   aiChatSessions?: Prisma.AiChatSessionCreateNestedManyWithoutUserInput
+  pushSubscriptions?: Prisma.PushSubscriptionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutSessionsInput = {
@@ -2010,6 +2040,7 @@ export type UserUncheckedCreateWithoutSessionsInput = {
   priceSubmissions?: Prisma.PriceHistoryUncheckedCreateNestedManyWithoutSubmitterInput
   preferredStores?: Prisma.UserPreferredStoreUncheckedCreateNestedManyWithoutUserInput
   aiChatSessions?: Prisma.AiChatSessionUncheckedCreateNestedManyWithoutUserInput
+  pushSubscriptions?: Prisma.PushSubscriptionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutSessionsInput = {
@@ -2078,6 +2109,7 @@ export type UserUpdateWithoutSessionsInput = {
   priceSubmissions?: Prisma.PriceHistoryUpdateManyWithoutSubmitterNestedInput
   preferredStores?: Prisma.UserPreferredStoreUpdateManyWithoutUserNestedInput
   aiChatSessions?: Prisma.AiChatSessionUpdateManyWithoutUserNestedInput
+  pushSubscriptions?: Prisma.PushSubscriptionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSessionsInput = {
@@ -2115,6 +2147,235 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput
+  lists?: Prisma.ListUncheckedUpdateManyWithoutUserNestedInput
+  pantryItems?: Prisma.PantryItemUncheckedUpdateManyWithoutUserNestedInput
+  recipes?: Prisma.RecipeUncheckedUpdateManyWithoutUserNestedInput
+  watchlists?: Prisma.WatchlistUncheckedUpdateManyWithoutUserNestedInput
+  alerts?: Prisma.AlertUncheckedUpdateManyWithoutUserNestedInput
+  consentLogs?: Prisma.ConsentLogUncheckedUpdateManyWithoutUserNestedInput
+  featureUsages?: Prisma.FeatureUsageUncheckedUpdateManyWithoutUserNestedInput
+  priceReports?: Prisma.PriceReportUncheckedUpdateManyWithoutReporterNestedInput
+  posts?: Prisma.PostUncheckedUpdateManyWithoutUserNestedInput
+  comments?: Prisma.CommentUncheckedUpdateManyWithoutUserNestedInput
+  reactions?: Prisma.ReactionUncheckedUpdateManyWithoutUserNestedInput
+  contentFlags?: Prisma.ContentFlagUncheckedUpdateManyWithoutReporterNestedInput
+  priceSubmissions?: Prisma.PriceHistoryUncheckedUpdateManyWithoutSubmitterNestedInput
+  preferredStores?: Prisma.UserPreferredStoreUncheckedUpdateManyWithoutUserNestedInput
+  aiChatSessions?: Prisma.AiChatSessionUncheckedUpdateManyWithoutUserNestedInput
+  pushSubscriptions?: Prisma.PushSubscriptionUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateWithoutPushSubscriptionsInput = {
+  id?: string
+  email: string
+  emailVerified?: Date | string | null
+  name?: string | null
+  dateOfBirth?: Date | string | null
+  gender?: string | null
+  image?: string | null
+  country?: string
+  city?: string | null
+  province?: string | null
+  nationality?: string | null
+  dietaryRestrictions?: Prisma.UserCreatedietaryRestrictionsInput | string[]
+  allergies?: Prisma.UserCreateallergiesInput | string[]
+  healthGoal?: string | null
+  activityLevel?: string | null
+  dailyCalorieGoal?: number | null
+  heightCm?: number | null
+  weightKg?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  locale?: string
+  currency?: string
+  role?: $Enums.UserRole
+  stripeCustomerId?: string | null
+  deletedAt?: Date | string | null
+  anonymizedAt?: Date | string | null
+  deletionRequestedAt?: Date | string | null
+  emailNotifications?: boolean
+  pushNotifications?: boolean
+  marketingOptIn?: boolean
+  digestFrequency?: $Enums.DigestFrequency
+  onboardingCompleted?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  managedStore?: Prisma.StoreCreateNestedOneWithoutAdminsInput
+  accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
+  sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+  lists?: Prisma.ListCreateNestedManyWithoutUserInput
+  pantryItems?: Prisma.PantryItemCreateNestedManyWithoutUserInput
+  recipes?: Prisma.RecipeCreateNestedManyWithoutUserInput
+  watchlists?: Prisma.WatchlistCreateNestedManyWithoutUserInput
+  alerts?: Prisma.AlertCreateNestedManyWithoutUserInput
+  consentLogs?: Prisma.ConsentLogCreateNestedManyWithoutUserInput
+  featureUsages?: Prisma.FeatureUsageCreateNestedManyWithoutUserInput
+  priceReports?: Prisma.PriceReportCreateNestedManyWithoutReporterInput
+  posts?: Prisma.PostCreateNestedManyWithoutUserInput
+  comments?: Prisma.CommentCreateNestedManyWithoutUserInput
+  reactions?: Prisma.ReactionCreateNestedManyWithoutUserInput
+  contentFlags?: Prisma.ContentFlagCreateNestedManyWithoutReporterInput
+  priceSubmissions?: Prisma.PriceHistoryCreateNestedManyWithoutSubmitterInput
+  preferredStores?: Prisma.UserPreferredStoreCreateNestedManyWithoutUserInput
+  aiChatSessions?: Prisma.AiChatSessionCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutPushSubscriptionsInput = {
+  id?: string
+  email: string
+  emailVerified?: Date | string | null
+  name?: string | null
+  dateOfBirth?: Date | string | null
+  gender?: string | null
+  image?: string | null
+  country?: string
+  city?: string | null
+  province?: string | null
+  nationality?: string | null
+  dietaryRestrictions?: Prisma.UserCreatedietaryRestrictionsInput | string[]
+  allergies?: Prisma.UserCreateallergiesInput | string[]
+  healthGoal?: string | null
+  activityLevel?: string | null
+  dailyCalorieGoal?: number | null
+  heightCm?: number | null
+  weightKg?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  locale?: string
+  currency?: string
+  role?: $Enums.UserRole
+  stripeCustomerId?: string | null
+  managedStoreId?: string | null
+  deletedAt?: Date | string | null
+  anonymizedAt?: Date | string | null
+  deletionRequestedAt?: Date | string | null
+  emailNotifications?: boolean
+  pushNotifications?: boolean
+  marketingOptIn?: boolean
+  digestFrequency?: $Enums.DigestFrequency
+  onboardingCompleted?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  lists?: Prisma.ListUncheckedCreateNestedManyWithoutUserInput
+  pantryItems?: Prisma.PantryItemUncheckedCreateNestedManyWithoutUserInput
+  recipes?: Prisma.RecipeUncheckedCreateNestedManyWithoutUserInput
+  watchlists?: Prisma.WatchlistUncheckedCreateNestedManyWithoutUserInput
+  alerts?: Prisma.AlertUncheckedCreateNestedManyWithoutUserInput
+  consentLogs?: Prisma.ConsentLogUncheckedCreateNestedManyWithoutUserInput
+  featureUsages?: Prisma.FeatureUsageUncheckedCreateNestedManyWithoutUserInput
+  priceReports?: Prisma.PriceReportUncheckedCreateNestedManyWithoutReporterInput
+  posts?: Prisma.PostUncheckedCreateNestedManyWithoutUserInput
+  comments?: Prisma.CommentUncheckedCreateNestedManyWithoutUserInput
+  reactions?: Prisma.ReactionUncheckedCreateNestedManyWithoutUserInput
+  contentFlags?: Prisma.ContentFlagUncheckedCreateNestedManyWithoutReporterInput
+  priceSubmissions?: Prisma.PriceHistoryUncheckedCreateNestedManyWithoutSubmitterInput
+  preferredStores?: Prisma.UserPreferredStoreUncheckedCreateNestedManyWithoutUserInput
+  aiChatSessions?: Prisma.AiChatSessionUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutPushSubscriptionsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutPushSubscriptionsInput, Prisma.UserUncheckedCreateWithoutPushSubscriptionsInput>
+}
+
+export type UserUpsertWithoutPushSubscriptionsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutPushSubscriptionsInput, Prisma.UserUncheckedUpdateWithoutPushSubscriptionsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutPushSubscriptionsInput, Prisma.UserUncheckedCreateWithoutPushSubscriptionsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutPushSubscriptionsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutPushSubscriptionsInput, Prisma.UserUncheckedUpdateWithoutPushSubscriptionsInput>
+}
+
+export type UserUpdateWithoutPushSubscriptionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dateOfBirth?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  country?: Prisma.StringFieldUpdateOperationsInput | string
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  province?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nationality?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dietaryRestrictions?: Prisma.UserUpdatedietaryRestrictionsInput | string[]
+  allergies?: Prisma.UserUpdateallergiesInput | string[]
+  healthGoal?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activityLevel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dailyCalorieGoal?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  heightCm?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  weightKg?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  locale?: Prisma.StringFieldUpdateOperationsInput | string
+  currency?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  anonymizedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletionRequestedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  emailNotifications?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  pushNotifications?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  marketingOptIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  digestFrequency?: Prisma.EnumDigestFrequencyFieldUpdateOperationsInput | $Enums.DigestFrequency
+  onboardingCompleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  managedStore?: Prisma.StoreUpdateOneWithoutAdminsNestedInput
+  accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
+  sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  lists?: Prisma.ListUpdateManyWithoutUserNestedInput
+  pantryItems?: Prisma.PantryItemUpdateManyWithoutUserNestedInput
+  recipes?: Prisma.RecipeUpdateManyWithoutUserNestedInput
+  watchlists?: Prisma.WatchlistUpdateManyWithoutUserNestedInput
+  alerts?: Prisma.AlertUpdateManyWithoutUserNestedInput
+  consentLogs?: Prisma.ConsentLogUpdateManyWithoutUserNestedInput
+  featureUsages?: Prisma.FeatureUsageUpdateManyWithoutUserNestedInput
+  priceReports?: Prisma.PriceReportUpdateManyWithoutReporterNestedInput
+  posts?: Prisma.PostUpdateManyWithoutUserNestedInput
+  comments?: Prisma.CommentUpdateManyWithoutUserNestedInput
+  reactions?: Prisma.ReactionUpdateManyWithoutUserNestedInput
+  contentFlags?: Prisma.ContentFlagUpdateManyWithoutReporterNestedInput
+  priceSubmissions?: Prisma.PriceHistoryUpdateManyWithoutSubmitterNestedInput
+  preferredStores?: Prisma.UserPreferredStoreUpdateManyWithoutUserNestedInput
+  aiChatSessions?: Prisma.AiChatSessionUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutPushSubscriptionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  emailVerified?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dateOfBirth?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  gender?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  country?: Prisma.StringFieldUpdateOperationsInput | string
+  city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  province?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  nationality?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dietaryRestrictions?: Prisma.UserUpdatedietaryRestrictionsInput | string[]
+  allergies?: Prisma.UserUpdateallergiesInput | string[]
+  healthGoal?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  activityLevel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dailyCalorieGoal?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  heightCm?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  weightKg?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  locale?: Prisma.StringFieldUpdateOperationsInput | string
+  currency?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  managedStoreId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  anonymizedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deletionRequestedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  emailNotifications?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  pushNotifications?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  marketingOptIn?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  digestFrequency?: Prisma.EnumDigestFrequencyFieldUpdateOperationsInput | $Enums.DigestFrequency
+  onboardingCompleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   lists?: Prisma.ListUncheckedUpdateManyWithoutUserNestedInput
   pantryItems?: Prisma.PantryItemUncheckedUpdateManyWithoutUserNestedInput
   recipes?: Prisma.RecipeUncheckedUpdateManyWithoutUserNestedInput
@@ -2182,6 +2443,7 @@ export type UserCreateWithoutPantryItemsInput = {
   priceSubmissions?: Prisma.PriceHistoryCreateNestedManyWithoutSubmitterInput
   preferredStores?: Prisma.UserPreferredStoreCreateNestedManyWithoutUserInput
   aiChatSessions?: Prisma.AiChatSessionCreateNestedManyWithoutUserInput
+  pushSubscriptions?: Prisma.PushSubscriptionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutPantryItemsInput = {
@@ -2234,6 +2496,7 @@ export type UserUncheckedCreateWithoutPantryItemsInput = {
   priceSubmissions?: Prisma.PriceHistoryUncheckedCreateNestedManyWithoutSubmitterInput
   preferredStores?: Prisma.UserPreferredStoreUncheckedCreateNestedManyWithoutUserInput
   aiChatSessions?: Prisma.AiChatSessionUncheckedCreateNestedManyWithoutUserInput
+  pushSubscriptions?: Prisma.PushSubscriptionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutPantryItemsInput = {
@@ -2302,6 +2565,7 @@ export type UserUpdateWithoutPantryItemsInput = {
   priceSubmissions?: Prisma.PriceHistoryUpdateManyWithoutSubmitterNestedInput
   preferredStores?: Prisma.UserPreferredStoreUpdateManyWithoutUserNestedInput
   aiChatSessions?: Prisma.AiChatSessionUpdateManyWithoutUserNestedInput
+  pushSubscriptions?: Prisma.PushSubscriptionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutPantryItemsInput = {
@@ -2354,6 +2618,7 @@ export type UserUncheckedUpdateWithoutPantryItemsInput = {
   priceSubmissions?: Prisma.PriceHistoryUncheckedUpdateManyWithoutSubmitterNestedInput
   preferredStores?: Prisma.UserPreferredStoreUncheckedUpdateManyWithoutUserNestedInput
   aiChatSessions?: Prisma.AiChatSessionUncheckedUpdateManyWithoutUserNestedInput
+  pushSubscriptions?: Prisma.PushSubscriptionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutManagedStoreInput = {
@@ -2406,6 +2671,7 @@ export type UserCreateWithoutManagedStoreInput = {
   priceSubmissions?: Prisma.PriceHistoryCreateNestedManyWithoutSubmitterInput
   preferredStores?: Prisma.UserPreferredStoreCreateNestedManyWithoutUserInput
   aiChatSessions?: Prisma.AiChatSessionCreateNestedManyWithoutUserInput
+  pushSubscriptions?: Prisma.PushSubscriptionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutManagedStoreInput = {
@@ -2458,6 +2724,7 @@ export type UserUncheckedCreateWithoutManagedStoreInput = {
   priceSubmissions?: Prisma.PriceHistoryUncheckedCreateNestedManyWithoutSubmitterInput
   preferredStores?: Prisma.UserPreferredStoreUncheckedCreateNestedManyWithoutUserInput
   aiChatSessions?: Prisma.AiChatSessionUncheckedCreateNestedManyWithoutUserInput
+  pushSubscriptions?: Prisma.PushSubscriptionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutManagedStoreInput = {
@@ -2575,6 +2842,7 @@ export type UserCreateWithoutPriceSubmissionsInput = {
   contentFlags?: Prisma.ContentFlagCreateNestedManyWithoutReporterInput
   preferredStores?: Prisma.UserPreferredStoreCreateNestedManyWithoutUserInput
   aiChatSessions?: Prisma.AiChatSessionCreateNestedManyWithoutUserInput
+  pushSubscriptions?: Prisma.PushSubscriptionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutPriceSubmissionsInput = {
@@ -2627,6 +2895,7 @@ export type UserUncheckedCreateWithoutPriceSubmissionsInput = {
   contentFlags?: Prisma.ContentFlagUncheckedCreateNestedManyWithoutReporterInput
   preferredStores?: Prisma.UserPreferredStoreUncheckedCreateNestedManyWithoutUserInput
   aiChatSessions?: Prisma.AiChatSessionUncheckedCreateNestedManyWithoutUserInput
+  pushSubscriptions?: Prisma.PushSubscriptionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutPriceSubmissionsInput = {
@@ -2695,6 +2964,7 @@ export type UserUpdateWithoutPriceSubmissionsInput = {
   contentFlags?: Prisma.ContentFlagUpdateManyWithoutReporterNestedInput
   preferredStores?: Prisma.UserPreferredStoreUpdateManyWithoutUserNestedInput
   aiChatSessions?: Prisma.AiChatSessionUpdateManyWithoutUserNestedInput
+  pushSubscriptions?: Prisma.PushSubscriptionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutPriceSubmissionsInput = {
@@ -2747,6 +3017,7 @@ export type UserUncheckedUpdateWithoutPriceSubmissionsInput = {
   contentFlags?: Prisma.ContentFlagUncheckedUpdateManyWithoutReporterNestedInput
   preferredStores?: Prisma.UserPreferredStoreUncheckedUpdateManyWithoutUserNestedInput
   aiChatSessions?: Prisma.AiChatSessionUncheckedUpdateManyWithoutUserNestedInput
+  pushSubscriptions?: Prisma.PushSubscriptionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutWatchlistsInput = {
@@ -2799,6 +3070,7 @@ export type UserCreateWithoutWatchlistsInput = {
   priceSubmissions?: Prisma.PriceHistoryCreateNestedManyWithoutSubmitterInput
   preferredStores?: Prisma.UserPreferredStoreCreateNestedManyWithoutUserInput
   aiChatSessions?: Prisma.AiChatSessionCreateNestedManyWithoutUserInput
+  pushSubscriptions?: Prisma.PushSubscriptionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutWatchlistsInput = {
@@ -2851,6 +3123,7 @@ export type UserUncheckedCreateWithoutWatchlistsInput = {
   priceSubmissions?: Prisma.PriceHistoryUncheckedCreateNestedManyWithoutSubmitterInput
   preferredStores?: Prisma.UserPreferredStoreUncheckedCreateNestedManyWithoutUserInput
   aiChatSessions?: Prisma.AiChatSessionUncheckedCreateNestedManyWithoutUserInput
+  pushSubscriptions?: Prisma.PushSubscriptionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutWatchlistsInput = {
@@ -2919,6 +3192,7 @@ export type UserUpdateWithoutWatchlistsInput = {
   priceSubmissions?: Prisma.PriceHistoryUpdateManyWithoutSubmitterNestedInput
   preferredStores?: Prisma.UserPreferredStoreUpdateManyWithoutUserNestedInput
   aiChatSessions?: Prisma.AiChatSessionUpdateManyWithoutUserNestedInput
+  pushSubscriptions?: Prisma.PushSubscriptionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutWatchlistsInput = {
@@ -2971,6 +3245,7 @@ export type UserUncheckedUpdateWithoutWatchlistsInput = {
   priceSubmissions?: Prisma.PriceHistoryUncheckedUpdateManyWithoutSubmitterNestedInput
   preferredStores?: Prisma.UserPreferredStoreUncheckedUpdateManyWithoutUserNestedInput
   aiChatSessions?: Prisma.AiChatSessionUncheckedUpdateManyWithoutUserNestedInput
+  pushSubscriptions?: Prisma.PushSubscriptionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutAlertsInput = {
@@ -3023,6 +3298,7 @@ export type UserCreateWithoutAlertsInput = {
   priceSubmissions?: Prisma.PriceHistoryCreateNestedManyWithoutSubmitterInput
   preferredStores?: Prisma.UserPreferredStoreCreateNestedManyWithoutUserInput
   aiChatSessions?: Prisma.AiChatSessionCreateNestedManyWithoutUserInput
+  pushSubscriptions?: Prisma.PushSubscriptionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutAlertsInput = {
@@ -3075,6 +3351,7 @@ export type UserUncheckedCreateWithoutAlertsInput = {
   priceSubmissions?: Prisma.PriceHistoryUncheckedCreateNestedManyWithoutSubmitterInput
   preferredStores?: Prisma.UserPreferredStoreUncheckedCreateNestedManyWithoutUserInput
   aiChatSessions?: Prisma.AiChatSessionUncheckedCreateNestedManyWithoutUserInput
+  pushSubscriptions?: Prisma.PushSubscriptionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutAlertsInput = {
@@ -3143,6 +3420,7 @@ export type UserUpdateWithoutAlertsInput = {
   priceSubmissions?: Prisma.PriceHistoryUpdateManyWithoutSubmitterNestedInput
   preferredStores?: Prisma.UserPreferredStoreUpdateManyWithoutUserNestedInput
   aiChatSessions?: Prisma.AiChatSessionUpdateManyWithoutUserNestedInput
+  pushSubscriptions?: Prisma.PushSubscriptionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutAlertsInput = {
@@ -3195,6 +3473,7 @@ export type UserUncheckedUpdateWithoutAlertsInput = {
   priceSubmissions?: Prisma.PriceHistoryUncheckedUpdateManyWithoutSubmitterNestedInput
   preferredStores?: Prisma.UserPreferredStoreUncheckedUpdateManyWithoutUserNestedInput
   aiChatSessions?: Prisma.AiChatSessionUncheckedUpdateManyWithoutUserNestedInput
+  pushSubscriptions?: Prisma.PushSubscriptionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutListsInput = {
@@ -3247,6 +3526,7 @@ export type UserCreateWithoutListsInput = {
   priceSubmissions?: Prisma.PriceHistoryCreateNestedManyWithoutSubmitterInput
   preferredStores?: Prisma.UserPreferredStoreCreateNestedManyWithoutUserInput
   aiChatSessions?: Prisma.AiChatSessionCreateNestedManyWithoutUserInput
+  pushSubscriptions?: Prisma.PushSubscriptionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutListsInput = {
@@ -3299,6 +3579,7 @@ export type UserUncheckedCreateWithoutListsInput = {
   priceSubmissions?: Prisma.PriceHistoryUncheckedCreateNestedManyWithoutSubmitterInput
   preferredStores?: Prisma.UserPreferredStoreUncheckedCreateNestedManyWithoutUserInput
   aiChatSessions?: Prisma.AiChatSessionUncheckedCreateNestedManyWithoutUserInput
+  pushSubscriptions?: Prisma.PushSubscriptionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutListsInput = {
@@ -3367,6 +3648,7 @@ export type UserUpdateWithoutListsInput = {
   priceSubmissions?: Prisma.PriceHistoryUpdateManyWithoutSubmitterNestedInput
   preferredStores?: Prisma.UserPreferredStoreUpdateManyWithoutUserNestedInput
   aiChatSessions?: Prisma.AiChatSessionUpdateManyWithoutUserNestedInput
+  pushSubscriptions?: Prisma.PushSubscriptionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutListsInput = {
@@ -3419,6 +3701,7 @@ export type UserUncheckedUpdateWithoutListsInput = {
   priceSubmissions?: Prisma.PriceHistoryUncheckedUpdateManyWithoutSubmitterNestedInput
   preferredStores?: Prisma.UserPreferredStoreUncheckedUpdateManyWithoutUserNestedInput
   aiChatSessions?: Prisma.AiChatSessionUncheckedUpdateManyWithoutUserNestedInput
+  pushSubscriptions?: Prisma.PushSubscriptionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutRecipesInput = {
@@ -3471,6 +3754,7 @@ export type UserCreateWithoutRecipesInput = {
   priceSubmissions?: Prisma.PriceHistoryCreateNestedManyWithoutSubmitterInput
   preferredStores?: Prisma.UserPreferredStoreCreateNestedManyWithoutUserInput
   aiChatSessions?: Prisma.AiChatSessionCreateNestedManyWithoutUserInput
+  pushSubscriptions?: Prisma.PushSubscriptionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutRecipesInput = {
@@ -3523,6 +3807,7 @@ export type UserUncheckedCreateWithoutRecipesInput = {
   priceSubmissions?: Prisma.PriceHistoryUncheckedCreateNestedManyWithoutSubmitterInput
   preferredStores?: Prisma.UserPreferredStoreUncheckedCreateNestedManyWithoutUserInput
   aiChatSessions?: Prisma.AiChatSessionUncheckedCreateNestedManyWithoutUserInput
+  pushSubscriptions?: Prisma.PushSubscriptionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutRecipesInput = {
@@ -3591,6 +3876,7 @@ export type UserUpdateWithoutRecipesInput = {
   priceSubmissions?: Prisma.PriceHistoryUpdateManyWithoutSubmitterNestedInput
   preferredStores?: Prisma.UserPreferredStoreUpdateManyWithoutUserNestedInput
   aiChatSessions?: Prisma.AiChatSessionUpdateManyWithoutUserNestedInput
+  pushSubscriptions?: Prisma.PushSubscriptionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutRecipesInput = {
@@ -3643,6 +3929,7 @@ export type UserUncheckedUpdateWithoutRecipesInput = {
   priceSubmissions?: Prisma.PriceHistoryUncheckedUpdateManyWithoutSubmitterNestedInput
   preferredStores?: Prisma.UserPreferredStoreUncheckedUpdateManyWithoutUserNestedInput
   aiChatSessions?: Prisma.AiChatSessionUncheckedUpdateManyWithoutUserNestedInput
+  pushSubscriptions?: Prisma.PushSubscriptionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutFeatureUsagesInput = {
@@ -3695,6 +3982,7 @@ export type UserCreateWithoutFeatureUsagesInput = {
   priceSubmissions?: Prisma.PriceHistoryCreateNestedManyWithoutSubmitterInput
   preferredStores?: Prisma.UserPreferredStoreCreateNestedManyWithoutUserInput
   aiChatSessions?: Prisma.AiChatSessionCreateNestedManyWithoutUserInput
+  pushSubscriptions?: Prisma.PushSubscriptionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutFeatureUsagesInput = {
@@ -3747,6 +4035,7 @@ export type UserUncheckedCreateWithoutFeatureUsagesInput = {
   priceSubmissions?: Prisma.PriceHistoryUncheckedCreateNestedManyWithoutSubmitterInput
   preferredStores?: Prisma.UserPreferredStoreUncheckedCreateNestedManyWithoutUserInput
   aiChatSessions?: Prisma.AiChatSessionUncheckedCreateNestedManyWithoutUserInput
+  pushSubscriptions?: Prisma.PushSubscriptionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutFeatureUsagesInput = {
@@ -3815,6 +4104,7 @@ export type UserUpdateWithoutFeatureUsagesInput = {
   priceSubmissions?: Prisma.PriceHistoryUpdateManyWithoutSubmitterNestedInput
   preferredStores?: Prisma.UserPreferredStoreUpdateManyWithoutUserNestedInput
   aiChatSessions?: Prisma.AiChatSessionUpdateManyWithoutUserNestedInput
+  pushSubscriptions?: Prisma.PushSubscriptionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutFeatureUsagesInput = {
@@ -3867,6 +4157,7 @@ export type UserUncheckedUpdateWithoutFeatureUsagesInput = {
   priceSubmissions?: Prisma.PriceHistoryUncheckedUpdateManyWithoutSubmitterNestedInput
   preferredStores?: Prisma.UserPreferredStoreUncheckedUpdateManyWithoutUserNestedInput
   aiChatSessions?: Prisma.AiChatSessionUncheckedUpdateManyWithoutUserNestedInput
+  pushSubscriptions?: Prisma.PushSubscriptionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutAiChatSessionsInput = {
@@ -3919,6 +4210,7 @@ export type UserCreateWithoutAiChatSessionsInput = {
   contentFlags?: Prisma.ContentFlagCreateNestedManyWithoutReporterInput
   priceSubmissions?: Prisma.PriceHistoryCreateNestedManyWithoutSubmitterInput
   preferredStores?: Prisma.UserPreferredStoreCreateNestedManyWithoutUserInput
+  pushSubscriptions?: Prisma.PushSubscriptionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutAiChatSessionsInput = {
@@ -3971,6 +4263,7 @@ export type UserUncheckedCreateWithoutAiChatSessionsInput = {
   contentFlags?: Prisma.ContentFlagUncheckedCreateNestedManyWithoutReporterInput
   priceSubmissions?: Prisma.PriceHistoryUncheckedCreateNestedManyWithoutSubmitterInput
   preferredStores?: Prisma.UserPreferredStoreUncheckedCreateNestedManyWithoutUserInput
+  pushSubscriptions?: Prisma.PushSubscriptionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutAiChatSessionsInput = {
@@ -4039,6 +4332,7 @@ export type UserUpdateWithoutAiChatSessionsInput = {
   contentFlags?: Prisma.ContentFlagUpdateManyWithoutReporterNestedInput
   priceSubmissions?: Prisma.PriceHistoryUpdateManyWithoutSubmitterNestedInput
   preferredStores?: Prisma.UserPreferredStoreUpdateManyWithoutUserNestedInput
+  pushSubscriptions?: Prisma.PushSubscriptionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutAiChatSessionsInput = {
@@ -4091,6 +4385,7 @@ export type UserUncheckedUpdateWithoutAiChatSessionsInput = {
   contentFlags?: Prisma.ContentFlagUncheckedUpdateManyWithoutReporterNestedInput
   priceSubmissions?: Prisma.PriceHistoryUncheckedUpdateManyWithoutSubmitterNestedInput
   preferredStores?: Prisma.UserPreferredStoreUncheckedUpdateManyWithoutUserNestedInput
+  pushSubscriptions?: Prisma.PushSubscriptionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutConsentLogsInput = {
@@ -4143,6 +4438,7 @@ export type UserCreateWithoutConsentLogsInput = {
   priceSubmissions?: Prisma.PriceHistoryCreateNestedManyWithoutSubmitterInput
   preferredStores?: Prisma.UserPreferredStoreCreateNestedManyWithoutUserInput
   aiChatSessions?: Prisma.AiChatSessionCreateNestedManyWithoutUserInput
+  pushSubscriptions?: Prisma.PushSubscriptionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutConsentLogsInput = {
@@ -4195,6 +4491,7 @@ export type UserUncheckedCreateWithoutConsentLogsInput = {
   priceSubmissions?: Prisma.PriceHistoryUncheckedCreateNestedManyWithoutSubmitterInput
   preferredStores?: Prisma.UserPreferredStoreUncheckedCreateNestedManyWithoutUserInput
   aiChatSessions?: Prisma.AiChatSessionUncheckedCreateNestedManyWithoutUserInput
+  pushSubscriptions?: Prisma.PushSubscriptionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutConsentLogsInput = {
@@ -4263,6 +4560,7 @@ export type UserUpdateWithoutConsentLogsInput = {
   priceSubmissions?: Prisma.PriceHistoryUpdateManyWithoutSubmitterNestedInput
   preferredStores?: Prisma.UserPreferredStoreUpdateManyWithoutUserNestedInput
   aiChatSessions?: Prisma.AiChatSessionUpdateManyWithoutUserNestedInput
+  pushSubscriptions?: Prisma.PushSubscriptionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutConsentLogsInput = {
@@ -4315,6 +4613,7 @@ export type UserUncheckedUpdateWithoutConsentLogsInput = {
   priceSubmissions?: Prisma.PriceHistoryUncheckedUpdateManyWithoutSubmitterNestedInput
   preferredStores?: Prisma.UserPreferredStoreUncheckedUpdateManyWithoutUserNestedInput
   aiChatSessions?: Prisma.AiChatSessionUncheckedUpdateManyWithoutUserNestedInput
+  pushSubscriptions?: Prisma.PushSubscriptionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutPriceReportsInput = {
@@ -4367,6 +4666,7 @@ export type UserCreateWithoutPriceReportsInput = {
   priceSubmissions?: Prisma.PriceHistoryCreateNestedManyWithoutSubmitterInput
   preferredStores?: Prisma.UserPreferredStoreCreateNestedManyWithoutUserInput
   aiChatSessions?: Prisma.AiChatSessionCreateNestedManyWithoutUserInput
+  pushSubscriptions?: Prisma.PushSubscriptionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutPriceReportsInput = {
@@ -4419,6 +4719,7 @@ export type UserUncheckedCreateWithoutPriceReportsInput = {
   priceSubmissions?: Prisma.PriceHistoryUncheckedCreateNestedManyWithoutSubmitterInput
   preferredStores?: Prisma.UserPreferredStoreUncheckedCreateNestedManyWithoutUserInput
   aiChatSessions?: Prisma.AiChatSessionUncheckedCreateNestedManyWithoutUserInput
+  pushSubscriptions?: Prisma.PushSubscriptionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutPriceReportsInput = {
@@ -4487,6 +4788,7 @@ export type UserUpdateWithoutPriceReportsInput = {
   priceSubmissions?: Prisma.PriceHistoryUpdateManyWithoutSubmitterNestedInput
   preferredStores?: Prisma.UserPreferredStoreUpdateManyWithoutUserNestedInput
   aiChatSessions?: Prisma.AiChatSessionUpdateManyWithoutUserNestedInput
+  pushSubscriptions?: Prisma.PushSubscriptionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutPriceReportsInput = {
@@ -4539,6 +4841,7 @@ export type UserUncheckedUpdateWithoutPriceReportsInput = {
   priceSubmissions?: Prisma.PriceHistoryUncheckedUpdateManyWithoutSubmitterNestedInput
   preferredStores?: Prisma.UserPreferredStoreUncheckedUpdateManyWithoutUserNestedInput
   aiChatSessions?: Prisma.AiChatSessionUncheckedUpdateManyWithoutUserNestedInput
+  pushSubscriptions?: Prisma.PushSubscriptionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutPostsInput = {
@@ -4591,6 +4894,7 @@ export type UserCreateWithoutPostsInput = {
   priceSubmissions?: Prisma.PriceHistoryCreateNestedManyWithoutSubmitterInput
   preferredStores?: Prisma.UserPreferredStoreCreateNestedManyWithoutUserInput
   aiChatSessions?: Prisma.AiChatSessionCreateNestedManyWithoutUserInput
+  pushSubscriptions?: Prisma.PushSubscriptionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutPostsInput = {
@@ -4643,6 +4947,7 @@ export type UserUncheckedCreateWithoutPostsInput = {
   priceSubmissions?: Prisma.PriceHistoryUncheckedCreateNestedManyWithoutSubmitterInput
   preferredStores?: Prisma.UserPreferredStoreUncheckedCreateNestedManyWithoutUserInput
   aiChatSessions?: Prisma.AiChatSessionUncheckedCreateNestedManyWithoutUserInput
+  pushSubscriptions?: Prisma.PushSubscriptionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutPostsInput = {
@@ -4711,6 +5016,7 @@ export type UserUpdateWithoutPostsInput = {
   priceSubmissions?: Prisma.PriceHistoryUpdateManyWithoutSubmitterNestedInput
   preferredStores?: Prisma.UserPreferredStoreUpdateManyWithoutUserNestedInput
   aiChatSessions?: Prisma.AiChatSessionUpdateManyWithoutUserNestedInput
+  pushSubscriptions?: Prisma.PushSubscriptionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutPostsInput = {
@@ -4763,6 +5069,7 @@ export type UserUncheckedUpdateWithoutPostsInput = {
   priceSubmissions?: Prisma.PriceHistoryUncheckedUpdateManyWithoutSubmitterNestedInput
   preferredStores?: Prisma.UserPreferredStoreUncheckedUpdateManyWithoutUserNestedInput
   aiChatSessions?: Prisma.AiChatSessionUncheckedUpdateManyWithoutUserNestedInput
+  pushSubscriptions?: Prisma.PushSubscriptionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutCommentsInput = {
@@ -4815,6 +5122,7 @@ export type UserCreateWithoutCommentsInput = {
   priceSubmissions?: Prisma.PriceHistoryCreateNestedManyWithoutSubmitterInput
   preferredStores?: Prisma.UserPreferredStoreCreateNestedManyWithoutUserInput
   aiChatSessions?: Prisma.AiChatSessionCreateNestedManyWithoutUserInput
+  pushSubscriptions?: Prisma.PushSubscriptionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutCommentsInput = {
@@ -4867,6 +5175,7 @@ export type UserUncheckedCreateWithoutCommentsInput = {
   priceSubmissions?: Prisma.PriceHistoryUncheckedCreateNestedManyWithoutSubmitterInput
   preferredStores?: Prisma.UserPreferredStoreUncheckedCreateNestedManyWithoutUserInput
   aiChatSessions?: Prisma.AiChatSessionUncheckedCreateNestedManyWithoutUserInput
+  pushSubscriptions?: Prisma.PushSubscriptionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutCommentsInput = {
@@ -4935,6 +5244,7 @@ export type UserUpdateWithoutCommentsInput = {
   priceSubmissions?: Prisma.PriceHistoryUpdateManyWithoutSubmitterNestedInput
   preferredStores?: Prisma.UserPreferredStoreUpdateManyWithoutUserNestedInput
   aiChatSessions?: Prisma.AiChatSessionUpdateManyWithoutUserNestedInput
+  pushSubscriptions?: Prisma.PushSubscriptionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutCommentsInput = {
@@ -4987,6 +5297,7 @@ export type UserUncheckedUpdateWithoutCommentsInput = {
   priceSubmissions?: Prisma.PriceHistoryUncheckedUpdateManyWithoutSubmitterNestedInput
   preferredStores?: Prisma.UserPreferredStoreUncheckedUpdateManyWithoutUserNestedInput
   aiChatSessions?: Prisma.AiChatSessionUncheckedUpdateManyWithoutUserNestedInput
+  pushSubscriptions?: Prisma.PushSubscriptionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutReactionsInput = {
@@ -5039,6 +5350,7 @@ export type UserCreateWithoutReactionsInput = {
   priceSubmissions?: Prisma.PriceHistoryCreateNestedManyWithoutSubmitterInput
   preferredStores?: Prisma.UserPreferredStoreCreateNestedManyWithoutUserInput
   aiChatSessions?: Prisma.AiChatSessionCreateNestedManyWithoutUserInput
+  pushSubscriptions?: Prisma.PushSubscriptionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutReactionsInput = {
@@ -5091,6 +5403,7 @@ export type UserUncheckedCreateWithoutReactionsInput = {
   priceSubmissions?: Prisma.PriceHistoryUncheckedCreateNestedManyWithoutSubmitterInput
   preferredStores?: Prisma.UserPreferredStoreUncheckedCreateNestedManyWithoutUserInput
   aiChatSessions?: Prisma.AiChatSessionUncheckedCreateNestedManyWithoutUserInput
+  pushSubscriptions?: Prisma.PushSubscriptionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutReactionsInput = {
@@ -5159,6 +5472,7 @@ export type UserUpdateWithoutReactionsInput = {
   priceSubmissions?: Prisma.PriceHistoryUpdateManyWithoutSubmitterNestedInput
   preferredStores?: Prisma.UserPreferredStoreUpdateManyWithoutUserNestedInput
   aiChatSessions?: Prisma.AiChatSessionUpdateManyWithoutUserNestedInput
+  pushSubscriptions?: Prisma.PushSubscriptionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutReactionsInput = {
@@ -5211,6 +5525,7 @@ export type UserUncheckedUpdateWithoutReactionsInput = {
   priceSubmissions?: Prisma.PriceHistoryUncheckedUpdateManyWithoutSubmitterNestedInput
   preferredStores?: Prisma.UserPreferredStoreUncheckedUpdateManyWithoutUserNestedInput
   aiChatSessions?: Prisma.AiChatSessionUncheckedUpdateManyWithoutUserNestedInput
+  pushSubscriptions?: Prisma.PushSubscriptionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutContentFlagsInput = {
@@ -5263,6 +5578,7 @@ export type UserCreateWithoutContentFlagsInput = {
   priceSubmissions?: Prisma.PriceHistoryCreateNestedManyWithoutSubmitterInput
   preferredStores?: Prisma.UserPreferredStoreCreateNestedManyWithoutUserInput
   aiChatSessions?: Prisma.AiChatSessionCreateNestedManyWithoutUserInput
+  pushSubscriptions?: Prisma.PushSubscriptionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutContentFlagsInput = {
@@ -5315,6 +5631,7 @@ export type UserUncheckedCreateWithoutContentFlagsInput = {
   priceSubmissions?: Prisma.PriceHistoryUncheckedCreateNestedManyWithoutSubmitterInput
   preferredStores?: Prisma.UserPreferredStoreUncheckedCreateNestedManyWithoutUserInput
   aiChatSessions?: Prisma.AiChatSessionUncheckedCreateNestedManyWithoutUserInput
+  pushSubscriptions?: Prisma.PushSubscriptionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutContentFlagsInput = {
@@ -5383,6 +5700,7 @@ export type UserUpdateWithoutContentFlagsInput = {
   priceSubmissions?: Prisma.PriceHistoryUpdateManyWithoutSubmitterNestedInput
   preferredStores?: Prisma.UserPreferredStoreUpdateManyWithoutUserNestedInput
   aiChatSessions?: Prisma.AiChatSessionUpdateManyWithoutUserNestedInput
+  pushSubscriptions?: Prisma.PushSubscriptionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutContentFlagsInput = {
@@ -5435,6 +5753,7 @@ export type UserUncheckedUpdateWithoutContentFlagsInput = {
   priceSubmissions?: Prisma.PriceHistoryUncheckedUpdateManyWithoutSubmitterNestedInput
   preferredStores?: Prisma.UserPreferredStoreUncheckedUpdateManyWithoutUserNestedInput
   aiChatSessions?: Prisma.AiChatSessionUncheckedUpdateManyWithoutUserNestedInput
+  pushSubscriptions?: Prisma.PushSubscriptionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateManyManagedStoreInput = {
@@ -5522,6 +5841,7 @@ export type UserUpdateWithoutManagedStoreInput = {
   priceSubmissions?: Prisma.PriceHistoryUpdateManyWithoutSubmitterNestedInput
   preferredStores?: Prisma.UserPreferredStoreUpdateManyWithoutUserNestedInput
   aiChatSessions?: Prisma.AiChatSessionUpdateManyWithoutUserNestedInput
+  pushSubscriptions?: Prisma.PushSubscriptionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutManagedStoreInput = {
@@ -5574,6 +5894,7 @@ export type UserUncheckedUpdateWithoutManagedStoreInput = {
   priceSubmissions?: Prisma.PriceHistoryUncheckedUpdateManyWithoutSubmitterNestedInput
   preferredStores?: Prisma.UserPreferredStoreUncheckedUpdateManyWithoutUserNestedInput
   aiChatSessions?: Prisma.AiChatSessionUncheckedUpdateManyWithoutUserNestedInput
+  pushSubscriptions?: Prisma.PushSubscriptionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateManyWithoutManagedStoreInput = {
@@ -5634,6 +5955,7 @@ export type UserCountOutputType = {
   priceSubmissions: number
   preferredStores: number
   aiChatSessions: number
+  pushSubscriptions: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -5654,6 +5976,7 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   priceSubmissions?: boolean | UserCountOutputTypeCountPriceSubmissionsArgs
   preferredStores?: boolean | UserCountOutputTypeCountPreferredStoresArgs
   aiChatSessions?: boolean | UserCountOutputTypeCountAiChatSessionsArgs
+  pushSubscriptions?: boolean | UserCountOutputTypeCountPushSubscriptionsArgs
 }
 
 /**
@@ -5785,6 +6108,13 @@ export type UserCountOutputTypeCountAiChatSessionsArgs<ExtArgs extends runtime.T
   where?: Prisma.AiChatSessionWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountPushSubscriptionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.PushSubscriptionWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -5838,6 +6168,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   priceSubmissions?: boolean | Prisma.User$priceSubmissionsArgs<ExtArgs>
   preferredStores?: boolean | Prisma.User$preferredStoresArgs<ExtArgs>
   aiChatSessions?: boolean | Prisma.User$aiChatSessionsArgs<ExtArgs>
+  pushSubscriptions?: boolean | Prisma.User$pushSubscriptionsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -5971,6 +6302,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   priceSubmissions?: boolean | Prisma.User$priceSubmissionsArgs<ExtArgs>
   preferredStores?: boolean | Prisma.User$preferredStoresArgs<ExtArgs>
   aiChatSessions?: boolean | Prisma.User$aiChatSessionsArgs<ExtArgs>
+  pushSubscriptions?: boolean | Prisma.User$pushSubscriptionsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -6001,6 +6333,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     priceSubmissions: Prisma.$PriceHistoryPayload<ExtArgs>[]
     preferredStores: Prisma.$UserPreferredStorePayload<ExtArgs>[]
     aiChatSessions: Prisma.$AiChatSessionPayload<ExtArgs>[]
+    pushSubscriptions: Prisma.$PushSubscriptionPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -6448,6 +6781,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   priceSubmissions<T extends Prisma.User$priceSubmissionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$priceSubmissionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PriceHistoryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   preferredStores<T extends Prisma.User$preferredStoresArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$preferredStoresArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserPreferredStorePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   aiChatSessions<T extends Prisma.User$aiChatSessionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$aiChatSessionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AiChatSessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  pushSubscriptions<T extends Prisma.User$pushSubscriptionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$pushSubscriptionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PushSubscriptionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -7335,6 +7669,30 @@ export type User$aiChatSessionsArgs<ExtArgs extends runtime.Types.Extensions.Int
   take?: number
   skip?: number
   distinct?: Prisma.AiChatSessionScalarFieldEnum | Prisma.AiChatSessionScalarFieldEnum[]
+}
+
+/**
+ * User.pushSubscriptions
+ */
+export type User$pushSubscriptionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the PushSubscription
+   */
+  select?: Prisma.PushSubscriptionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the PushSubscription
+   */
+  omit?: Prisma.PushSubscriptionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PushSubscriptionInclude<ExtArgs> | null
+  where?: Prisma.PushSubscriptionWhereInput
+  orderBy?: Prisma.PushSubscriptionOrderByWithRelationInput | Prisma.PushSubscriptionOrderByWithRelationInput[]
+  cursor?: Prisma.PushSubscriptionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.PushSubscriptionScalarFieldEnum | Prisma.PushSubscriptionScalarFieldEnum[]
 }
 
 /**

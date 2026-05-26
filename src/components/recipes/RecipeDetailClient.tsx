@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import AddToListSheet from "@/components/search/AddToListSheet";
 import type { RecipeDetailData } from "@/app/(main)/recipes/[id]/page";
@@ -114,7 +114,30 @@ type ActiveTimer = {
   secondsLeft: number;
   totalSeconds: number;
   running: boolean;
+  endsAt: number | null; // wall-clock ms when timer finishes (null when paused)
 };
+
+function scheduleSwTimer(stepIndex: number, endsAt: number, stepLabel: string) {
+  if (!("serviceWorker" in navigator)) return;
+  navigator.serviceWorker.ready.then((reg) => {
+    reg.active?.postMessage({ type: "TIMER_START", timerId: `step-${stepIndex}`, endsAt, label: stepLabel });
+  });
+}
+
+function cancelSwTimer(stepIndex: number) {
+  if (!("serviceWorker" in navigator)) return;
+  navigator.serviceWorker.ready.then((reg) => {
+    reg.active?.postMessage({ type: "TIMER_CANCEL", timerId: `step-${stepIndex}` });
+  });
+}
+
+async function ensureNotificationPermission() {
+  if (typeof Notification === "undefined") return false;
+  if (Notification.permission === "granted") return true;
+  if (Notification.permission === "denied") return false;
+  const result = await Notification.requestPermission();
+  return result === "granted";
+}
 
 export default function RecipeDetailClient({
   recipe,
@@ -143,6 +166,7 @@ export default function RecipeDetailClient({
 
   // Timer: only one active at a time
   const [activeTimer, setActiveTimer] = useState<ActiveTimer | null>(null);
+  const endsAtRef = useRef<number | null>(null);
   // Per-step custom duration (overrides step.timerMinutes before starting)
   const [timerMins, setTimerMins] = useState<Record<number, number>>({});
 
@@ -165,21 +189,44 @@ export default function RecipeDetailClient({
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // ── Timer countdown ──────────────────────────────────────────────────────
+  // Keep endsAtRef in sync so visibilitychange handler can read without stale closure
   useEffect(() => {
-    if (!activeTimer?.running) return;
-    if (activeTimer.secondsLeft <= 0) {
-      setActiveTimer((t) => (t ? { ...t, running: false } : null));
-      playTimerDone();
-      return;
+    endsAtRef.current = activeTimer?.endsAt ?? null;
+  }, [activeTimer?.endsAt]);
+
+  // ── Wall-clock countdown ──────────────────────────────────────────────────
+  useEffect(() => {
+    if (!activeTimer?.running || activeTimer.endsAt == null) return;
+    const endsAt = activeTimer.endsAt;
+    const id = setInterval(() => {
+      const left = Math.max(0, Math.round((endsAt - Date.now()) / 1000));
+      if (left <= 0) {
+        clearInterval(id);
+        setActiveTimer((t) => t ? { ...t, secondsLeft: 0, running: false, endsAt: null } : null);
+        playTimerDone();
+      } else {
+        setActiveTimer((t) => t ? { ...t, secondsLeft: left } : null);
+      }
+    }, 500);
+    return () => clearInterval(id);
+  }, [activeTimer?.running, activeTimer?.endsAt]);
+
+  // ── Recalculate when app comes back to foreground ─────────────────────────
+  useEffect(() => {
+    function onVisible() {
+      if (document.visibilityState !== "visible" || endsAtRef.current == null) return;
+      const left = Math.max(0, Math.round((endsAtRef.current - Date.now()) / 1000));
+      if (left <= 0) {
+        endsAtRef.current = null;
+        setActiveTimer((t) => t ? { ...t, secondsLeft: 0, running: false, endsAt: null } : null);
+        playTimerDone();
+      } else {
+        setActiveTimer((t) => t ? { ...t, secondsLeft: left } : null);
+      }
     }
-    const id = setTimeout(() => {
-      setActiveTimer((t) =>
-        t ? { ...t, secondsLeft: t.secondsLeft - 1 } : null,
-      );
-    }, 1000);
-    return () => clearTimeout(id);
-  }, [activeTimer]);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, []);
 
   // ── Handlers ─────────────────────────────────────────────────────────────
   function toggleIngredient(id: string) {
@@ -215,21 +262,40 @@ export default function RecipeDetailClient({
     );
   }
 
-  function handleTimer(stepIndex: number, minutes: number, e: React.MouseEvent) {
+  const handleTimer = useCallback(async (stepIndex: number, minutes: number, e: React.MouseEvent) => {
     e.stopPropagation();
     if (activeTimer?.stepIndex === stepIndex) {
       if (activeTimer.secondsLeft === 0) return; // done — use reset
-      setActiveTimer((t) => (t ? { ...t, running: !t.running } : null));
+      if (activeTimer.running) {
+        // Pause: capture current remaining seconds, clear endsAt
+        const secsLeft = activeTimer.endsAt
+          ? Math.max(0, Math.round((activeTimer.endsAt - Date.now()) / 1000))
+          : activeTimer.secondsLeft;
+        cancelSwTimer(stepIndex);
+        setActiveTimer((t) => t ? { ...t, secondsLeft: secsLeft, running: false, endsAt: null } : null);
+      } else {
+        // Resume
+        await ensureNotificationPermission();
+        const endsAt = Date.now() + activeTimer.secondsLeft * 1000;
+        scheduleSwTimer(stepIndex, endsAt, `Step ${stepIndex + 1}`);
+        setActiveTimer((t) => t ? { ...t, running: true, endsAt } : null);
+      }
     } else {
+      await ensureNotificationPermission();
       const mins = getTimerMins(stepIndex, minutes);
-      setActiveTimer({ stepIndex, secondsLeft: mins * 60, totalSeconds: mins * 60, running: true });
+      const totalSeconds = mins * 60;
+      const endsAt = Date.now() + totalSeconds * 1000;
+      scheduleSwTimer(stepIndex, endsAt, `Step ${stepIndex + 1}`);
+      setActiveTimer({ stepIndex, secondsLeft: totalSeconds, totalSeconds, running: true, endsAt });
     }
-  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTimer, timerMins]);
 
   function handleReset(stepIndex: number, minutes: number, e: React.MouseEvent) {
     e.stopPropagation();
+    cancelSwTimer(stepIndex);
     const mins = getTimerMins(stepIndex, minutes);
-    setActiveTimer({ stepIndex, secondsLeft: mins * 60, totalSeconds: mins * 60, running: false });
+    setActiveTimer({ stepIndex, secondsLeft: mins * 60, totalSeconds: mins * 60, running: false, endsAt: null });
   }
 
   // ── Collapsed banner content ──────────────────────────────────────────────

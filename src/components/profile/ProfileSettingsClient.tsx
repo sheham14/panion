@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { ArrowLeft, ChevronRight, LogOut } from "lucide-react";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -169,6 +170,7 @@ export default function ProfileSettingsClient({
   stores: Store[];
 }) {
   const router = useRouter();
+  const { permission, subscribed, loading: pushLoading, subscribe, unsubscribe } = usePushNotifications();
 
   // Form state
   const [name, setName] = useState(initialData.name);
@@ -546,8 +548,29 @@ export default function ProfileSettingsClient({
       {/* ── Notifications ── */}
       <SectionHeader title="Notifications" />
       <SettingsCard>
-        <SettingsRow label="Price alert emails" last>
+        <SettingsRow label="Price alert emails">
           <Toggle value={emailNotifications} onChange={setEmailNotifications} />
+        </SettingsRow>
+        <SettingsRow label="Push notifications" last>
+          {permission === "denied" ? (
+            <span className="text-[12px] text-[#aaa]">Blocked in browser</span>
+          ) : subscribed ? (
+            <button
+              onClick={unsubscribe}
+              disabled={pushLoading}
+              className="text-[12px] font-medium text-[#00b89e] disabled:opacity-50"
+            >
+              {pushLoading ? "…" : "Enabled · Turn off"}
+            </button>
+          ) : (
+            <button
+              onClick={subscribe}
+              disabled={pushLoading}
+              className="text-[12px] font-medium text-[#00b89e] disabled:opacity-50"
+            >
+              {pushLoading ? "…" : "Enable"}
+            </button>
+          )}
         </SettingsRow>
       </SettingsCard>
 
