@@ -45,6 +45,11 @@ html, body {
   top: env(safe-area-inset-top, 0px);
 }
 
+/* Position elements just above the bottom nav (72px) + home indicator */
+.bottom-above-nav {
+  bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+}
+
 .scrollbar-subtle {
   scrollbar-width: thin;
   scrollbar-color: #d1d5db transparent;

@@ -36,7 +36,7 @@ export default function BottomNav() {
   }
 
   return (
-    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-sm bg-white dark:bg-[#161b1e] border-t border-[#ebebeb] dark:border-[#2e3538] flex items-center justify-around px-2 z-10 pb-safe">
+    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white dark:bg-[#161b1e] border-t border-[#ebebeb] dark:border-[#2e3538] flex items-center justify-around px-2 z-10 pb-safe">
       {NAV_ITEMS.map(({ href, label, Icon, exact }) => {
         const active = isActive(href, exact);
         return (

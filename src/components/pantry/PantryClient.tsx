@@ -566,7 +566,7 @@ export default function PantryClient({
         onClick={() => setEditItem(null)}
         className={[
           "fixed right-4 z-10 w-12 h-12 bg-[#00E5C3] rounded-[16px] shadow-lg flex items-center justify-center active:scale-95 transition-all",
-          hasActions ? "bottom-[148px]" : "bottom-[80px]",
+          hasActions ? "bottom-[calc(148px+env(safe-area-inset-bottom,0px))]" : "bottom-above-nav",
         ].join(" ")}
         aria-label="Add pantry item"
       >
@@ -575,7 +575,7 @@ export default function PantryClient({
 
       {/* Bulk action bar */}
       {hasActions && (
-        <div className="fixed bottom-[72px] left-0 right-0 bg-white dark:bg-[#1e2528] border-t border-[#ebebeb] dark:border-[#2e3538] px-4 py-3 flex gap-2 z-10">
+        <div className="fixed bottom-above-nav left-0 right-0 bg-white dark:bg-[#1e2528] border-t border-[#ebebeb] dark:border-[#2e3538] px-4 py-3 flex gap-2 z-10">
           <button
             onClick={() => setShowAddToList(true)}
             className="flex-1 py-[10px] rounded-[10px] text-[12px] font-medium text-[#0a7a62] bg-[#f0fdf9] border border-[#b2f0e4]"

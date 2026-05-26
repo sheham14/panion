@@ -28,7 +28,7 @@ export async function GET(
           product: {
             include: {
               storeProducts: {
-                where: { isActive: true },
+                where: { isActive: true, store: { chain: { not: "costco" } } },
                 include: {
                   store: { select: { id: true, chain: true, name: true } },
                 },

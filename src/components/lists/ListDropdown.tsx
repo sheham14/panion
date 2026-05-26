@@ -42,7 +42,7 @@ export default function ListDropdown({
       {/* Trigger */}
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-1.5 text-[16px] font-medium text-[#111] dark:text-[#e0e0e0]"
+        className="flex items-center gap-1.5 text-[20px] font-medium text-[#111] dark:text-[#e0e0e0]"
       >
         <span className="max-w-[200px] truncate">{activeList.name}</span>
         <ChevronDown

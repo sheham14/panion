@@ -803,7 +803,7 @@ export default function AIChatClient() {
                   if (e.key === "Enter") commitRename();
                   if (e.key === "Escape") setIsRenaming(false);
                 }}
-                className="text-[13px] font-medium text-center bg-transparent border-b border-[#00E5C3] outline-none text-[#111] dark:text-[#e0e0e0] w-full max-w-[180px]"
+                className="text-[17px] font-medium text-center bg-transparent border-b border-[#00E5C3] outline-none text-[#111] dark:text-[#e0e0e0] w-full max-w-[200px]"
               />
             ) : (
               <button
@@ -812,7 +812,7 @@ export default function AIChatClient() {
                   setRenameDraft(headerTitle);
                   setIsRenaming(true);
                 }}
-                className="text-[13px] font-medium text-[#111] dark:text-[#e0e0e0] truncate max-w-[180px] text-center"
+                className="text-[17px] font-medium text-[#111] dark:text-[#e0e0e0] truncate max-w-[200px] text-center"
                 title="Tap to rename"
               >
                 {headerTitle}

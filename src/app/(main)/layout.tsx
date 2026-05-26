@@ -7,7 +7,7 @@ export default function MainLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="relative min-h-screen bg-white dark:bg-[#0f1416] max-w-sm mx-auto pt-safe">
+    <div className="relative min-h-screen bg-white dark:bg-[#0f1416] w-full max-w-md mx-auto pt-safe">
       <GuestBanner />
       <main className="pb-[72px]">{children}</main>
       <BottomNav />
