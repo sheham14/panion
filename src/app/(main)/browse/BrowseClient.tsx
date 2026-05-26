@@ -120,7 +120,7 @@ export default function BrowseClient({
   return (
     <div className="min-h-screen bg-white dark:bg-[#0f1416] pb-24">
       {/* Header */}
-      <div className="sticky top-0 z-20 bg-white dark:bg-[#0f1416] px-4 pt-5 pb-3 border-b border-[#f0f0f0] dark:border-[#1e2528]">
+      <div className="sticky top-safe z-20 bg-white dark:bg-[#0f1416] px-4 pt-5 pb-3 border-b border-[#f0f0f0] dark:border-[#1e2528]">
         <h1 className="text-[20px] font-semibold text-[#111] dark:text-[#e8e8e8] mb-3">
           Browse Products
         </h1>

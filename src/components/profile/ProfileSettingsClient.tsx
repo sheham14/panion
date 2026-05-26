@@ -338,7 +338,7 @@ export default function ProfileSettingsClient({
       )}
 
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-white dark:bg-[#0f1416] px-4 pt-4 pb-3 flex items-center gap-3 border-b border-[#f0f0f0] dark:border-[#2a3044]">
+      <div className="sticky top-safe z-10 bg-white dark:bg-[#0f1416] px-4 pt-4 pb-3 flex items-center gap-3 border-b border-[#f0f0f0] dark:border-[#2a3044]">
         <button
           onClick={() => router.back()}
           className="w-[32px] h-[32px] rounded-[10px] bg-[#f4f4f4] dark:bg-[#242b2e] flex items-center justify-center"

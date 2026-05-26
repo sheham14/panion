@@ -189,7 +189,7 @@ export default function RecipeDetailClient({
   // ── Collapsed banner content ──────────────────────────────────────────────
   const CollapsedBanner = (
     <div
-      className="fixed top-0 left-0 right-0 z-20 h-[52px] transition-all duration-200"
+      className="fixed top-safe left-0 right-0 z-20 h-[52px] transition-all duration-200"
       style={{
         opacity: heroCollapsed ? 1 : 0,
         pointerEvents: heroCollapsed ? "auto" : "none",

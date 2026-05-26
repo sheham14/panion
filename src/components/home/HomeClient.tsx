@@ -558,7 +558,7 @@ export default function HomeClient({
       <div
         ref={headerRef}
         className={[
-          "sticky top-0 z-10 bg-white dark:bg-[#0f1416] transition-transform duration-300 ease-in-out",
+          "sticky top-safe z-10 bg-white dark:bg-[#0f1416] transition-transform duration-300 ease-in-out",
           headerVisible ? "translate-y-0" : "-translate-y-full",
         ].join(" ")}
       >

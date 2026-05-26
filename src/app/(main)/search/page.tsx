@@ -259,7 +259,7 @@ export default function SearchPage() {
   return (
     <div className="min-h-screen bg-white dark:bg-[#0f1416]">
       {/* Search header */}
-      <div className="sticky top-0 z-10 bg-white dark:bg-[#0f1416] px-4 pt-4 pb-3 flex items-center gap-3">
+      <div className="sticky top-safe z-10 bg-white dark:bg-[#0f1416] px-4 pt-4 pb-3 flex items-center gap-3">
         <button
           onClick={() => router.back()}
           className="w-9 h-9 rounded-xl bg-[#f4f4f4] dark:bg-[#1e2528] flex items-center justify-center flex-shrink-0"

@@ -210,7 +210,7 @@ export default function RecipeForm({ initial, mode }: Props) {
   return (
     <div className="bg-[#f7f7f7] dark:bg-[#161b1e] min-h-screen pb-32">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-white dark:bg-[#1e2528] border-b border-[#f0f0f0] dark:border-[#2e3538] px-4 h-[52px] flex items-center justify-between">
+      <div className="sticky top-safe z-10 bg-white dark:bg-[#1e2528] border-b border-[#f0f0f0] dark:border-[#2e3538] px-4 h-[52px] flex items-center justify-between">
         <button
           onClick={() => router.back()}
           className="text-[13px] text-[#aaa]"
