@@ -979,12 +979,17 @@ export default function AIChatClient() {
         </div>
 
         {/* Input area */}
-        <div className="px-4 pt-2.5 border-t border-[#f0f0f0] dark:border-[#2a3044] flex-shrink-0">
+        <div className="px-4 pt-2.5 pb-1 border-t border-[#f0f0f0] dark:border-[#2a3044] flex-shrink-0">
           <div className="flex items-end gap-2 bg-[#f4f4f4] dark:bg-[#1e2528] rounded-[16px] px-3 py-2">
             <textarea
               ref={textareaRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
+              onFocus={() => {
+                setTimeout(() => {
+                  messagesEndRef.current?.scrollIntoView({ behavior: "instant", block: "nearest" });
+                }, 350);
+              }}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();

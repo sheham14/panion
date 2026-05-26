@@ -9,7 +9,7 @@ export default function MainLayout({
   return (
     <div className="relative min-h-screen bg-white dark:bg-[#0f1416] w-full max-w-md mx-auto pt-safe">
       <GuestBanner />
-      <main className="pb-[72px]">{children}</main>
+      <main className="pb-[calc(72px+env(safe-area-inset-bottom,0px))]">{children}</main>
       <BottomNav />
     </div>
   );

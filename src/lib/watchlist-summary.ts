@@ -14,7 +14,7 @@ const STORE_META: Record<
 export async function getWatchlistSummary(userId: string) {
   const [preferredStores, watchlist] = await Promise.all([
     prisma.userPreferredStore.findMany({
-      where: { userId },
+      where: { userId, store: { chain: { not: "costco" } } },
       include: { store: true },
     }),
     prisma.watchlist.findMany({
