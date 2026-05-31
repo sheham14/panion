@@ -25,7 +25,7 @@ if (!process.env.TEST_DATABASE_URL) {
 }
 
 console.log("→ Pushing schema to test database...");
-execSync("npx prisma db push --skip-generate", {
+execSync("npx prisma db push", {
   env: { ...process.env, DATABASE_URL: process.env.TEST_DATABASE_URL },
   stdio: "inherit",
 });
