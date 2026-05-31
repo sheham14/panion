@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getAuthenticatedUser } from "@/lib/auth-utils";
 
 export async function GET(request: NextRequest) {
+  const { user, error } = await getAuthenticatedUser();
+  if (error) return error;
+
   const { searchParams } = new URL(request.url);
   const q = searchParams.get("q");
   const maxTime = searchParams.get("maxTime");
@@ -9,17 +13,21 @@ export async function GET(request: NextRequest) {
   const recipes = await prisma.recipe.findMany({
     where: {
       isActive: true,
+      // Only the user's own recipes + system recipes (userId: null)
+      OR: [{ userId: user.id }, { userId: null }],
       ...(q && {
-        OR: [
-          { title: { contains: q, mode: "insensitive" as const } },
-          { description: { contains: q, mode: "insensitive" as const } },
+        AND: [
+          {
+            OR: [
+              { title: { contains: q, mode: "insensitive" as const } },
+              { description: { contains: q, mode: "insensitive" as const } },
+            ],
+          },
         ],
       }),
       ...(maxTime && {
-        AND: [
-          { prepTime: { lte: parseInt(maxTime) } },
-          { cookTime: { lte: parseInt(maxTime) } },
-        ],
+        prepTime: { lte: parseInt(maxTime) },
+        cookTime: { lte: parseInt(maxTime) },
       }),
     },
     include: {

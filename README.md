@@ -26,7 +26,9 @@ git clone https://github.com/sheham14/sentinel.git
 cd sentinel/project-sentinel
 
 cp .env.example .env.local
-# Fill in: AUTH_SECRET, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, DATABASE_URL, ANTHROPIC_API_KEY
+# Fill in: AUTH_SECRET, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, DATABASE_URL,
+#          ANTHROPIC_API_KEY, SENDGRID_API_KEY, EMAIL_FROM, ADMIN_EMAIL,
+#          NEXT_PUBLIC_VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY
 
 docker compose up -d        # starts PostgreSQL + Redis
 npx prisma migrate dev      # run migrations
@@ -34,8 +36,20 @@ npx prisma db seed          # seed stores, products, test users
 npm run dev                 # http://localhost:3000
 ```
 
+## Testing
+
+```bash
+npm run test:setup          # one-time: push schema to TEST_DATABASE_URL
+npm test                    # run all tests
+npm run test:watch          # watch mode
+npm run test:coverage       # with coverage report
+```
+
+See [`TESTING.md`](TESTING.md) for the test strategy, Neon branch setup, and what's covered.
+
 ## Key Docs
 
 - [`CODEBASE.md`](CODEBASE.md) — every file explained
 - [`SECURITY.md`](SECURITY.md) — auth design, audit log, pre-deploy checklist
+- [`TESTING.md`](TESTING.md) — test strategy, coverage, CI
 - [`DISCOVERY.md`](DISCOVERY.md) — product overview, competitive analysis, risks

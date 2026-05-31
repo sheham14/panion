@@ -6,8 +6,15 @@ import Anthropic from "@anthropic-ai/sdk";
 
 const DAILY_LIMIT = 10;
 const GUEST_LIMIT = 5;
+const GUEST_IP_DAILY_LIMIT = 15; // hard ceiling per IP, survives cookie clears
 const MAX_QUERY_LENGTH = 500;
 const MAX_BUDGET = 10000;
+
+function getClientIp(request: NextRequest): string {
+  const fwd = request.headers.get("x-forwarded-for");
+  if (fwd) return fwd.split(",")[0].trim();
+  return request.headers.get("x-real-ip") ?? "unknown";
+}
 
 function sanitizeInput(input: string): string {
   return input
@@ -22,6 +29,23 @@ export async function POST(request: NextRequest) {
   const isGuest = !!guestId;
 
   if (isGuest) {
+    // IP-level ceiling first — protects against cookie-clear bypass
+    const ip = getClientIp(request);
+    const ipKey = `guest:ai:ip:${ip}`;
+    const ipUsed = await redis.incr(ipKey);
+    if (ipUsed === 1) await redis.expire(ipKey, 60 * 60 * 24);
+
+    if (ipUsed > GUEST_IP_DAILY_LIMIT) {
+      return NextResponse.json(
+        {
+          error: "Guest limit reached",
+          message: "Guest AI quota exceeded for today. Sign in for unlimited access.",
+          isGuestLimit: true,
+        },
+        { status: 429 },
+      );
+    }
+
     const redisKey = `guest:ai:${guestId}`;
     const used = await redis.incr(redisKey);
     if (used === 1) await redis.expire(redisKey, 60 * 60 * 24); // 24h TTL on first use

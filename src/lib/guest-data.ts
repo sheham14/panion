@@ -1,7 +1,7 @@
 // Mock data served to guest users. All prices match the seed data price matrix.
-// Dates are relative to a fixed reference so the demo always looks current.
+// Dates are relative to "now" at module load so the demo always looks current.
 
-const TODAY = new Date("2026-05-25T12:00:00Z");
+const TODAY = new Date();
 const iso = (d: Date) => d.toISOString();
 const daysFromNow = (n: number) =>
   iso(new Date(TODAY.getTime() + n * 86400000));

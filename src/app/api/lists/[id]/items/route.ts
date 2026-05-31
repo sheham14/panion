@@ -41,7 +41,6 @@ export async function POST(
     return NextResponse.json({ error: "List not found" }, { status: 404 });
 
   const body = await request.json();
-  console.log("POST body:", body);
 
   const { productId, name, quantity, unit, notes } = body;
 

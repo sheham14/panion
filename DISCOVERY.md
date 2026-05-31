@@ -38,10 +38,20 @@ Panion's premise: **give shoppers one place to compare prices across all four st
 | Feature | Status |
 |---|---|
 | Flyer integration | API stub exists; scraper not built |
-| Push notifications | Preference UI is built; no service worker push yet |
 | Barcode scanning | API stub exists; no barcode database connected |
 | Inngest background jobs | Framework integrated; price alert triggering and digest emails not wired |
 | Admin panel | `UserRole` enum exists in schema; no admin UI built |
+| Stripe paywall | SDK + `stripeCustomerId` field installed; no paywall built |
+| Sentry error tracking | SDK installed; not yet configured |
+
+### Recently shipped
+
+| Feature | What it does |
+|---|---|
+| Web Push notifications | VAPID-signed push delivered via the Service Worker. Used for cooking timers that fire even when the app is backgrounded. Also wired for future price-drop alerts. |
+| Magic-link sign-in | Email-based passwordless auth via SendGrid, alongside Google OAuth. |
+| Guest mode | Visitors can try the app with mock data behind the `panion-guest` cookie. AI is rate-limited per cookie + per IP. |
+| Integration test suite | Vitest + Neon-branch test DB; covers the security boundary. Runs in CI on every push. |
 
 ---
 
@@ -62,10 +72,12 @@ Panion's premise: **give shoppers one place to compare prices across all four st
 - **Next.js App Router** with server components for data fetching, client components only where interaction is needed
 - **Auth split:** Edge-safe config (middleware) vs full Node config (API routes, Prisma) — important for next-auth v5
 - **All auth is JWT-based** — middleware reads `onboardingCompleted` from the token without hitting the DB on every request
-- **All API routes enforce `userId` scoping** — user data is never accessible by another user
-- **PostgreSQL + Prisma** for relational data (products, prices, recipes, lists, pantry)
-- **Redis** for caching (product search, price lookups)
-- **Anthropic Claude** for Clove with a 10 queries/day free tier limit
+- **All API routes enforce `userId` scoping** — user data is never accessible by another user (verified by integration tests, see [`TESTING.md`](TESTING.md))
+- **PostgreSQL + Prisma** for relational data (products, prices, recipes, lists, pantry); Neon in production
+- **Redis (Upstash)** for caching and AI rate limiting (cookie- and IP-keyed)
+- **Anthropic Claude** for Clove — 10 queries/day for authenticated users, 5 per guest cookie + 15 per guest IP/day ceiling
+- **SendGrid** for transactional email (magic link sign-in, admin signup notifications)
+- **web-push + Service Worker** for installable PWA notifications (cooking timers, future price alerts)
 
 For full file-by-file detail: see [`CODEBASE.md`](CODEBASE.md).
 

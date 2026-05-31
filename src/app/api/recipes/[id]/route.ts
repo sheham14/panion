@@ -6,6 +6,9 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const { user, error } = await getAuthenticatedUser();
+  if (error) return error;
+
   const { id } = await params;
 
   const recipe = await prisma.recipe.findUnique({
@@ -30,7 +33,12 @@ export async function GET(
     },
   });
 
-  if (!recipe) {
+  if (!recipe || !recipe.isActive) {
+    return NextResponse.json({ error: "Recipe not found" }, { status: 404 });
+  }
+
+  // Only owner or system recipes are accessible
+  if (recipe.userId !== null && recipe.userId !== user.id) {
     return NextResponse.json({ error: "Recipe not found" }, { status: 404 });
   }
 

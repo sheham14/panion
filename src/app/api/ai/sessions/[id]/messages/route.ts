@@ -6,6 +6,13 @@ import { redis } from "@/lib/redis";
 import Anthropic from "@anthropic-ai/sdk";
 
 const GUEST_LIMIT = 5;
+const GUEST_IP_DAILY_LIMIT = 15; // hard ceiling per IP, survives cookie clears
+
+function getClientIp(request: NextRequest): string {
+  const fwd = request.headers.get("x-forwarded-for");
+  if (fwd) return fwd.split(",")[0].trim();
+  return request.headers.get("x-real-ip") ?? "unknown";
+}
 
 const GUEST_PANTRY = [
   { name: "Central Dairies 2% Milk", quantity: 1, unit: "L" },
@@ -185,6 +192,23 @@ export async function POST(
     const guestId = cookieStore.get("panion-guest-id")?.value;
     if (!guestId) {
       return NextResponse.json({ error: "Invalid guest session" }, { status: 400 });
+    }
+
+    // IP-level ceiling first — protects against cookie-clear bypass
+    const ip = getClientIp(request);
+    const ipKey = `guest:ai:ip:${ip}`;
+    const ipUsed = await redis.incr(ipKey);
+    if (ipUsed === 1) await redis.expire(ipKey, 60 * 60 * 24);
+
+    if (ipUsed > GUEST_IP_DAILY_LIMIT) {
+      const enc = new TextEncoder();
+      const stream = new ReadableStream({
+        start(controller) {
+          controller.enqueue(enc.encode(`data: ${JSON.stringify({ type: "error", message: "Guest AI quota exceeded for today. Sign in for unlimited access.", isGuestLimit: true })}\n\n`));
+          controller.close();
+        },
+      });
+      return new Response(stream, { headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" } });
     }
 
     const redisKey = `guest:ai:${guestId}`;

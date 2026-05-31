@@ -13,7 +13,9 @@ A file-by-file reference for the Sentinel / Panion grocery price comparison app.
 5. [API Routes — `src/app/api/`](#api-routes--srcappapi)
 6. [Components — `src/components/`](#components--srccomponents)
 7. [Utilities — `src/lib/`](#utilities--srclib)
-8. [Types — `src/types/`](#types--srctypes)
+8. [Hooks — `src/hooks/`](#hooks--srchooks)
+9. [Types — `src/types/`](#types--srctypes)
+10. [Tests — `tests/`](#tests--tests)
 
 ---
 
@@ -22,14 +24,17 @@ A file-by-file reference for the Sentinel / Panion grocery price comparison app.
 | Layer | Technology |
 |---|---|
 | Framework | Next.js 16, React 18, TypeScript |
-| Styling | Tailwind CSS, dark mode, mobile-first (max-width 384px) |
-| Auth | next-auth v5 (Google OAuth, JWT sessions) |
-| Database | PostgreSQL via Prisma 7 ORM |
-| Caching | Redis (Upstash) |
+| Styling | Tailwind CSS, DM Sans (Google Fonts), dark mode, mobile-first (max-width 384px) |
+| Auth | next-auth v5 (Google OAuth + magic link via SendGrid, JWT sessions) |
+| Database | PostgreSQL via Prisma 7 ORM (Neon in prod) |
+| Caching / rate limits | Redis (Upstash) |
 | AI | Anthropic Claude SDK |
-| Background jobs | Inngest |
-| Error tracking | Sentry |
+| Email | SendGrid (magic link + admin notifications) |
+| Push notifications | web-push + VAPID + Service Worker |
+| Background jobs | Inngest (installed; not wired) |
+| Error tracking | Sentry (installed; not wired) |
 | Analytics | Vercel Analytics |
+| Testing | Vitest, React Testing Library, jsdom |
 
 **Route groups:**
 - `(auth)` — unauthenticated pages (`/signin`, `/welcome`)
@@ -51,10 +56,14 @@ A file-by-file reference for the Sentinel / Panion grocery price comparison app.
 | `tsconfig.json` | TypeScript config with strict mode and `@/*` path alias for `src/`. |
 | `postcss.config.mjs` | PostCSS config enabling Tailwind. |
 | `docker-compose.yml` | Local dev services — PostgreSQL and Redis containers. |
-| `package.json` | Dependencies and scripts (`dev`, `build`, `seed`, `smoke`). |
+| `package.json` | Dependencies and scripts (`dev`, `build`, `lint`, `test`, `test:watch`, `test:coverage`, `test:setup`). |
+| `vitest.config.ts` | Vitest config — jsdom env, path aliases, single-fork pool for shared test DB. |
+| `.github/workflows/ci.yml` | GitHub Actions — typecheck + Postgres service container + `npm test` on push and PR. |
 | `SECURITY.md` | Security audit log, auth/authorization design, pre-deploy checklist. |
+| `TESTING.md` | Test strategy, what's covered, local Neon branch setup. |
 | `CODEBASE.md` | This file. |
 | `README.md` | Project overview. |
+| `DISCOVERY.md` | Product overview, competitive analysis, weaknesses, risks. |
 
 ---
 
@@ -105,7 +114,7 @@ Auto-generated migration history. Don't edit manually — run `npx prisma migrat
 
 | File | What it does |
 |---|---|
-| `layout.tsx` | Root layout — wraps everything in `SessionProvider`, loads Geist fonts, adds Vercel Analytics, sets Open Graph metadata. |
+| `layout.tsx` | Root layout — wraps everything in `SessionProvider`, loads DM Sans (Google Fonts), registers the Service Worker, adds Vercel Analytics, sets Open Graph metadata. |
 | `globals.css` | Global Tailwind styles and CSS variables. |
 | `icon.tsx` | Favicon component. |
 | `opengraph-image.tsx` | Auto-generated OG preview image. |
@@ -204,8 +213,8 @@ All routes return JSON. All protected routes call `getAuthenticatedUser()` first
 
 | Route | Methods | What it does |
 |---|---|---|
-| `/api/recipes` | GET, POST | GET: search recipes by name, max cook time. POST: create recipe with ingredients. |
-| `/api/recipes/[id]` | GET, PATCH, DELETE | Fetch, update, or delete a recipe. Users can only modify their own; system recipes (userId: null) are read-only. |
+| `/api/recipes` | GET, POST | GET (auth-only): list the caller's own recipes + system recipes (userId: null). Supports search by name and max cook time. POST: create a recipe with ingredients. |
+| `/api/recipes/[id]` | GET, PATCH, DELETE | GET (auth-only): fetch a recipe — returns 404 unless the caller owns it or it's a system recipe. PATCH/DELETE: only the creator can mutate. |
 
 ### Alerts
 
@@ -220,8 +229,8 @@ All routes return JSON. All protected routes call `getAuthenticatedUser()` first
 
 | Route | Methods | What it does |
 |---|---|---|
-| `/api/ai/ask` | POST | One-shot AI query (recipe suggestions, grocery advice). Enforces a daily limit of 10 free queries. Uses Anthropic SDK. |
-| `/api/ai/extract-recipe` | POST | Extract a recipe from uploaded image or text using Claude vision. |
+| `/api/ai/ask` | POST | One-shot AI query (recipe suggestions, grocery advice). Authenticated users: 10/day. Guests: 5/cookie + a hard 15/day per IP ceiling that survives cookie clears. Uses Anthropic SDK. |
+| `/api/ai/extract-recipe` | POST | Extract a recipe from text using Claude. Daily limit: 20/user. |
 | `/api/ai/sessions` | GET, POST | GET: user's chat sessions. POST: create a new session. |
 | `/api/ai/sessions/[id]` | GET, PATCH, DELETE | Get, rename, or delete a session. |
 | `/api/ai/sessions/[id]/messages` | GET, POST | Get message history or post a new message in a session. |
@@ -234,6 +243,19 @@ All routes return JSON. All protected routes call `getAuthenticatedUser()` first
 | `/api/user/delete` | POST | Delete the user's account and all associated data (PIPEDA compliance). |
 | `/api/user/export` | GET | Export all of the user's personal data as JSON (PIPEDA compliance). |
 
+### Push Notifications
+
+| Route | Methods | What it does |
+|---|---|---|
+| `/api/push/subscribe` | POST, DELETE | POST: register a Web Push subscription against the authenticated user. DELETE: remove a subscription by endpoint. Used by `usePushNotifications` hook. |
+
+### Guest Mode
+
+| Route | Methods | What it does |
+|---|---|---|
+| `/api/guest/enter` | POST | Issue `panion-guest` and `panion-guest-id` cookies for 24h. Lets visitors try the app without signing up. |
+| `/api/guest/exit` | POST | Clear guest cookies and redirect to `/signin`. |
+
 ### Other
 
 | Route | Methods | What it does |
@@ -241,8 +263,9 @@ All routes return JSON. All protected routes call `getAuthenticatedUser()` first
 | `/api/notifications/preferences` | GET, PATCH | Get or update notification preferences (email, push, digest frequency). |
 | `/api/onboarding/complete` | POST | Save onboarding choices — preferred stores, initial watchlist, marks `onboardingCompleted: true` in DB. |
 | `/api/price-reports` | POST | Submit a crowdsourced price report for a product at a store. |
-| `/api/scan` | POST | Barcode lookup — integration point for external barcode database. |
+| `/api/scan` | GET | Barcode lookup — returns product + per-store current prices. |
 | `/api/flyers` | GET | Fetch store flyers — integration point for future scraper. |
+| `/api/icons/[size]` | GET | Generate PWA icon at 192px or 512px via Edge runtime. |
 | `/api/health` | GET | Health check endpoint. Returns 200 OK. |
 
 ---
@@ -331,6 +354,17 @@ All routes return JSON. All protected routes call `getAuthenticatedUser()` first
 | `unit-convert.ts` | Unit conversion for list cost estimation. `TO_BASE` maps units to grams/ml. `calculateEffectivePrice()` normalizes prices to the same unit so you can compare "per 100g" across products. `getAllowedUnits()` returns compatible units based on product type (packaged vs bulk). |
 | `watchlist-summary.ts` | `getWatchlistSummary(userId)` — aggregates the user's watchlist across their preferred stores. Returns best price per item, total per store, and overall cheapest-store breakdown. Used by the home dashboard and the watchlist summary API. |
 | `redis/index.ts` | Redis client setup (Upstash). Used for caching and rate limiting. |
+| `push.ts` | `sendPush(subscription, payload)` — server-side helper that signs and delivers a Web Push notification using `web-push` and VAPID keys. |
+| `guest-data.ts` | Mock data served to guest-mode users (watchlist, lists, pantry, recipes). Dates rebase on module load so the demo always looks current. |
+
+---
+
+## Hooks — `src/hooks/`
+
+| File | What it does |
+|---|---|
+| `useGuest.ts` | Reads NextAuth session status; returns `{ isGuest, isLoading, session }`. Used by client components that branch on guest vs authenticated state. |
+| `usePushNotifications.ts` | Requests browser notification permission, subscribes the user to Web Push via the Service Worker, posts the subscription to `/api/push/subscribe`. Also exposes `scheduleTimerNotification` / `cancelTimerNotification` for the recipe cooking timer. |
 
 ---
 
@@ -339,3 +373,22 @@ All routes return JSON. All protected routes call `getAuthenticatedUser()` first
 | File | What it does |
 |---|---|
 | `next-auth.d.ts` | Extends next-auth's built-in types so TypeScript knows about `session.user.id`, `session.user.onboardingCompleted`, and `token.onboardingCompleted`. Without this, those fields would be type errors. |
+
+---
+
+## Tests — `tests/`
+
+Vitest + RTL + a dedicated Neon test branch. Real Prisma queries; Anthropic/SendGrid/Redis are mocked. See [`TESTING.md`](TESTING.md) for setup and philosophy.
+
+| File | What it covers |
+|---|---|
+| `setup.ts` | Global test setup — loads env, mocks Anthropic/SendGrid/Redis (in-memory), provides `setMockSession()` helper for injecting authenticated users. |
+| `helpers/db.ts` | `resetDb()` (truncate user-owned tables between tests), `createTestUser()`, `ensureTestProduct()`. |
+| `helpers/setup-test-db.ts` | One-shot script (`npm run test:setup`) — pushes the Prisma schema to `TEST_DATABASE_URL`. |
+| `api/recipes.test.ts` | Recipe authorization — user A can't read user B's recipes via `GET /api/recipes` or `/api/recipes/[id]`. |
+| `api/ai-rate-limit.test.ts` | IP-keyed Clove ceiling survives cookie clears; `/api/ai/extract-recipe` enforces its daily limit. |
+| `api/lists.test.ts` | List + list-item operations are scoped to the owner. |
+| `api/watchlist.test.ts` | Upsert dedup; DELETE only removes the caller's row. |
+| `api/pantry.test.ts` | Pantry mutations are scoped to the owner. |
+| `unit/unit-convert.test.ts` | Pure unit-conversion logic (no DB). |
+| `components/GuestBanner.test.tsx` | Conditional render based on session state (RTL example). |

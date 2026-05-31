@@ -26,8 +26,6 @@ export async function POST(req: Request) {
   const { storeIds, watchlistProductIds } = parsed.data;
   const userId = session.user.id;
 
-  console.log("storeIds received:", storeIds);
-
   try {
     await prisma.$transaction(async (tx) => {
       // 1. Delete existing preferred stores

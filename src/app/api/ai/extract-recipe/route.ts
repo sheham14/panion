@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
 import Anthropic from "@anthropic-ai/sdk";
 
+const DAILY_LIMIT = 20;
+
 type ExtractedIngredient = {
   name: string;
   quantity: number | null;
@@ -29,6 +31,28 @@ export async function POST(request: NextRequest) {
   const { user, error } = await getAuthenticatedUser();
   if (error) return error;
 
+  // Daily rate limit
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
+  const usageCount = await prisma.featureUsage.count({
+    where: {
+      userId: user.id,
+      feature: "extract_recipe",
+      usedAt: { gte: startOfDay },
+    },
+  });
+
+  if (usageCount >= DAILY_LIMIT) {
+    return NextResponse.json(
+      {
+        error: "Daily limit reached",
+        message: `You've used your ${DAILY_LIMIT} recipe extractions for today.`,
+        resetsAt: new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000),
+      },
+      { status: 429 },
+    );
+  }
+
   let body: { messageContent?: unknown };
   try {
     body = await request.json();
@@ -43,6 +67,15 @@ export async function POST(request: NextRequest) {
       { status: 400 },
     );
   }
+
+  // Log usage before the call (count attempts, not just success)
+  await prisma.featureUsage.create({
+    data: {
+      userId: user.id,
+      feature: "extract_recipe",
+      metadata: { contentLength: messageContent.length },
+    },
+  });
 
   const client = new Anthropic();
 

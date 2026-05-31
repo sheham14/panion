@@ -40,3 +40,9 @@ docker-compose.yml
 next-env.d.ts
 
 /app/generated/prisma
+
+# audit notes (private)
+OPUS_AUDIT.md
+
+# marketing/portfolio artifacts (handed off, not part of the app)
+panion-landing.tsx
