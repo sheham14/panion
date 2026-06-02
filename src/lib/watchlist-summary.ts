@@ -4,11 +4,10 @@ const STORE_META: Record<
   string,
   { color: string; bg: string; letter: string }
 > = {
-  walmart: { color: "#0071ce", bg: "#0071ce18", letter: "W" },
-  loblaws: { color: "#c8102e", bg: "#c8102e18", letter: "L" },
-  metro: { color: "#e30000", bg: "#e3000018", letter: "M" },
-  sobeys: { color: "#d62b2b", bg: "#d62b2b18", letter: "S" },
-  dollarama: { color: "#00853e", bg: "#00853e18", letter: "D" },
+  walmart:  { color: "#0071ce", bg: "#0071ce18", letter: "W" },
+  dominion: { color: "#c8102e", bg: "#c8102e18", letter: "D" },
+  sobeys:   { color: "#d62b2b", bg: "#d62b2b18", letter: "S" },
+  costco:   { color: "#005dab", bg: "#005dab18", letter: "C" },
 };
 
 export async function getWatchlistSummary(userId: string) {
