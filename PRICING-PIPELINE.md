@@ -124,7 +124,7 @@ The schema was designed for this. Existing fields, no migration needed:
 
 **Schema changes needed (small):**
 
-1. `PriceHistory.source`: add `"flyer"` as an allowed value (it's a `String`, so this is convention + validation, not a migration).
+1. `PriceHistory.source`: add `"flyer"` and `"partner"` as allowed values (it's a `String`, so this is convention + validation, not a migration).
 2. Optional, later: `PriceHistory.confidence` if crowdsourced data grows enough to need weighting. Skip for now.
 3. `Flyer` stores flyer-level metadata; *item-level* flyer prices go into `PriceHistory` as `source: "flyer"` with `isSale: true` and `saleEndDate` = flyer `validUntil`. No new table.
 
@@ -176,10 +176,20 @@ The unglamorous piece that makes everything resilient. A single admin page (gate
 - Target: updating 100 products should take ~15 minutes with a flyer or store website open in another tab.
 - Also serves as the review queue for `extractionFailed` items.
 
-### 6.7 Parked (deliberately)
+### 6.7 Partner stores (direct price feeds)
+
+Independent local stores can contribute their prices directly — the cleanest data lane there is: accurate, consented, no scraping involved. It also gives smaller stores visibility they can't build themselves, next to the big chains. Listing in Panion is free for partner stores.
+
+- **Schema is already prepared:** `Store.portalEnabled` / `portalEnabledAt` and the `StoreAdmin` relation on `User` exist, unused, for exactly this.
+- **Source value:** partner-supplied observations use `PriceHistory.source: "partner"`.
+- **Keep the ask tiny:** a curated set of 30–60 staples updated weekly (~15 min), or a CSV export from the store's POS — never a full catalog.
+- **MVP needs no new code:** until a portal exists, a partner store sends a weekly price list and it's entered through the admin bulk-entry tool (§6.6, `source: "partner"`). A self-serve portal (store admin logs in, bulk-edits their prices) is a fast-follow once a pilot store is active.
+- **Catalog note:** independents carry local brands the big chains don't; each partner adds some product-mapping work (§8). Start with one pilot store.
+
+### 6.8 Parked (deliberately)
 
 - **Receipt scanning** — solvable (Claude handles cryptic receipt abbreviations well) but needs a user base to matter. Revisit at meaningful WAU.
-- **Store partnerships** — revisit with usage numbers as leverage. A single store's price feed would be a moat ([`DISCOVERY.md`](DISCOVERY.md) §Defensible).
+- **Big-chain partnerships** — the four major chains benefit from price opacity; revisit with usage numbers as leverage. (Independent stores are the opposite case — see §6.7.) A single store's price feed would be a moat ([`DISCOVERY.md`](DISCOVERY.md) §Defensible).
 
 ---
 
