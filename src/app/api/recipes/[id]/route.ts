@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
+import { validateBody } from "@/lib/validate";
+import { notFound, forbidden } from "@/lib/api-error";
+import { recipeFields, toIngredientCreate } from "../route";
+
+const UpdateRecipeSchema = z.object(recipeFields);
 
 export async function GET(
   request: NextRequest,
@@ -67,64 +73,36 @@ export async function PATCH(
 
   const recipe = await prisma.recipe.findUnique({ where: { id } });
   if (!recipe || !recipe.isActive) {
-    return NextResponse.json({ error: "Recipe not found" }, { status: 404 });
+    return notFound("Recipe not found");
   }
 
   // Only the creator can edit
-  if (recipe.userId !== user!.id) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (recipe.userId !== user.id) {
+    return forbidden();
   }
 
-  const body = await request.json();
-  const {
-    title,
-    description,
-    imageUrl,
-    prepTime,
-    cookTime,
-    servings,
-    instructions,
-    ingredients,
-  } = body;
+  const { data, error: invalid } = await validateBody(request, UpdateRecipeSchema);
+  if (invalid) return invalid;
 
-  if (!title?.trim()) {
-    return NextResponse.json({ error: "title is required" }, { status: 400 });
-  }
-
-  // Update recipe fields + replace all ingredients
+  // Update recipe fields + replace all ingredients.
+  //
+  // The ingredient map previously omitted `productId`, so every edit silently
+  // severed the link to the canonical Product — which is what powers cost
+  // estimation. Cost-per-serving quietly broke after the first edit (audit M4).
+  // `toIngredientCreate` is shared with POST so the two can't diverge again.
   const updated = await prisma.recipe.update({
     where: { id },
     data: {
-      title: title.trim(),
-      description: description ?? null,
-      imageUrl: imageUrl ?? null,
-      prepTime: prepTime ?? null,
-      cookTime: cookTime ?? null,
-      servings: servings ?? null,
-      instructions: instructions ?? null,
-      // Replace all ingredients
+      title: data.title,
+      description: data.description ?? null,
+      imageUrl: data.imageUrl ?? null,
+      prepTime: data.prepTime ?? null,
+      cookTime: data.cookTime ?? null,
+      servings: data.servings ?? null,
+      instructions: (data.instructions ?? null) as never,
       ingredients: {
         deleteMany: {},
-        create: (ingredients ?? []).map(
-          (
-            ing: {
-              name: string;
-              quantity?: number | null;
-              unit?: string | null;
-              notes?: string | null;
-              isOptional?: boolean;
-              sortOrder?: number;
-            },
-            index: number,
-          ) => ({
-            name: ing.name,
-            quantity: ing.quantity ?? null,
-            unit: ing.unit ?? null,
-            notes: ing.notes ?? null,
-            isOptional: ing.isOptional ?? false,
-            sortOrder: ing.sortOrder ?? index,
-          }),
-        ),
+        create: (data.ingredients ?? []).map(toIngredientCreate),
       },
     },
     include: { ingredients: { orderBy: { sortOrder: "asc" } } },

@@ -76,7 +76,7 @@ async function main() {
   console.log(`✅ ${stores.length} stores created`);
 
   // ─── USERS ────────────────────────────────────────────────
-  const adminUser = await prisma.user.upsert({
+  await prisma.user.upsert({
     where: { email: "admin@sentinel.ca" },
     update: {},
     create: {

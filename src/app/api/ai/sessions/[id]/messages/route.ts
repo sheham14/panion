@@ -3,10 +3,16 @@ import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
 import { redis } from "@/lib/redis";
+import { badRequest, notFound } from "@/lib/api-error";
 import Anthropic from "@anthropic-ai/sdk";
 
 const GUEST_LIMIT = 5;
 const GUEST_IP_DAILY_LIMIT = 15; // hard ceiling per IP, survives cookie clears
+
+// The guest rate limit is counted in *requests*, but Anthropic bills *tokens*.
+// Without these caps a guest could send 15 requests each carrying a megabyte of
+// client-supplied history and run up an unbounded bill (audit C1).
+const GUEST_MAX_HISTORY_MESSAGES = 10;
 
 function getClientIp(request: NextRequest): string {
   const fwd = request.headers.get("x-forwarded-for");
@@ -191,7 +197,7 @@ export async function POST(
   if (isGuest) {
     const guestId = cookieStore.get("panion-guest-id")?.value;
     if (!guestId) {
-      return NextResponse.json({ error: "Invalid guest session" }, { status: 400 });
+      return badRequest("Invalid guest session");
     }
 
     // IP-level ceiling first — protects against cookie-clear bypass
@@ -230,12 +236,26 @@ export async function POST(
     try { guestBody = await request.json(); } catch { /* empty body ok */ }
 
     const guestContent = typeof guestBody.content === "string" ? sanitizeInput(guestBody.content) : "";
-    if (!guestContent) return NextResponse.json({ error: "content is required" }, { status: 400 });
+    if (!guestContent) return badRequest("content is required");
+    if (guestContent.length > MAX_QUERY_LENGTH) {
+      return badRequest(`Query must be ${MAX_QUERY_LENGTH} characters or less`);
+    }
 
+    // Client-supplied history is untrusted: bound the turn count *and* the size
+    // of each turn before any of it reaches the model.
     const clientHistory = Array.isArray(guestBody.history)
-      ? (guestBody.history as { role: string; content: string }[])
-          .filter((m) => m.role === "user" || m.role === "assistant")
-          .map((m) => ({ role: m.role as "user" | "assistant", content: String(m.content) }))
+      ? (guestBody.history as { role?: unknown; content?: unknown }[])
+          .filter(
+            (m) =>
+              (m?.role === "user" || m?.role === "assistant") &&
+              typeof m?.content === "string" &&
+              m.content.trim().length > 0,
+          )
+          .slice(-GUEST_MAX_HISTORY_MESSAGES)
+          .map((m) => ({
+            role: m.role as "user" | "assistant",
+            content: sanitizeInput(m.content as string).slice(0, MAX_QUERY_LENGTH),
+          }))
       : [];
 
     const storeIdArray = Array.isArray(guestBody.storeIds) ? (guestBody.storeIds as string[]) : [];
@@ -301,7 +321,7 @@ export async function POST(
     where: { id: sessionId, userId: user.id },
   });
   if (!session) {
-    return NextResponse.json({ error: "Session not found" }, { status: 404 });
+    return notFound("Session not found");
   }
 
   // Parse body
@@ -315,7 +335,7 @@ export async function POST(
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return badRequest("Invalid JSON body");
   }
 
   const {
@@ -327,15 +347,12 @@ export async function POST(
   } = body;
 
   if (!content || typeof content !== "string" || content.trim().length === 0) {
-    return NextResponse.json({ error: "content is required" }, { status: 400 });
+    return badRequest("content is required");
   }
 
   const sanitized = sanitizeInput(content);
   if (sanitized.length > MAX_QUERY_LENGTH) {
-    return NextResponse.json(
-      { error: `Query must be ${MAX_QUERY_LENGTH} characters or less` },
-      { status: 400 },
-    );
+    return badRequest(`Query must be ${MAX_QUERY_LENGTH} characters or less`);
   }
 
   // Rate limit check
@@ -384,7 +401,7 @@ export async function POST(
   // Fetch context in parallel
   const storeIdArray = Array.isArray(storeIds) ? (storeIds as string[]) : [];
 
-  const [pantryItems, storeProducts, userProfile, history] = await Promise.all([
+  const [pantryItems, storeProducts, userProfile, recentMessages] = await Promise.all([
     usePantry
       ? prisma.pantryItem.findMany({
           where: { userId: user.id },
@@ -409,14 +426,19 @@ export async function POST(
       where: { id: user.id },
       select: { dietaryRestrictions: true, allergies: true },
     }),
-    // Last 20 messages (10 turns) as conversation history
+    // Last 20 messages (10 turns) as conversation history.
+    // Must be fetched newest-first then reversed: `asc` + `take` returns the 20
+    // *oldest* messages, so past 20 messages Clove never saw the user's latest
+    // question and appeared to stop listening (audit H2).
     prisma.aiChatMessage.findMany({
       where: { sessionId },
-      orderBy: { createdAt: "asc" },
+      orderBy: { createdAt: "desc" },
       take: 20,
       select: { role: true, content: true },
     }),
   ]);
+
+  const history = recentMessages.slice().reverse();
 
   const systemPrompt = buildSystemPrompt({
     pantryItems: pantryItems.map((p) => ({

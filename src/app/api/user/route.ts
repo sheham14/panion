@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
+import {
+  validateBody,
+  boundedString,
+  tagArray,
+  idSchema,
+  MAX_NAME_LENGTH,
+} from "@/lib/validate";
+import { notFound } from "@/lib/api-error";
 
 export async function GET() {
   const { user, error } = await getAuthenticatedUser();
@@ -30,95 +39,44 @@ export async function GET() {
     },
   });
 
-  if (!userData)
-    return NextResponse.json({ error: "User not found" }, { status: 404 });
+  if (!userData) return notFound("User not found");
 
   return NextResponse.json(userData);
 }
+
+/**
+ * `allergies` and `dietaryRestrictions` are interpolated directly into Clove's
+ * system prompt, so an uncapped array here is both a token-cost vector and the
+ * widest prompt-injection surface in the app — a user could set an "allergy" to
+ * a paragraph of instructions. `tagArray` bounds count and per-item length
+ * (audit H4 + H6).
+ */
+const UpdateUserSchema = z
+  .object({
+    name: boundedString(MAX_NAME_LENGTH),
+    dietaryRestrictions: tagArray,
+    allergies: tagArray,
+    preferredStores: z.array(idSchema).max(20),
+    emailNotifications: z.boolean(),
+    pushNotifications: z.boolean(),
+    marketingOptIn: z.boolean(),
+    digestFrequency: z.enum(["immediate", "daily", "weekly", "none"]),
+  })
+  .partial();
 
 export async function PATCH(request: NextRequest) {
   const { user, error } = await getAuthenticatedUser();
   if (error) return error;
 
-  let body: {
-    name?: unknown;
-    dietaryRestrictions?: unknown;
-    allergies?: unknown;
-    preferredStores?: unknown;
-    emailNotifications?: unknown;
-    pushNotifications?: unknown;
-    marketingOptIn?: unknown;
-    digestFrequency?: unknown;
-  };
+  const { data, error: invalid } = await validateBody(request, UpdateUserSchema);
+  if (invalid) return invalid;
 
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-  }
-
-  const {
-    name,
-    dietaryRestrictions,
-    allergies,
-    preferredStores,
-    emailNotifications,
-    pushNotifications,
-    marketingOptIn,
-    digestFrequency,
-  } = body;
-
-  // Validate arrays
-  if (
-    dietaryRestrictions !== undefined &&
-    !Array.isArray(dietaryRestrictions)
-  ) {
-    return NextResponse.json(
-      { error: "dietaryRestrictions must be an array" },
-      { status: 400 },
-    );
-  }
-  if (allergies !== undefined && !Array.isArray(allergies)) {
-    return NextResponse.json(
-      { error: "allergies must be an array" },
-      { status: 400 },
-    );
-  }
-  if (preferredStores !== undefined && !Array.isArray(preferredStores)) {
-    return NextResponse.json(
-      { error: "preferredStores must be an array" },
-      { status: 400 },
-    );
-  }
+  const { preferredStores, ...userFields } = data;
 
   // Update user fields
   const updated = await prisma.user.update({
     where: { id: user.id },
-    data: {
-      ...(name !== undefined && { name: String(name) }),
-      ...(dietaryRestrictions !== undefined && {
-        dietaryRestrictions: (dietaryRestrictions as string[]).filter(Boolean),
-      }),
-      ...(allergies !== undefined && {
-        allergies: (allergies as string[]).filter(Boolean),
-      }),
-      ...(emailNotifications !== undefined && {
-        emailNotifications: Boolean(emailNotifications),
-      }),
-      ...(pushNotifications !== undefined && {
-        pushNotifications: Boolean(pushNotifications),
-      }),
-      ...(marketingOptIn !== undefined && {
-        marketingOptIn: Boolean(marketingOptIn),
-      }),
-      ...(digestFrequency !== undefined && {
-        digestFrequency: digestFrequency as
-          | "immediate"
-          | "daily"
-          | "weekly"
-          | "none",
-      }),
-    },
+    data: userFields,
     select: {
       id: true,
       email: true,
@@ -132,16 +90,21 @@ export async function PATCH(request: NextRequest) {
     },
   });
 
-  // Handle preferred stores separately — delete + insert in transaction
+  // Handle preferred stores separately — replace the set in one transaction.
+  // Uses createMany rather than N individual creates, matching the onboarding
+  // route (audit M6).
   if (preferredStores !== undefined) {
-    const storeIds = preferredStores as string[];
+    const storeIds = Array.from(new Set(preferredStores));
     await prisma.$transaction([
       prisma.userPreferredStore.deleteMany({ where: { userId: user.id } }),
-      ...storeIds.map((storeId) =>
-        prisma.userPreferredStore.create({
-          data: { userId: user.id, storeId },
-        }),
-      ),
+      ...(storeIds.length
+        ? [
+            prisma.userPreferredStore.createMany({
+              data: storeIds.map((storeId) => ({ userId: user.id, storeId })),
+              skipDuplicates: true,
+            }),
+          ]
+        : []),
     ]);
   }
 

@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
+import {
+  apiError,
+  badRequest,
+  serverError,
+  tooManyRequests,
+} from "@/lib/api-error";
 import Anthropic from "@anthropic-ai/sdk";
 
 const DAILY_LIMIT = 20;
@@ -43,13 +49,9 @@ export async function POST(request: NextRequest) {
   });
 
   if (usageCount >= DAILY_LIMIT) {
-    return NextResponse.json(
-      {
-        error: "Daily limit reached",
-        message: `You've used your ${DAILY_LIMIT} recipe extractions for today.`,
-        resetsAt: new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000),
-      },
-      { status: 429 },
+    return tooManyRequests(
+      `Daily limit reached. You've used your ${DAILY_LIMIT} recipe extractions for today.`,
+      { code: "daily_limit" },
     );
   }
 
@@ -57,15 +59,12 @@ export async function POST(request: NextRequest) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return badRequest("Invalid JSON body");
   }
 
   const { messageContent } = body;
   if (!messageContent || typeof messageContent !== "string") {
-    return NextResponse.json(
-      { error: "messageContent is required" },
-      { status: 400 },
-    );
+    return badRequest("messageContent is required");
   }
 
   // Log usage before the call (count attempts, not just success)
@@ -100,10 +99,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (err) {
     console.error("[extract-recipe] Anthropic error:", err);
-    return NextResponse.json(
-      { error: "Failed to extract recipe" },
-      { status: 502 },
-    );
+    return apiError("Failed to extract recipe", 502, { code: "upstream_error" });
   }
 
   const raw =
@@ -114,10 +110,7 @@ export async function POST(request: NextRequest) {
     const cleaned = raw.replace(/```json|```/g, "").trim();
     recipeData = JSON.parse(cleaned);
   } catch {
-    return NextResponse.json(
-      { error: "Failed to parse extracted recipe" },
-      { status: 500 },
-    );
+    return serverError("Failed to parse extracted recipe");
   }
 
   const recipe = await prisma.recipe.create({

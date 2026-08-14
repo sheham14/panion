@@ -1,14 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "../../../../auth";
+import { parsePagination } from "@/lib/query-params";
+import { ProductCategory } from "../../../../prisma/generated/enums";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const q = searchParams.get("q") ?? "";
-  const category = searchParams.get("category");
-  const page = parseInt(searchParams.get("page") ?? "1");
-  const limit = parseInt(searchParams.get("limit") ?? "20");
-  const skip = (page - 1) * limit;
+  const rawCategory = searchParams.get("category");
+  const { limit, skip } = parsePagination(searchParams);
+
+  // Only accept a real enum member — an arbitrary `?category=` string used to
+  // reach Prisma as `as any` and surface as a 500 (audit L8).
+  const category =
+    rawCategory && rawCategory in ProductCategory
+      ? (rawCategory as ProductCategory)
+      : null;
 
   // Get session — optional, guests can still search
   const session = await auth();
@@ -22,29 +29,33 @@ export async function GET(request: NextRequest) {
         { brand: { contains: q, mode: "insensitive" as const } },
       ],
     }),
-    ...(category && { category: category as any }),
+    ...(category && { category }),
   };
 
-  const [products, total, watchlist] = await Promise.all([
+  // No `count()` here: this endpoint returns a flat array with no pagination
+  // envelope, so the extra COUNT ran on every request and was thrown away.
+  const [products, watchlist] = await Promise.all([
     prisma.product.findMany({
       where,
       skip,
       take: limit,
       include: {
+        // `currentPrice` is denormalized onto StoreProduct precisely so hot
+        // read paths don't need a per-row correlated subquery into
+        // priceHistory (audit M1). The chart endpoint still reads the series.
         storeProducts: {
-          where: { isActive: true },
-          include: {
+          where: { isActive: true, currentPrice: { not: null } },
+          select: {
+            storeId: true,
+            currentPrice: true,
+            isSale: true,
+            lastScrapedAt: true,
             store: { select: { id: true, chain: true, name: true } },
-            priceHistory: {
-              orderBy: { scrapedAt: "desc" },
-              take: 1,
-            },
           },
         },
       },
       orderBy: { name: "asc" },
     }),
-    prisma.product.count({ where }),
     // Fetch user's watchlist IDs if logged in
     userId
       ? prisma.watchlist.findMany({
@@ -61,12 +72,12 @@ export async function GET(request: NextRequest) {
   // Shape into flat array the search page expects
   const shaped = products.map((product) => {
     const prices = product.storeProducts
-      .filter((sp) => sp.priceHistory.length > 0)
       .map((sp) => ({
         storeId: sp.storeId,
         chain: sp.store.chain,
-        price: Number(sp.priceHistory[0].price),
-        isSale: sp.priceHistory[0].isSale,
+        price: Number(sp.currentPrice),
+        isSale: sp.isSale,
+        lastScrapedAt: sp.lastScrapedAt,
       }))
       .sort((a, b) => a.price - b.price);
 
