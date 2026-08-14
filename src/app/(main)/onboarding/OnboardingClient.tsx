@@ -133,7 +133,7 @@ export default function OnboardingClient({ stores }: { stores: StoreRow[] }) {
             Which stores do you shop at?
           </h1>
           <p className="text-[14px] text-[#aaa] leading-relaxed">
-            We'll track prices and flyer deals at your chosen stores.
+            We&apos;ll track prices and flyer deals at your chosen stores.
           </p>
         </div>
 
@@ -237,7 +237,7 @@ export default function OnboardingClient({ stores }: { stores: StoreRow[] }) {
 
           <div className="mt-3 p-3.5 bg-[#f0fdf9] dark:bg-[#1a2e2a] border border-[#b2f0e4] dark:border-[#1e4a3a] rounded-xl flex items-center gap-3">
             <p className="flex-1 text-[12px] text-[#0a7a62] dark:text-[#4db89e] leading-relaxed">
-              You'll get notified when any of these drop in price
+              You&apos;ll get notified when any of these drop in price
             </p>
             <ChevronRight size={14} className="text-[#00b89e] flex-shrink-0" />
           </div>
@@ -272,7 +272,7 @@ export default function OnboardingClient({ stores }: { stores: StoreRow[] }) {
         </div>
 
         <h1 className="text-[24px] font-medium text-[#111] dark:text-[#e8e8e8] mb-3">
-          You're all set
+          You&apos;re all set
         </h1>
         <p className="text-[14px] text-[#888] leading-relaxed mb-8 max-w-[260px]">
           Panion is tracking prices across your stores. Here&apos;s what you can do:

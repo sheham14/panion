@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Plus, Trash2, Pencil, MoreHorizontal } from "lucide-react";
@@ -74,20 +74,25 @@ function DeleteConfirmSheet({
   );
 }
 
+/** Where the menu should be pinned, measured when it is opened. */
+type MenuPosition = { top: number; right: number };
+
 function RecipeMenu({
   recipe,
   onDelete,
   onClose,
-  buttonRef,
+  position,
 }: {
   recipe: Recipe;
   onDelete: () => void;
   onClose: () => void;
-  buttonRef: React.RefObject<HTMLButtonElement>;
+  position: MenuPosition;
 }) {
-  const rect = buttonRef.current?.getBoundingClientRect();
-  const top = (rect?.bottom ?? 0) + 4;
-  const right = window.innerWidth - (rect?.right ?? 0);
+  // Position is measured in the opening click handler and passed in. Reading
+  // `buttonRef.current.getBoundingClientRect()` during render (the previous
+  // approach) is unsafe: the ref isn't guaranteed to be populated on the first
+  // render, which silently pinned the menu to the top-left corner.
+  const { top, right } = position;
 
   return (
     <>
@@ -130,10 +135,10 @@ export function RecipeCard({
   onAddToList: (recipe: Recipe) => void;
   onDeleted: (id: string) => void;
 }) {
-  const [menuOpen, setMenuOpen] = useState(false);
+  // Doubles as the open flag: non-null means the menu is showing.
+  const [menuPosition, setMenuPosition] = useState<MenuPosition | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const menuButtonRef = useRef<HTMLButtonElement>(null);
 
   const isOwner = recipe.userId === currentUserId;
   const totalTime = (recipe.prepMinutes ?? 0) + (recipe.cookMinutes ?? 0);
@@ -174,18 +179,30 @@ export function RecipeCard({
           {isOwner && (
             <div className="relative flex-shrink-0">
               <button
-                ref={menuButtonRef}
-                onClick={() => setMenuOpen((v) => !v)}
+                onClick={(e) => {
+                  // Measure here rather than during the menu's render: event
+                  // handlers are a safe place to read layout, and this captures
+                  // the button's position at the moment it was clicked.
+                  if (menuPosition) {
+                    setMenuPosition(null);
+                    return;
+                  }
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  setMenuPosition({
+                    top: rect.bottom + 4,
+                    right: window.innerWidth - rect.right,
+                  });
+                }}
                 className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-[#f4f4f4] dark:hover:bg-[#242b2e] transition-colors"
               >
                 <MoreHorizontal size={15} className="text-[#aaa]" />
               </button>
-              {menuOpen && (
+              {menuPosition && (
                 <RecipeMenu
                   recipe={recipe}
                   onDelete={() => setConfirmDelete(true)}
-                  onClose={() => setMenuOpen(false)}
-                  buttonRef={menuButtonRef}
+                  onClose={() => setMenuPosition(null)}
+                  position={menuPosition}
                 />
               )}
             </div>

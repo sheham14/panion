@@ -226,14 +226,6 @@ export default function ProfileSettingsClient({
 
   // ── Dietary restrictions ───────────────────────────────────────────────────
 
-  const toggleDietary = (option: string) => {
-    setDietaryRestrictions((prev) =>
-      prev.includes(option)
-        ? prev.filter((d) => d !== option)
-        : [...prev, option],
-    );
-  };
-
   // ── Allergies tag input ────────────────────────────────────────────────────
 
   const addAllergy = () => {

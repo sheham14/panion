@@ -346,7 +346,8 @@ export default function PantryClient({
   function toggleSelect(id: string) {
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   }
@@ -411,7 +412,8 @@ export default function PantryClient({
           <span className="text-[12px] text-[#aaa]">{items.length} items</span>
           <button
             onClick={() => {
-              selectMode ? exitSelectMode() : setSelectMode(true);
+              if (selectMode) exitSelectMode();
+              else setSelectMode(true);
             }}
             className="text-[13px] font-medium text-[#00b89e]"
           >

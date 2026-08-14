@@ -250,7 +250,7 @@ export default function AlertsClient({
             No notifications yet
           </p>
           <p className="text-[13px] text-[#aaa] leading-relaxed">
-            We'll let you know when prices drop on your saved products
+            We&apos;ll let you know when prices drop on your saved products
           </p>
         </div>
       ) : (

@@ -6,10 +6,7 @@ import EditItemSheet from "@/components/lists/EditItemSheet";
 import ListDropdown from "@/components/lists/ListDropdown";
 import ListOptionsMenu from "@/components/lists/ListOptionsMenu";
 import PantryFromListSheet from "@/components/pantry/PantryFromListSheet";
-import {
-  calculateEffectivePrice,
-  getAllowedUnits,
-} from "@/lib/unit-convert";
+import { calculateEffectivePrice } from "@/lib/unit-convert";
 
 // ── Types ──────────────────────────────────────
 
@@ -421,12 +418,15 @@ export default function ListsClient({
     .sort((a, b) => a[1] - b[1]);
   const activeTotal = activeChain ? storeTotals[activeChain] : null;
 
-  // Save last viewed list
+  // Save last viewed list. The id is hoisted so the dependency array can name
+  // exactly what the effect reads — depending on `activeList?.id` while the
+  // body read the whole `activeList` object is what tripped exhaustive-deps.
+  const activeListId = activeList?.id;
   useEffect(() => {
-    if (activeList) {
-      localStorage.setItem(LAST_LIST_KEY, activeList.id);
+    if (activeListId) {
+      localStorage.setItem(LAST_LIST_KEY, activeListId);
     }
-  }, [activeList?.id]);
+  }, [activeListId]);
 
   // ── Switch list ────────────────────────────
 
@@ -942,7 +942,6 @@ export default function ListsClient({
               .filter(([, t]) => t > 0)
               .sort((a, b) => a[1] - b[1])
               .map(([chain, total], i) => {
-                const meta = STORE_META[chain.toLowerCase()];
                 const isBest = i === 0;
                 const isActive = chain === activeChain;
                 return (

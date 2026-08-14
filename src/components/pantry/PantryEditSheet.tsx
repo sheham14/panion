@@ -271,6 +271,11 @@ export default function PantryEditSheet({ item, onClose, onSaved }: Props) {
                     className={`${inputCls} pl-8`}
                   />
                 </div>
+                {searching && searchResults.length === 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-[#1e2528] border border-[#e0e0e0] dark:border-[#2e3538] rounded-xl z-10 shadow-lg px-3 py-2.5">
+                    <p className="text-[13px] text-[#aaa]">Searching…</p>
+                  </div>
+                )}
                 {searchResults.length > 0 && (
                   <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-[#1e2528] border border-[#e0e0e0] dark:border-[#2e3538] rounded-xl overflow-hidden z-10 shadow-lg">
                     {searchResults.map((p) => (

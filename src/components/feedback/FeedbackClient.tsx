@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { send } from "@emailjs/browser";
 import { ArrowLeft, Check } from "lucide-react";
 
 type Category = "Bug report" | "Feature request" | "General feedback";
@@ -22,18 +21,19 @@ export default function FeedbackClient() {
     if (!message.trim()) return;
     setStatus("sending");
     try {
-      await send(
-        process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID!,
-        process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID!,
-        {
+      // Posts to our own rate-limited route; the mail credential stays on the
+      // server instead of shipping in the client bundle (audit M7).
+      const res = await fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           category,
-          from_name: fromName.trim() || "Anonymous",
-          from_email: fromEmail.trim() || "Not provided",
+          fromName: fromName.trim(),
+          fromEmail: fromEmail.trim(),
           message: message.trim(),
-        },
-        process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY!,
-      );
-      setStatus("success");
+        }),
+      });
+      setStatus(res.ok ? "success" : "error");
     } catch {
       setStatus("error");
     }

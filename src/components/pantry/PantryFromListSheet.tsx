@@ -60,7 +60,8 @@ export default function PantryFromListSheet({
   function toggleItem(id: string) {
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   }
@@ -141,7 +142,7 @@ export default function PantryFromListSheet({
               onClick={onJustClear}
               className="w-full py-3 rounded-[12px] text-[13px] text-[#aaa]"
             >
-              Just clear, don't add to pantry
+              Just clear, don&apos;t add to pantry
             </button>
           </div>
         ) : (
@@ -196,7 +197,7 @@ export default function PantryFromListSheet({
                 onClick={onJustClear}
                 className="w-full py-3 rounded-[12px] text-[13px] text-[#aaa]"
               >
-                Just clear, don't add to pantry
+                Just clear, don&apos;t add to pantry
               </button>
             </div>
           </>

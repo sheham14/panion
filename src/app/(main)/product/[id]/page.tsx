@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { auth } from "../../../../../auth";
 import { prisma } from "@/lib/prisma";
+import type { ProductCategory } from "../../../../../prisma/generated/enums";
 import ProductDetailClient from "@/components/product/ProductDetailClient";
 
 // ── Data fetching ──────────────────────────────
@@ -107,11 +108,16 @@ async function getProduct(id: string, userId: string | null) {
   };
 }
 
-async function getSimilarProducts(category: string | null, excludeId: string) {
+async function getSimilarProducts(
+  // Prisma already hands us the enum member here; widening it to `string` was
+  // what forced the `as any` back.
+  category: ProductCategory | null,
+  excludeId: string,
+) {
   if (!category) return [];
   const products = await prisma.product.findMany({
     where: {
-      category: category as any,
+      category,
       isActive: true,
       id: { not: excludeId },
     },

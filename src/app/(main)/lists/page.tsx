@@ -6,8 +6,6 @@ import ListsClient from "@/components/lists/ListsClient";
 import { GUEST_LIST, GUEST_ALL_LISTS, GUEST_PREFERRED_STORES } from "@/lib/guest-data";
 import type { ComponentProps } from "react";
 
-const LAST_LIST_KEY = "sentinel_last_list_id";
-
 async function getLists(userId: string) {
   return prisma.list.findMany({
     where: { userId },

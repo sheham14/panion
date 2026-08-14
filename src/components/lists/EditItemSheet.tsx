@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X, Minus, Plus } from "lucide-react";
+import { X } from "lucide-react";
 import { getAllowedUnits } from "@/lib/unit-convert";
 
 type Product = {
@@ -46,7 +46,7 @@ export default function EditItemSheet({ item, onSave, onClose }: Props) {
   const [quantity, setQuantity] = useState<string | number>(
     String(item.quantity ?? 1),
   );
-  const [unit, setUnit] = useState(item.unit ?? "each");
+  const [selectedUnit, setSelectedUnit] = useState(item.unit ?? "each");
   const [notes, setNotes] = useState(item.notes ?? "");
   const [saving, setSaving] = useState(false);
   const allowedUnits = getAllowedUnits(
@@ -54,20 +54,18 @@ export default function EditItemSheet({ item, onSave, onClose }: Props) {
     item.product?.unitSize,
   );
 
+  // Derived, not synced. This used to be a `useEffect` that called `setUnit`
+  // when the product's allowed units changed, which forced a second render
+  // pass on every open and briefly rendered an invalid unit. Computing the
+  // fallback during render removes both problems.
+  const unit = allowedUnits.includes(selectedUnit)
+    ? selectedUnit
+    : allowedUnits[0];
+
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = ""; };
   }, []);
-
-  useEffect(() => {
-    const allowed = getAllowedUnits(
-      item.product?.unitMeasure,
-      item.product?.unitSize,
-    );
-    if (!allowed.includes(unit)) {
-      setUnit(allowed[0]);
-    }
-  }, [item.product?.unitMeasure, item.product?.unitSize]);
 
   async function handleSave() {
     setSaving(true);
@@ -149,7 +147,9 @@ export default function EditItemSheet({ item, onSave, onClose }: Props) {
             onChange={(e) => {
               const val = e.target.value.replace(/[^0-9]/g, "");
               if (val === "") {
-                setQuantity("" as any); // allow empty while typing
+                // State is already `string | number`, so no cast is needed to
+                // hold the empty value while the user is mid-edit.
+                setQuantity("");
                 return;
               }
               const num = Math.min(999, Math.max(1, parseInt(val)));
@@ -170,7 +170,7 @@ export default function EditItemSheet({ item, onSave, onClose }: Props) {
             {allowedUnits.map((u) => (
               <button
                 key={u}
-                onClick={() => setUnit(u)}
+                onClick={() => setSelectedUnit(u)}
                 className={[
                   "px-3 py-1.5 rounded-full border text-[12px] font-medium transition-all",
                   unit === u
