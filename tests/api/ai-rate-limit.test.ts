@@ -46,7 +46,9 @@ describe("Guest AI IP ceiling (S3)", () => {
         if (res.status === 429) {
           blocked = true;
           const body = await res.json();
-          expect(body.message).toMatch(/quota exceeded|limit reached/i);
+          // Standard error envelope: { error: { message, code } }
+          expect(body.error.message).toMatch(/quota exceeded|limit reached/i);
+          expect(body.error.code).toBe("guest_limit");
         }
       }
     }
@@ -96,7 +98,7 @@ describe("Extract-recipe daily limit (S4)", () => {
 
     expect(res.status).toBe(429);
     const body = await res.json();
-    expect(body.error).toMatch(/limit reached/i);
+    expect(body.error.message).toMatch(/limit reached/i);
   });
 
   it("allows the call when usage is below the limit", async () => {
