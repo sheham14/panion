@@ -2,7 +2,16 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2, GripVertical, Clock, Users, Image } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  GripVertical,
+  Clock,
+  Users,
+  // Aliased: the bare name `Image` makes jsx-a11y treat this icon as an
+  // image element and demand an `alt` prop, and shadows next/image.
+  Image as ImageIcon,
+} from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -262,7 +271,7 @@ export default function RecipeForm({ initial, mode }: Props) {
 
           <Field label="Image URL">
             <div className="relative">
-              <Image
+              <ImageIcon
                 size={14}
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-[#bbb]"
               />
@@ -342,7 +351,7 @@ export default function RecipeForm({ initial, mode }: Props) {
           </div>
 
           <div className="flex flex-col gap-3">
-            {ingredients.map((ing, i) => (
+            {ingredients.map((ing) => (
               <div
                 key={ing.id}
                 className="flex flex-col gap-2 pb-3 border-b border-[#f5f5f5] dark:border-[#2a3044] last:border-0 last:pb-0"

@@ -232,7 +232,8 @@ export default function RecipeDetailClient({
   function toggleIngredient(id: string) {
     setCheckedIds((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   }
@@ -240,7 +241,8 @@ export default function RecipeDetailClient({
   function toggleStep(index: number) {
     setCompletedSteps((prev) => {
       const next = new Set(prev);
-      next.has(index) ? next.delete(index) : next.add(index);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
       return next;
     });
   }

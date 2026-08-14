@@ -374,7 +374,7 @@ export default function SearchPage() {
           {results.length === 0 ? (
             <div className="flex flex-col items-center pt-16 px-8 text-center">
               <p className="text-[14px] font-medium text-[#111] dark:text-[#e0e0e0] mb-2">
-                No results for "{query}"
+                No results for &ldquo;{query}&rdquo;
               </p>
               <p className="text-[13px] text-[#aaa]">
                 Try a different search term or browse by category.

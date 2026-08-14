@@ -7,7 +7,6 @@ import {
   Trash2,
   Plus,
   Check,
-  X,
   LayoutGrid,
   LayoutList,
   Bell,
@@ -535,7 +534,8 @@ export default function HomeClient({
   function handleSelect(productId: string) {
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      next.has(productId) ? next.delete(productId) : next.add(productId);
+      if (next.has(productId)) next.delete(productId);
+      else next.add(productId);
       return next;
     });
   }

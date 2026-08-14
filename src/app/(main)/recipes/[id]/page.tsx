@@ -60,7 +60,7 @@ async function RecipeDetail({ id }: { id: string }) {
     return <RecipeDetailClient recipe={guestRecipe} isOwner={false} />;
   }
 
-  const { user, error } = await getAuthenticatedUser();
+  const { user } = await getAuthenticatedUser();
   if (!user) redirect("/signin");
 
   const recipe = await prisma.recipe.findUnique({
