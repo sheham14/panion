@@ -28,19 +28,38 @@ S1–S4 reference the findings in [OPUS_AUDIT.md](OPUS_AUDIT.md). Each test corr
 
 ## Local setup
 
-1. **Create a Neon branch** (free tier supports up to 10):
-   - Neon dashboard → your project → "Branches" → "New branch" from your main branch.
-   - Copy the connection string.
+Either option works — Docker is quicker and costs nothing.
 
-2. **Add it to `.env.local`**:
+### Option A — Docker (recommended)
+
+1. **Start Postgres**:
    ```
-   TEST_DATABASE_URL=postgresql://user:pass@xxx.neon.tech/neondb?sslmode=require
+   docker compose up -d
    ```
 
-3. **Push the schema to the test branch**:
+2. **Create the test database** (once):
    ```
-   npm run test:setup
+   docker exec sentinel_postgres psql -U sentinel -d sentinel_db -c "CREATE DATABASE sentinel_test"
    ```
+
+3. **Add the URL to `.env.local`**:
+   ```
+   TEST_DATABASE_URL="postgresql://sentinel:sentinel_dev@localhost:5432/sentinel_test?schema=public"
+   ```
+
+### Option B — Neon branch
+
+1. Neon dashboard → your project → "Branches" → "New branch" from main. Copy the connection string.
+2. Set it as `TEST_DATABASE_URL` in `.env.local`.
+
+### Then, either way
+
+3. **Push the schema to the test database**:
+   ```
+   npx prisma db push --url "$TEST_DATABASE_URL"
+   ```
+   > Prisma 7 removed `--skip-generate` and added `--url`; the datasource
+   > otherwise comes from `prisma.config.ts`, which reads `DATABASE_URL`.
 
 4. **Run tests**:
    ```
@@ -48,6 +67,9 @@ S1–S4 reference the findings in [OPUS_AUDIT.md](OPUS_AUDIT.md). Each test corr
    npm run test:watch
    npm run test:coverage
    ```
+
+`tests/setup.ts` throws if `TEST_DATABASE_URL` is missing — that is deliberate,
+so a stray run can never point at the development or production database.
 
 ## CI
 

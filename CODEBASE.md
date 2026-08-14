@@ -174,9 +174,9 @@ All routes return JSON. All protected routes call `getAuthenticatedUser()` first
 
 | Route | Methods | What it does |
 |---|---|---|
-| `/api/products` | GET, POST | GET: search/filter products by name, category, page — returns current prices from each store and user's watchlist status. Cached 5 min. POST: create product (admin). |
-| `/api/products/[id]` | GET, PATCH, DELETE | Fetch, update, or delete a specific product. |
-| `/api/products/[id]/prices` | GET, POST | GET: price history for a product. POST: add a price record. |
+| `/api/products` | GET | Search/filter products by name, category, page — returns current prices from each store and user's watchlist status. `page`/`limit` are clamped (max 100). Cached 5 min. |
+| `/api/products/[id]` | GET | Fetch a specific product. |
+| `/api/products/[id]/prices` | GET | Price history for a product. `range` is capped at 365 days. |
 
 ### Stores
 
@@ -240,7 +240,9 @@ All routes return JSON. All protected routes call `getAuthenticatedUser()` first
 | Route | Methods | What it does |
 |---|---|---|
 | `/api/user` | GET, PATCH | GET: user profile with preferences. PATCH: update name, dietary restrictions, allergies, notification settings, preferred stores. |
-| `/api/user/delete` | POST | Delete the user's account and all associated data (PIPEDA compliance). |
+| `/api/user/delete` | POST, DELETE | POST: request account deletion — sets `deletionRequestedAt`. The `purge-deleted-accounts` Inngest cron anonymizes the account 30 days later (credentials and personal content are hard-deleted; crowdsourced price contributions are severed from the person rather than destroyed). DELETE: cancel a pending request. |
+| `/api/feedback` | POST | Public feedback intake. Rate-limited to 5/day/IP via Redis; sends through SendGrid server-side. |
+| `/api/inngest` | GET, POST, PUT | Inngest function endpoint. Hosts the scheduled jobs. |
 | `/api/user/export` | GET | Export all of the user's personal data as JSON (PIPEDA compliance). |
 
 ### Push Notifications
@@ -266,7 +268,7 @@ All routes return JSON. All protected routes call `getAuthenticatedUser()` first
 | `/api/scan` | GET | Barcode lookup — returns product + per-store current prices. |
 | `/api/flyers` | GET | Fetch store flyers — integration point for future scraper. |
 | `/api/icons/[size]` | GET | Generate PWA icon at 192px or 512px via Edge runtime. |
-| `/api/health` | GET | Health check endpoint. Returns 200 OK. |
+| `/api/health` | GET | Health check. Pings Postgres **and** Redis; returns 200 when both are up, 503 otherwise. |
 
 ---
 
