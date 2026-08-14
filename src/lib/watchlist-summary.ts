@@ -21,14 +21,17 @@ export async function getWatchlistSummary(userId: string) {
       include: {
         product: {
           include: {
+            // Reads the denormalized currentPrice instead of a per-store-product
+            // correlated subquery into priceHistory. This runs on every home
+            // render, so the join mattered (audit M1).
             storeProducts: {
               where: { isActive: true },
-              include: {
-                store: true,
-                priceHistory: {
-                  orderBy: { scrapedAt: "desc" },
-                  take: 1,
-                },
+              select: {
+                storeId: true,
+                currentPrice: true,
+                isSale: true,
+                lastScrapedAt: true,
+                store: { select: { id: true, chain: true, name: true } },
               },
             },
           },
@@ -51,11 +54,13 @@ export async function getWatchlistSummary(userId: string) {
 
     for (const sp of w.product.storeProducts) {
       if (!preferredStoreIds.has(sp.storeId)) continue;
-      const latest = sp.priceHistory[0];
       const chain = sp.store.chain;
-      if (latest) {
-        const price = Number(latest.price);
-        prices[chain] = { price, scrapedAt: latest.scrapedAt.toISOString() };
+      if (sp.currentPrice !== null) {
+        const price = Number(sp.currentPrice);
+        prices[chain] = {
+          price,
+          scrapedAt: (sp.lastScrapedAt ?? new Date()).toISOString(),
+        };
         if (bestPrice === null || price < bestPrice) {
           bestPrice = price;
           bestStore = chain;

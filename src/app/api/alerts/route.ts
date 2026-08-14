@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
+import { parsePagination } from "@/lib/query-params";
 
 export async function GET(request: NextRequest) {
   const { user, error } = await getAuthenticatedUser();
   if (error) return error;
 
   const { searchParams } = new URL(request.url);
-  const page = parseInt(searchParams.get("page") ?? "1");
-  const limit = parseInt(searchParams.get("limit") ?? "20");
-  const skip = (page - 1) * limit;
+  const { page, limit, skip } = parsePagination(searchParams);
 
   const [alerts, total] = await Promise.all([
     prisma.alert.findMany({

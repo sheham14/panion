@@ -17,7 +17,12 @@ export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
     adapter, // <-- Pass the adapter into the client here
-    log: ["query", "error", "warn"],
+    // Logging every query in production is noisy, slows requests, and can spill
+    // data values into Vercel's log stream (audit M8).
+    log:
+      process.env.NODE_ENV === "production"
+        ? ["error"]
+        : ["query", "error", "warn"],
   });
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;

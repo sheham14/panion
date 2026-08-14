@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
+import { validateBody } from "@/lib/validate";
+import { notFound } from "@/lib/api-error";
+import { pantryFields } from "../route";
+
+const UpdatePantryItemSchema = z.object(pantryFields).partial();
 
 export async function PATCH(
   request: NextRequest,
@@ -10,26 +16,21 @@ export async function PATCH(
   if (error) return error;
 
   const { id } = await params;
-  const body = await request.json();
-  const { quantity, unit, expiresAt, name, brand, category, productId } = body;
+  const { data, error: invalid } = await validateBody(
+    request,
+    UpdatePantryItemSchema,
+  );
+  if (invalid) return invalid;
 
+  // updateMany is already scoped to the caller, so this can't touch another
+  // user's row.
   const item = await prisma.pantryItem.updateMany({
     where: { id, userId: user.id },
-    data: {
-      ...(name !== undefined && { name }),
-      ...(brand !== undefined && { brand }),
-      ...(category !== undefined && { category }),
-      ...(productId !== undefined && { productId }),
-      ...(quantity !== undefined && { quantity }),
-      ...(unit !== undefined && { unit }),
-      ...(expiresAt !== undefined && {
-        expiresAt: expiresAt ? new Date(expiresAt) : null,
-      }),
-    },
+    data,
   });
 
   if (item.count === 0) {
-    return NextResponse.json({ error: "Item not found" }, { status: 404 });
+    return notFound("Item not found");
   }
 
   return NextResponse.json({ success: true });
@@ -49,7 +50,7 @@ export async function DELETE(
   });
 
   if (item.count === 0) {
-    return NextResponse.json({ error: "Item not found" }, { status: 404 });
+    return notFound("Item not found");
   }
 
   return NextResponse.json({ success: true });

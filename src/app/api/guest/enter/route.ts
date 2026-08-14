@@ -10,6 +10,8 @@ export async function POST() {
   const cookieOpts = {
     httpOnly: true,
     sameSite: "lax" as const,
+    // Without this the cookie can still ride a plaintext downgrade (audit M11).
+    secure: process.env.NODE_ENV === "production",
     path: "/",
     maxAge: GUEST_TTL_SECONDS,
   };

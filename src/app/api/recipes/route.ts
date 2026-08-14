@@ -1,6 +1,53 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
+import {
+  validateBody,
+  boundedString,
+  idSchema,
+  quantitySchema,
+  MAX_NAME_LENGTH,
+} from "@/lib/validate";
+
+/** One ingredient. `productId` is what powers cost-per-serving. */
+export const ingredientSchema = z.object({
+  productId: idSchema.nullish(),
+  name: boundedString(MAX_NAME_LENGTH),
+  quantity: quantitySchema.nullish(),
+  unit: z.string().trim().max(32).nullish(),
+  notes: z.string().trim().max(200).nullish(),
+  isOptional: z.boolean().optional(),
+  sortOrder: z.number().int().min(0).max(500).optional(),
+});
+
+/** Shared by POST here and PATCH on `[id]` so the two can't drift. */
+export const recipeFields = {
+  title: boundedString(200),
+  description: z.string().trim().max(4000).nullish(),
+  imageUrl: z.string().url().max(2048).nullish(),
+  prepTime: z.number().int().min(0).max(10_000).nullish(),
+  cookTime: z.number().int().min(0).max(10_000).nullish(),
+  servings: z.number().int().min(1).max(100).nullish(),
+  instructions: z.unknown().nullish(),
+  ingredients: z.array(ingredientSchema).max(100).optional(),
+};
+
+const CreateRecipeSchema = z.object(recipeFields);
+
+/** Maps a validated ingredient onto the Prisma create shape. */
+export const toIngredientCreate = (
+  ing: z.infer<typeof ingredientSchema>,
+  index: number,
+) => ({
+  productId: ing.productId ?? null,
+  name: ing.name,
+  quantity: ing.quantity ?? null,
+  unit: ing.unit ?? null,
+  notes: ing.notes ?? null,
+  isOptional: ing.isOptional ?? false,
+  sortOrder: ing.sortOrder ?? index,
+});
 
 export async function GET(request: NextRequest) {
   const { user, error } = await getAuthenticatedUser();
@@ -51,59 +98,26 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const { user, error } = await (
-    await import("@/lib/auth-utils")
-  ).getAuthenticatedUser();
+  // Was a dynamic `await import("@/lib/auth-utils")` mid-function even though
+  // the static import is right at the top of the file (audit L2).
+  const { user, error } = await getAuthenticatedUser();
   if (error) return error;
 
-  const body = await request.json();
-  const {
-    title,
-    description,
-    prepTime,
-    cookTime,
-    servings,
-    instructions,
-    ingredients,
-  } = body;
-
-  if (!title) {
-    return NextResponse.json({ error: "title is required" }, { status: 400 });
-  }
+  const { data, error: invalid } = await validateBody(request, CreateRecipeSchema);
+  if (invalid) return invalid;
 
   const recipe = await prisma.recipe.create({
     data: {
-      title,
-      userId: user!.id,
-      description: description ?? null,
-      prepTime: prepTime ?? null,
-      cookTime: cookTime ?? null,
-      servings: servings ?? null,
-      instructions: instructions ?? null,
+      title: data.title,
+      userId: user.id,
+      description: data.description ?? null,
+      imageUrl: data.imageUrl ?? null,
+      prepTime: data.prepTime ?? null,
+      cookTime: data.cookTime ?? null,
+      servings: data.servings ?? null,
+      instructions: (data.instructions ?? null) as never,
       ingredients: {
-        create:
-          ingredients?.map(
-            (
-              ing: {
-                productId?: string;
-                name: string;
-                quantity?: number;
-                unit?: string;
-                notes?: string;
-                isOptional?: boolean;
-                sortOrder?: number;
-              },
-              index: number,
-            ) => ({
-              productId: ing.productId ?? null,
-              name: ing.name,
-              quantity: ing.quantity ?? null,
-              unit: ing.unit ?? null,
-              notes: ing.notes ?? null,
-              isOptional: ing.isOptional ?? false,
-              sortOrder: ing.sortOrder ?? index,
-            }),
-          ) ?? [],
+        create: (data.ingredients ?? []).map(toIngredientCreate),
       },
     },
     include: { ingredients: true },

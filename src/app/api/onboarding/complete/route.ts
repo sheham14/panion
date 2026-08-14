@@ -1,30 +1,24 @@
 import { NextResponse } from "next/server";
-import { auth } from "../../../../../auth";
+import { getAuthenticatedUser } from "@/lib/auth-utils";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import { validateBody, idSchema } from "@/lib/validate";
 
 const schema = z.object({
-  storeIds: z.array(z.string()).min(1, "Select at least one store"),
-  watchlistProductIds: z.array(z.string()),
+  storeIds: z.array(idSchema).min(1, "Select at least one store").max(20),
+  watchlistProductIds: z.array(idSchema).max(100),
 });
 
 export async function POST(req: Request) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  // Standardized on the shared auth helper (audit L1).
+  const { user, error } = await getAuthenticatedUser();
+  if (error) return error;
 
-  const body = await req.json();
-  const parsed = schema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: parsed.error.flatten().fieldErrors },
-      { status: 400 },
-    );
-  }
+  const { data: parsed, error: invalid } = await validateBody(req, schema);
+  if (invalid) return invalid;
 
-  const { storeIds, watchlistProductIds } = parsed.data;
-  const userId = session.user.id;
+  const { storeIds, watchlistProductIds } = parsed;
+  const userId = user.id;
 
   try {
     await prisma.$transaction(async (tx) => {

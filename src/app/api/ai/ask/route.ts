@@ -2,6 +2,9 @@
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
 import { redis } from "@/lib/redis";
+import { z } from "zod";
+import { validateBody, boundedString } from "@/lib/validate";
+import { badRequest, tooManyRequests } from "@/lib/api-error";
 import Anthropic from "@anthropic-ai/sdk";
 
 const DAILY_LIMIT = 10;
@@ -23,10 +26,33 @@ function sanitizeInput(input: string): string {
     .trim();
 }
 
+const AskSchema = z.object({
+  query: boundedString(MAX_QUERY_LENGTH),
+  budget: z.number().finite().min(0).max(MAX_BUDGET).nullish(),
+});
+
 export async function POST(request: NextRequest) {
-  // Guest path — identified by cookie, rate-limited via Redis
+  // Guest detection must match the messages route. Keying off the mere presence
+  // of `panion-guest-id` sent a signed-in user with a stale cookie down the
+  // guest path and capped them at 5 queries (audit L6).
   const guestId = request.cookies.get("panion-guest-id")?.value;
-  const isGuest = !!guestId;
+  const isGuest =
+    request.cookies.get("panion-guest")?.value === "1" && !!guestId;
+
+  // Validate the request *before* touching Redis. The counters below are
+  // atomic `incr`s, so validating afterwards meant a malformed body still
+  // consumed one of the guest's five daily queries (audit H5).
+  const contentType = request.headers.get("content-type");
+  if (!contentType?.includes("application/json")) {
+    return badRequest("Content-Type must be application/json");
+  }
+
+  const { data: parsed, error: invalid } = await validateBody(request, AskSchema);
+  if (invalid) return invalid;
+
+  const sanitizedQuery = sanitizeInput(parsed.query);
+  if (!sanitizedQuery) return badRequest("query cannot be empty");
+  const budget = parsed.budget ?? null;
 
   if (isGuest) {
     // IP-level ceiling first — protects against cookie-clear bypass
@@ -36,13 +62,9 @@ export async function POST(request: NextRequest) {
     if (ipUsed === 1) await redis.expire(ipKey, 60 * 60 * 24);
 
     if (ipUsed > GUEST_IP_DAILY_LIMIT) {
-      return NextResponse.json(
-        {
-          error: "Guest limit reached",
-          message: "Guest AI quota exceeded for today. Sign in for unlimited access.",
-          isGuestLimit: true,
-        },
-        { status: 429 },
+      return tooManyRequests(
+        "Guest AI quota exceeded for today. Sign in for unlimited access.",
+        { code: "guest_limit" },
       );
     }
 
@@ -51,13 +73,9 @@ export async function POST(request: NextRequest) {
     if (used === 1) await redis.expire(redisKey, 60 * 60 * 24); // 24h TTL on first use
 
     if (used > GUEST_LIMIT) {
-      return NextResponse.json(
-        {
-          error: "Guest limit reached",
-          message: `You've used your ${GUEST_LIMIT} free Clove queries. Sign in for unlimited access.`,
-          isGuestLimit: true,
-        },
-        { status: 429 },
+      return tooManyRequests(
+        `You've used your ${GUEST_LIMIT} free Clove queries. Sign in for unlimited access.`,
+        { code: "guest_limit" },
       );
     }
   }
@@ -66,62 +84,6 @@ export async function POST(request: NextRequest) {
     ? { user: null, error: null }
     : await getAuthenticatedUser();
   if (!isGuest && error) return error;
-
-  // Validate content type
-  const contentType = request.headers.get("content-type");
-  if (!contentType?.includes("application/json")) {
-    return NextResponse.json(
-      { error: "Invalid content type" },
-      { status: 400 },
-    );
-  }
-
-  // Parse and validate body
-  let body: { query?: unknown; budget?: unknown };
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-  }
-
-  const { query, budget } = body;
-
-  // Validate query
-  if (!query || typeof query !== "string") {
-    return NextResponse.json(
-      { error: "query must be a string" },
-      { status: 400 },
-    );
-  }
-  if (query.trim().length === 0) {
-    return NextResponse.json(
-      { error: "query cannot be empty" },
-      { status: 400 },
-    );
-  }
-  if (query.length > MAX_QUERY_LENGTH) {
-    return NextResponse.json(
-      { error: `query must be ${MAX_QUERY_LENGTH} characters or less` },
-      { status: 400 },
-    );
-  }
-
-  // Validate budget
-  if (budget !== undefined && budget !== null) {
-    if (
-      typeof budget !== "number" ||
-      isNaN(budget) ||
-      budget < 0 ||
-      budget > MAX_BUDGET
-    ) {
-      return NextResponse.json(
-        { error: "budget must be a positive number" },
-        { status: 400 },
-      );
-    }
-  }
-
-  const sanitizedQuery = sanitizeInput(query);
 
   let usageCount = 0;
 

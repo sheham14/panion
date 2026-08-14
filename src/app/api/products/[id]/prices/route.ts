@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { parseRangeDays } from "@/lib/query-params";
+import { notFound } from "@/lib/api-error";
 
 export async function GET(
   request: NextRequest,
@@ -8,15 +10,10 @@ export async function GET(
   const { id } = await params;
   const { searchParams } = new URL(request.url);
   const storeId = searchParams.get("storeId");
-  const range = searchParams.get("range") ?? "90d";
 
-  const rangeMap: Record<string, number> = {
-    "30d": 30,
-    "90d": 90,
-    "1y": 365,
-    all: 9999,
-  };
-  const days = rangeMap[range] ?? 90;
+  // `range=all` used to map to 9999 days — effectively unbounded. Capped at a
+  // year, which is more history than retention keeps anyway (audit M2).
+  const days = parseRangeDays(searchParams.get("range") ?? "90d");
   const since = new Date();
   since.setDate(since.getDate() - days);
 
@@ -36,7 +33,7 @@ export async function GET(
   });
 
   if (!storeProducts.length) {
-    return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    return notFound("Product not found");
   }
 
   return NextResponse.json(storeProducts);

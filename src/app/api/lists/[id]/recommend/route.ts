@@ -6,7 +6,6 @@ type StoreTotal = {
   store: { id: string; chain: string; name: string };
   total: number;
   matchedItems: number;
-  unmatchedItems: string[];
   items: { name: string; price: number; storeProductId: string }[];
 };
 
@@ -45,11 +44,15 @@ export async function GET(
 
   const storeTotals: { [storeId: string]: StoreTotal } = {};
 
+  // Free-text items belong to the list, not to any one store. They used to be
+  // pushed into whatever stores happened to already exist in `storeTotals`,
+  // which meant an unmatched *first* item was dropped entirely (the map was
+  // still empty) and the rest were scattered per-store (audit M3).
+  const unmatchedItems: string[] = [];
+
   for (const item of list.items) {
     if (!item.product) {
-      for (const storeData of Object.values(storeTotals)) {
-        storeData.unmatchedItems.push(item.name);
-      }
+      unmatchedItems.push(item.name);
       continue;
     }
 
@@ -62,7 +65,6 @@ export async function GET(
           store: sp.store,
           total: 0,
           matchedItems: 0,
-          unmatchedItems: [],
           items: [],
         };
       }
@@ -78,24 +80,35 @@ export async function GET(
     }
   }
 
-  const ranked = Object.values(storeTotals).sort(
-    (a: StoreTotal, b: StoreTotal) => a.total - b.total,
+  // Rank by coverage first, then price. Sorting on total alone let a store that
+  // stocks 1 of your 10 items "win" as cheapest despite being unable to fill
+  // the basket (audit M3).
+  const ranked = Object.values(storeTotals).sort((a, b) =>
+    b.matchedItems !== a.matchedItems
+      ? b.matchedItems - a.matchedItems
+      : a.total - b.total,
   );
 
-  const cheapest = ranked[0];
+  const best = ranked[0];
 
   return NextResponse.json({
     listId: id,
     listName: list.name,
     totalItems: list.items.length,
-    ranked: ranked.map((s: StoreTotal, index: number) => ({
+    matchableItems: list.items.length - unmatchedItems.length,
+    // One top-level list rather than a copy per store.
+    unmatchedItems,
+    ranked: ranked.map((s, index) => ({
       rank: index + 1,
       store: s.store,
       total: Math.round(s.total * 100) / 100,
       matchedItems: s.matchedItems,
-      unmatchedItems: s.unmatchedItems,
-      savingsVsCheapest:
-        index === 0 ? 0 : Math.round((s.total - cheapest.total) * 100) / 100,
+      // Only meaningful between stores with the same coverage; null otherwise
+      // so the UI doesn't present an apples-to-oranges "saving".
+      savingsVsBest:
+        index === 0 || s.matchedItems !== best.matchedItems
+          ? null
+          : Math.round((s.total - best.total) * 100) / 100,
       items: s.items,
     })),
   });
