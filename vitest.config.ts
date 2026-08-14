@@ -11,7 +11,17 @@ export default defineConfig({
     pool: "forks",
     fileParallelism: false, // serialize so tests share the DB without colliding
     testTimeout: 15_000,
+    hookTimeout: 30_000,
     include: ["tests/**/*.test.ts", "tests/**/*.test.tsx"],
+    server: {
+      deps: {
+        // next-auth imports `next/server` without a file extension. Node's
+        // strict ESM resolver refuses that, which is what broke the CI test
+        // job (audit H1). Inlining makes Vite transform the package instead of
+        // handing it to Node's resolver.
+        inline: ["next-auth", "@auth/prisma-adapter"],
+      },
+    },
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],
