@@ -5,15 +5,8 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { Check, X, ChevronRight } from "lucide-react";
+import { getStoreMeta } from "@/lib/store-meta";
 
-// Brand colours keyed by chain slug. Falls back to neutral grey for unknown chains.
-const CHAIN_STYLE: Record<string, { color: string; bg: string }> = {
-  walmart:  { color: "#0071ce", bg: "#0071ce18" },
-  dominion: { color: "#c8102e", bg: "#c8102e18" },
-  sobeys:   { color: "#d62b2b", bg: "#d62b2b18" },
-  costco:   { color: "#005daa", bg: "#005daa18" },
-};
-const DEFAULT_STYLE = { color: "#666666", bg: "#66666618" };
 
 export type StoreRow = { id: string; chain: string; name: string };
 
@@ -71,8 +64,9 @@ export default function OnboardingClient({ stores }: { stores: StoreRow[] }) {
   const storeItems = stores.map((s) => ({
     id: s.id,
     name: s.name,
-    letter: s.name[0].toUpperCase(),
-    ...(CHAIN_STYLE[s.chain] ?? DEFAULT_STYLE),
+    // `letter` comes from getStoreMeta — it was previously derived from the
+    // store name here and then silently overwritten by the spread anyway.
+    ...getStoreMeta(s.chain),
   }));
 
   const activeWatchlist = WATCHLIST_DEFAULTS.filter(

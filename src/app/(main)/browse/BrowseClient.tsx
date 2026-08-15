@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
+import { getStoreColor } from "@/lib/store-meta";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -41,13 +42,6 @@ const CATEGORY_META: Record<string, { label: string; emoji: string }> = {
   health_wellness:  { label: "Health & Wellness", emoji: "💊" },
   seasonal:         { label: "Seasonal",          emoji: "🌿" },
   other:            { label: "Other",             emoji: "📦" },
-};
-
-const CHAIN_COLOR: Record<string, string> = {
-  walmart:  "#0071ce",
-  dominion: "#c8102e",
-  sobeys:   "#d62b2b",
-  costco:   "#005daa",
 };
 
 function priceTag(price: number, isSale: boolean) {
@@ -235,7 +229,7 @@ function StoreView({
   return (
     <div className="flex flex-col gap-6">
       {Array.from(byStore.values()).map(({ store, products }) => {
-        const color = CHAIN_COLOR[store.chain] ?? "#888";
+        const color = getStoreColor(store.chain);
         return (
           <section key={store.id}>
             <h2
@@ -290,7 +284,7 @@ function ProductRow({
             <div key={i} className="flex items-center gap-1.5">
               <span
                 className="text-[10px] font-medium"
-                style={{ color: CHAIN_COLOR[sp.store.chain] ?? "#aaa" }}
+                style={{ color: getStoreColor(sp.store.chain) }}
               >
                 {sp.store.chain}
               </span>

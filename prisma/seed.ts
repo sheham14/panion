@@ -1,9 +1,20 @@
+import { config as loadEnv } from "dotenv";
 import { PrismaClient } from "./generated/client";
 import { UserRole, ProductCategory, ConsentType } from "./generated/enums";
 import { PrismaPg } from "@prisma/adapter-pg";
 
+// Same precedence as prisma.config.ts and Next.js: .env, then .env.local wins.
+// Without this the script only worked via `prisma db seed` (which loads env
+// through prisma.config.ts) and failed when run directly with tsx.
+loadEnv({ path: ".env" });
+loadEnv({ path: ".env.local", override: true });
+
+if (!process.env.DATABASE_URL) {
+  throw new Error("DATABASE_URL is not set — check .env / .env.local");
+}
+
 const adapter = new PrismaPg({
-  connectionString: process.env.DATABASE_URL!,
+  connectionString: process.env.DATABASE_URL,
 });
 const prisma = new PrismaClient({ adapter });
 
@@ -11,10 +22,17 @@ async function main() {
   console.log("🌱 Seeding Panion database...");
 
   // ─── STORES ───────────────────────────────────────────────
-  // 4 St. John's / Mount Pearl stores.
-  // Loblaws and Metro removed — neither exists in NL.
-  // Dominion is the Loblaws-owned NL banner, queryable via PC Express API.
-  // Dollarama removed — dollar store, not a grocery store.
+  // St. John's / Mount Pearl area stores.
+  //
+  // Loblaws and Metro: neither operates in NL. Dollarama: not a grocery store.
+  //   compare like-for-like against a household shelf price, and costco.ca
+  //   bakes shipping into grocery prices (8-49% higher than warehouse), so
+  //   there is no honest automated source for it. See PRICING-PIPELINE.md §6.4.
+  //
+  // The three national chains carry full catalogue + price mapping. The six NL
+  // independents below are flyer-only for now: Flipp publishes their weekly
+  // specials, which is real data worth showing, but they are not catalogue-
+  // mapped yet. See PRICING-PIPELINE.md §6.7 (partner stores).
   const stores = await Promise.all([
     prisma.store.upsert({
       where: { id: "store_walmart" },
@@ -58,22 +76,43 @@ async function main() {
         isActive: true,
       },
     }),
-    prisma.store.upsert({
-      where: { id: "store_costco" },
-      update: {},
-      create: {
-        id: "store_costco",
-        chain: "costco",
-        name: "Costco Wholesale - St. John's",
-        address: "45 Stavanger Dr",
-        city: "St. John's",
-        province: "NL",
-        postalCode: "A1A 5E5",
-        isActive: true,
-      },
-    }),
   ]);
-  console.log(`✅ ${stores.length} stores created`);
+  console.log(`✅ ${stores.length} chain stores created`);
+
+  // ─── NL INDEPENDENT STORES (flyer-only) ───────────────────
+  // Verified present in Flipp's St. John's (A1B 4P1) results, so their weekly
+  // flyers are a real, reliable source. `chain` matches Flipp's merchant_name
+  // lowercased — that string is the join key the Flipp adapter maps on.
+  //
+  // Addresses are intentionally null: these are multi-location independents and
+  // we serve chain-level pricing (PRICING-PIPELINE.md §12.1). Fill in a
+  // representative address per store when/if we go per-location.
+  const localStores = await Promise.all(
+    (
+      [
+        { id: "store_powells", chain: "powell's supermarket", name: "Powell's Supermarket" },
+        { id: "store_colemans", chain: "colemans", name: "Colemans" },
+        { id: "store_value_grocer", chain: "value grocer", name: "Value Grocer" },
+        { id: "store_bidgoods", chain: "bidgood's", name: "BidGood's" },
+        { id: "store_clover_farm", chain: "clover farm", name: "Clover Farm" },
+        { id: "store_maries_mini_mart", chain: "marie's mini mart", name: "Marie's Mini Mart" },
+      ] as const
+    ).map((s) =>
+      prisma.store.upsert({
+        where: { id: s.id },
+        update: { chain: s.chain, name: s.name },
+        create: {
+          id: s.id,
+          chain: s.chain,
+          name: s.name,
+          city: "St. John's",
+          province: "NL",
+          isActive: true,
+        },
+      }),
+    ),
+  );
+  console.log(`✅ ${localStores.length} NL independent stores created (flyer-only)`);
 
   // ─── USERS ────────────────────────────────────────────────
   await prisma.user.upsert({
@@ -899,126 +938,117 @@ async function main() {
   console.log(`✅ ${products.length} products created`);
 
   // ─── STORE PRODUCTS + PRICE HISTORY ───────────────────────
-  // Columns: [walmart, dominion, sobeys, costco]
+  // Columns: [walmart, dominion, sobeys]
   // null = not carried / not meaningful to compare at that store.
   //
   // Pricing notes:
   //   - Walmart: cheapest baseline, NL-adjusted
   //   - Dominion: Loblaws-owned, typically 5–10% above Walmart
   //   - Sobeys: typically 3–7% above Walmart, close to Dominion
-  //   - Costco: null for most items. Non-null entries reflect bulk pack
-  //     pricing (e.g. Costco chicken breast is a 2.5kg tray, not 1kg).
-  //     Costco prices are listed as-is (the full pack price), so unit price
-  //     comparison works correctly via unitQuantity on the product.
 
   const priceMatrix: Record<string, (number | null)[]> = {
     // ── DAIRY & EGGS
-    prod_milk_natrel:             [4.87, 4.78, 5.39, null], // Walmart, Dominion, Sobeys — Dominion cheapest
-    prod_butter_lactantia:        [5.97, 6.79, 6.49, null],
-    prod_cheddar_cracker_barrel:  [6.97, 7.99, 7.49, null],
-    prod_yogurt_liberte:          [5.47, 6.29, 5.99, null],
-    prod_eggs_burnbrae:           [5.50, 5.28, 5.79, null], // Walmart, Dominion, Sobeys — Dominion cheapest; Costco sells 60-pk (different product)
-    prod_d001:                    [3.47, 3.99, 3.79, null],
-    prod_d002:                    [3.47, 3.99, 3.79, null],
-    prod_d003:                    [4.97, 5.79, 5.49, null],
-    prod_d004:                    [5.97, 6.99, 6.49, null],
-    prod_d005:                    [4.47, 5.29, 4.99, null],
-    prod_d006:                    [3.97, 4.69, 4.39, null],
-    prod_d007:                    [7.47, 8.79, 8.29, null],
+    prod_milk_natrel:             [4.87, 4.78, 5.39], // Walmart, Dominion, Sobeys — Dominion cheapest
+    prod_butter_lactantia:        [5.97, 6.79, 6.49],
+    prod_cheddar_cracker_barrel:  [6.97, 7.99, 7.49],
+    prod_yogurt_liberte:          [5.47, 6.29, 5.99],
+    prod_eggs_burnbrae:           [5.50, 5.28, 5.79], // Dominion cheapest
+    prod_d001:                    [3.47, 3.99, 3.79],
+    prod_d002:                    [3.47, 3.99, 3.79],
+    prod_d003:                    [4.97, 5.79, 5.49],
+    prod_d004:                    [5.97, 6.99, 6.49],
+    prod_d005:                    [4.47, 5.29, 4.99],
+    prod_d006:                    [3.97, 4.69, 4.39],
+    prod_d007:                    [7.47, 8.79, 8.29],
 
     // ── MEAT & SEAFOOD (prices per kg where unitSize = "per kg")
-    prod_chicken_maple_leaf:      [10.97, 12.49, 11.79, null],
-    prod_beef_ground_lean:        [9.97,  11.49, 10.79, null],
-    prod_salmon_atlantic:         [22.97, 26.49, 24.79, null],
-    prod_m001:                    [8.97,  10.29, 9.49,  null],
-    prod_m002:                    [6.47,  7.49,  6.99,  null],
-    prod_m003:                    [7.47,  8.79,  7.99,  null],
-    prod_m004:                    [17.97, 20.99, 18.99, null],
-    prod_m005:                    [9.97,  11.49, 10.79, null],
-    prod_m006:                    [7.97,  9.29,  8.79,  null],
-    prod_m007:                    [3.97,  4.69,  4.29,  null],
+    prod_chicken_maple_leaf:      [10.97, 12.49, 11.79],
+    prod_beef_ground_lean:        [9.97, 11.49, 10.79],
+    prod_salmon_atlantic:         [22.97, 26.49, 24.79],
+    prod_m001:                    [8.97, 10.29, 9.49],
+    prod_m002:                    [6.47, 7.49, 6.99],
+    prod_m003:                    [7.47, 8.79, 7.99],
+    prod_m004:                    [17.97, 20.99, 18.99],
+    prod_m005:                    [9.97, 11.49, 10.79],
+    prod_m006:                    [7.97, 9.29, 8.79],
+    prod_m007:                    [3.97, 4.69, 4.29],
 
     // ── PRODUCE
-    prod_bananas:                 [1.47, 1.79, 1.69, null],
-    prod_apples_gala:             [4.97, 5.79, 5.49, null],
-    prod_strawberries:            [3.97, 4.69, 4.39, null],
-    prod_broccoli:                [2.97, 3.49, 3.29, null],
-    prod_p001:                    [2.47, 2.99, 2.79, null],
-    prod_p002:                    [4.97, 5.79, 5.49, null],
-    prod_p003:                    [2.97, 3.49, 3.29, null],
-    prod_p004:                    [1.97, 2.49, 2.29, null],
-    prod_p005:                    [2.97, 3.49, 3.29, null],
-    prod_p006:                    [2.97, 3.49, 3.29, null],
-    prod_p007:                    [2.97, 3.69, 3.49, null],
-    prod_p008:                    [4.97, 5.79, 5.49, null],
-    prod_p009:                    [2.47, 2.99, 2.79, null],
-    prod_p010:                    [3.97, 4.69, 4.39, null],
+    prod_bananas:                 [1.47, 1.79, 1.69],
+    prod_apples_gala:             [4.97, 5.79, 5.49],
+    prod_strawberries:            [3.97, 4.69, 4.39],
+    prod_broccoli:                [2.97, 3.49, 3.29],
+    prod_p001:                    [2.47, 2.99, 2.79],
+    prod_p002:                    [4.97, 5.79, 5.49],
+    prod_p003:                    [2.97, 3.49, 3.29],
+    prod_p004:                    [1.97, 2.49, 2.29],
+    prod_p005:                    [2.97, 3.49, 3.29],
+    prod_p006:                    [2.97, 3.49, 3.29],
+    prod_p007:                    [2.97, 3.69, 3.49],
+    prod_p008:                    [4.97, 5.79, 5.49],
+    prod_p009:                    [2.47, 2.99, 2.79],
+    prod_p010:                    [3.97, 4.69, 4.39],
 
     // ── BAKERY & BREAD
-    prod_bread_wonder:            [3.97, 4.69, 4.39, null],
-    prod_bread_dempsters:         [4.47, 5.29, 4.99, null],
-    prod_b001:                    [4.47, 5.29, 4.99, null],
-    prod_b002:                    [4.97, 5.79, 5.49, null],
-    prod_b003:                    [3.97, 4.69, 4.39, null],
-    prod_b004:                    [3.47, 3.99, 3.79, null],
+    prod_bread_wonder:            [3.97, 4.69, 4.39],
+    prod_bread_dempsters:         [4.47, 5.29, 4.99],
+    prod_b001:                    [4.47, 5.29, 4.99],
+    prod_b002:                    [4.97, 5.79, 5.49],
+    prod_b003:                    [3.97, 4.69, 4.39],
+    prod_b004:                    [3.47, 3.99, 3.79],
 
     // ── PANTRY & DRY GOODS
-    prod_pasta_barilla:           [2.47, 2.99, 2.79, null],
-    prod_olive_oil_bertolli:      [9.97, 11.79, 10.99, 19.97], // Costco ~3L bottle
-    prod_rice_uncle_bens:         [6.97, 7.99,  7.49,  null],
-    prod_tomato_sauce_hunts:      [2.47, 2.99,  2.79,  null],
-    prod_g001:                    [2.97, 3.49,  3.29,  null],
-    prod_g002:                    [3.97, 4.69,  4.39,  null],
-    prod_g003:                    [9.97, 11.79, 10.99, null],
-    prod_g004:                    [1.47, 1.79,  1.69,  null],
-    prod_g005:                    [2.47, 2.99,  2.79,  null],
-    prod_g006:                    [4.97, 5.79,  5.49,  null],
-    prod_g007:                    [4.47, 5.29,  4.99,  null],
-    prod_g008:                    [6.97, 7.99,  7.49,  null],
+    prod_pasta_barilla:           [2.47, 2.99, 2.79],
+    prod_olive_oil_bertolli:      [9.97, 11.79, 10.99],
+    prod_rice_uncle_bens:         [6.97, 7.99, 7.49],
+    prod_tomato_sauce_hunts:      [2.47, 2.99, 2.79],
+    prod_g001:                    [2.97, 3.49, 3.29],
+    prod_g002:                    [3.97, 4.69, 4.39],
+    prod_g003:                    [9.97, 11.79, 10.99],
+    prod_g004:                    [1.47, 1.79, 1.69],
+    prod_g005:                    [2.47, 2.99, 2.79],
+    prod_g006:                    [4.97, 5.79, 5.49],
+    prod_g007:                    [4.47, 5.29, 4.99],
+    prod_g008:                    [6.97, 7.99, 7.49],
 
     // ── FROZEN
-    prod_peas_frozen_green_giant: [3.47, 3.99, 3.79, null],
-    prod_f001:                    [4.97, 5.79, 5.49, null],
-    prod_f002:                    [3.47, 3.99, 3.79, null],
-    prod_f003:                    [8.97, 10.49, 9.79, null],
-    prod_f004:                    [7.97, 9.49,  8.79, null],
-    prod_f005:                    [3.97, 4.69,  4.39, null],
+    prod_peas_frozen_green_giant: [3.47, 3.99, 3.79],
+    prod_f001:                    [4.97, 5.79, 5.49],
+    prod_f002:                    [3.47, 3.99, 3.79],
+    prod_f003:                    [8.97, 10.49, 9.79],
+    prod_f004:                    [7.97, 9.49, 8.79],
+    prod_f005:                    [3.97, 4.69, 4.39],
 
     // ── SNACKS & CANDY
-    prod_chips_lays:              [4.47, 5.29, 4.99, null],
-    prod_s001:                    [4.97, 5.79, 5.49, null],
-    prod_s002:                    [3.97, 4.69, 4.39, null],
-    prod_s003:                    [3.97, 4.69, 4.39, null],
-    prod_s004:                    [5.97, 6.99, 6.49, null],
-    prod_s005:                    [4.97, 5.79, 5.49, null],
+    prod_chips_lays:              [4.47, 5.29, 4.99],
+    prod_s001:                    [4.97, 5.79, 5.49],
+    prod_s002:                    [3.97, 4.69, 4.39],
+    prod_s003:                    [3.97, 4.69, 4.39],
+    prod_s004:                    [5.97, 6.99, 6.49],
+    prod_s005:                    [4.97, 5.79, 5.49],
 
     // ── BEVERAGES
-    prod_oj_tropicana:            [5.97, 6.99, 6.49, null],
-    prod_v001:                    [6.97, 7.99, 7.49, 22.97], // Costco 36-pk
-    prod_v002:                    [6.97, 7.99, 7.49, null],
-    prod_v003:                    [4.97, 5.79, 5.49, null],
-    prod_v004:                    [5.97, 6.99, 6.49, null],
-    prod_v005:                    [9.97, 11.79, 10.99, 22.97], // Costco large tin
+    prod_oj_tropicana:            [5.97, 6.99, 6.49],
+    prod_v001:                    [6.97, 7.99, 7.49],
+    prod_v002:                    [6.97, 7.99, 7.49],
+    prod_v003:                    [4.97, 5.79, 5.49],
+    prod_v004:                    [5.97, 6.99, 6.49],
+    prod_v005:                    [9.97, 11.79, 10.99],
 
     // ── HOUSEHOLD
-    prod_h001:                    [13.97, 15.99, 14.99, 39.97], // Costco 152-count
-    prod_h002:                    [9.97,  11.79, 10.99, 24.97], // Costco 12-roll
-    prod_h003:                    [11.97, 13.99, 12.99, 29.97], // Costco 30-roll
-    prod_h004:                    [3.97,  4.69,  4.39,  null],
+    prod_h001:                    [13.97, 15.99, 14.99],
+    prod_h002:                    [9.97, 11.79, 10.99],
+    prod_h003:                    [11.97, 13.99, 12.99],
+    prod_h004:                    [3.97, 4.69, 4.39],
 
     // ── PERSONAL CARE
-    prod_pc001:                   [5.97, 6.99, 6.49, null],
-    prod_pc002:                   [2.97, 3.49, 3.29, null],
-    prod_pc003:                   [6.97, 7.99, 7.49, null],
-    prod_pc004:                   [8.97, 10.49, 9.79, null],
+    prod_pc001:                   [5.97, 6.99, 6.49],
+    prod_pc002:                   [2.97, 3.49, 3.29],
+    prod_pc003:                   [6.97, 7.99, 7.49],
+    prod_pc004:                   [8.97, 10.49, 9.79],
   };
 
-  const storeIds = [
-    "store_walmart",
-    "store_dominion",
-    "store_sobeys",
-    "store_costco",
-  ];
+  const storeIds = ["store_walmart", "store_dominion", "store_sobeys"];
 
   // Build all StoreProduct records first
   let storeProductCount = 0;
@@ -1411,7 +1441,7 @@ async function main() {
   console.log("✅ 6 alerts seeded");
 
   console.log("\n🎉 Seed complete!");
-  console.log(`   Stores:        ${stores.length} (Walmart, Dominion, Sobeys, Costco)`);
+  console.log(`   Stores:        ${stores.length} chains + ${localStores.length} NL independents`);
   console.log(`   Products:      ${products.length}`);
   console.log(`   Store products:${storeProductCount}`);
   console.log(`   Price history: ${priceHistoryCount} rows`);

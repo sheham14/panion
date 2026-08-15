@@ -7,6 +7,7 @@ import ListDropdown from "@/components/lists/ListDropdown";
 import ListOptionsMenu from "@/components/lists/ListOptionsMenu";
 import PantryFromListSheet from "@/components/pantry/PantryFromListSheet";
 import { calculateEffectivePrice } from "@/lib/unit-convert";
+import { getStoreMeta } from "@/lib/store-meta";
 
 // ── Types ──────────────────────────────────────
 
@@ -380,7 +381,7 @@ export default function ListsClient({
   const [pantrySheetItems, setPantrySheetItems] = useState<typeof items>([]);
   const [showPantrySheet, setShowPantrySheet] = useState(false);
   const [items, setItems] = useState<ListItem[]>(initialList?.items ?? []);
-  const filteredPreferredStores = preferredStores.filter((s) => s.chain.toLowerCase() !== "costco");
+  const filteredPreferredStores = preferredStores;
   const [activeChain, setActiveChain] = useState<string | null>(null);
   const [editingItem, setEditingItem] = useState<ListItem | null>(null);
   const [addingItem, setAddingItem] = useState(false);
@@ -681,7 +682,7 @@ export default function ListsClient({
       {filteredPreferredStores.length > 0 && (
         <div className="flex gap-2 px-4 py-2.5 overflow-x-auto scrollbar-none flex-shrink-0">
           {filteredPreferredStores.map((store) => {
-            const meta = STORE_META[store.chain.toLocaleLowerCase()];
+            const meta = getStoreMeta(store.chain);
             const isActive = activeChain === store.chain;
             return (
               <button

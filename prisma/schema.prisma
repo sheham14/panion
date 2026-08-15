@@ -62,11 +62,12 @@ enum ProductCategory {
     other
 }
 
-enum PriceSource {
-    manual
-    scraper
-    crowdsourced
-}
+// NOTE: there is deliberately no PriceSource enum.
+//
+// `PriceHistory.source` is a String so new provenance values can be added as
+// convention rather than as a migration — see PRICING-PIPELINE.md §5.1. Current
+// allowed values: "manual" | "scraper" | "flyer" | "crowdsourced" | "partner".
+// They are enforced in code by PRICE_SOURCES in src/lib/pricing/types.ts.
 
 enum PriceReportStatus {
     pending
@@ -360,6 +361,10 @@ model StoreProduct {
     scrapeUrl        String?   @map("scrape_url")
     currentPrice     Decimal?  @map("current_price") @db.Decimal(10, 2)
     isSale           Boolean   @default(false) @map("is_sale")
+    // The pre-sale price, when currentPrice is a sale price. Needed to render
+    // "was $6.49, now $4.99", and to have something to revert to when a sale
+    // expires (see the pricing/expire-sales job).
+    regularPrice     Decimal?  @map("regular_price") @db.Decimal(10, 2)
     saleEndDate      DateTime? @map("sale_end_date")
     lastScrapedAt    DateTime? @map("last_scraped_at")
     extractionFailed Boolean   @default(false) @map("extraction_failed")

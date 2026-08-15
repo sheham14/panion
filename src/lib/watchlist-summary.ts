@@ -1,19 +1,11 @@
 import { prisma } from "@/lib/prisma";
+import { getStoreMeta } from "@/lib/store-meta";
 
-const STORE_META: Record<
-  string,
-  { color: string; bg: string; letter: string }
-> = {
-  walmart:  { color: "#0071ce", bg: "#0071ce18", letter: "W" },
-  dominion: { color: "#c8102e", bg: "#c8102e18", letter: "D" },
-  sobeys:   { color: "#d62b2b", bg: "#d62b2b18", letter: "S" },
-  costco:   { color: "#005dab", bg: "#005dab18", letter: "C" },
-};
 
 export async function getWatchlistSummary(userId: string) {
   const [preferredStores, watchlist] = await Promise.all([
     prisma.userPreferredStore.findMany({
-      where: { userId, store: { chain: { not: "costco" } } },
+      where: { userId },
       include: { store: true },
     }),
     prisma.watchlist.findMany({
@@ -99,11 +91,7 @@ export async function getWatchlistSummary(userId: string) {
     chain: ps.store.chain,
     name: ps.store.name,
     total: storeTotals[ps.store.chain] ?? 0,
-    ...(STORE_META[ps.store.chain] ?? {
-      color: "#aaa",
-      bg: "#aaa18",
-      letter: "?",
-    }),
+    ...getStoreMeta(ps.store.chain),
   }));
 
   return { items, stores, storeTotals, bestStore };

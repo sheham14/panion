@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "// build": "prisma generate is explicit: Prisma 7 dropped @prisma/client's postinstall auto-generate, and prisma/generated is gitignored, so a fresh checkout (Vercel) has no client without this.",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint .",
     "test": "vitest run",

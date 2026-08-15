@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Search, X, Clock, Bell, BellOff, Plus, ArrowLeft } from "lucide-react";
 import AddToListSheet from "@/components/search/AddToListSheet";
+import { getStoreColor } from "@/lib/store-meta";
 
 // ── Types ──────────────────────────────────────
 
@@ -28,13 +29,6 @@ type SearchResult = {
   isWatched: boolean;
 };
 
-const STORE_COLORS: Record<string, string> = {
-  walmart: "#0071ce",
-  loblaws: "#c8102e",
-  metro: "#e30000",
-  sobeys: "#d62b2b",
-  dollarama: "#00853e",
-};
 
 const RECENT_SEARCHES_KEY = "sentinel_recent_searches";
 const MAX_RECENT = 8;
@@ -119,7 +113,7 @@ function ResultCard({
                   <span
                     className="w-1.5 h-1.5 rounded-full"
                     style={{
-                      background: STORE_COLORS[result.bestStore] ?? "#aaa",
+                      background: getStoreColor(result.bestStore),
                     }}
                   />
                   <span className="text-[10px] text-[#888] dark:text-[#555] capitalize">

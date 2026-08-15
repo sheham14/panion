@@ -12,14 +12,12 @@ export const GUEST_PREFERRED_STORES = [
   { chain: "walmart",  name: "Walmart Supercentre - St. John's" },
   { chain: "dominion", name: "Dominion - Stavanger Dr" },
   { chain: "sobeys",   name: "Sobeys - Mount Pearl" },
-  { chain: "costco",   name: "Costco Wholesale - St. John's" },
 ];
 
 const STORE_IDS = {
   walmart:  "store_walmart",
   dominion: "store_dominion",
   sobeys:   "store_sobeys",
-  costco:   "store_costco",
 };
 
 // ─── WATCHLIST SUMMARY (home page) ───────────────────────────────────────────
@@ -110,7 +108,6 @@ export const GUEST_WATCHLIST_SUMMARY = {
         walmart:  { price: 9.97,  scrapedAt: daysFromNow(-1) },
         dominion: { price: 11.79, scrapedAt: daysFromNow(-1) },
         sobeys:   { price: 10.99, scrapedAt: daysFromNow(-1) },
-        costco:   { price: 19.97, scrapedAt: daysFromNow(-1) }, // bulk 3L bottle
       },
       bestPrice: 9.97,
       bestStore: "walmart",
@@ -147,7 +144,6 @@ export const GUEST_WATCHLIST_SUMMARY = {
         walmart:  { price: 6.97,  scrapedAt: daysFromNow(-1) },
         dominion: { price: 7.99,  scrapedAt: daysFromNow(-1) },
         sobeys:   { price: 7.49,  scrapedAt: daysFromNow(-1) },
-        costco:   { price: 22.97, scrapedAt: daysFromNow(-1) }, // 36-pack
       },
       bestPrice: 6.97,
       bestStore: "walmart",
@@ -177,9 +173,8 @@ export const GUEST_WATCHLIST_SUMMARY = {
     { id: STORE_IDS.walmart,  chain: "walmart",  name: "Walmart Supercentre - St. John's", total: 68.29, color: "#0071ce", bg: "#0071ce18", letter: "W" },
     { id: STORE_IDS.dominion, chain: "dominion", name: "Dominion - Stavanger Dr",          total: 79.72, color: "#e2001a", bg: "#e2001a18", letter: "D" },
     { id: STORE_IDS.sobeys,   chain: "sobeys",   name: "Sobeys - Mount Pearl",             total: 74.72, color: "#d62b2b", bg: "#d62b2b18", letter: "S" },
-    { id: STORE_IDS.costco,   chain: "costco",   name: "Costco Wholesale - St. John's",    total: 42.94, color: "#005daa", bg: "#005daa18", letter: "C" },
   ],
-  storeTotals: { walmart: 68.29, dominion: 79.72, sobeys: 74.72, costco: 42.94 },
+  storeTotals: { walmart: 68.29, dominion: 79.72, sobeys: 74.72 },
   bestStore: "walmart",
 };
 
@@ -189,7 +184,7 @@ function makeStoreProducts(
   prices: [number | null, number | null, number | null, number | null],
   productId: string,
 ) {
-  const chains = ["walmart", "dominion", "sobeys", "costco"] as const;
+  const chains = ["walmart", "dominion", "sobeys"] as const;
   return chains
     .flatMap((chain, i) =>
       prices[i] === null

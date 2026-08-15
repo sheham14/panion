@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { auth } from "../../../../../auth";
 import { prisma } from "@/lib/prisma";
+import { getStoreMeta } from "@/lib/store-meta";
 import type { ProductCategory } from "../../../../../prisma/generated/enums";
 import ProductDetailClient from "@/components/product/ProductDetailClient";
 
@@ -58,11 +59,7 @@ async function getProduct(id: string, userId: string | null) {
         isSale: latest?.isSale ?? false,
         scrapedAt: latest?.scrapedAt.toISOString() ?? null,
         daysAgo: days,
-        ...(STORE_META[sp.store.chain] ?? {
-          color: "#aaa",
-          bg: "#aaa18",
-          letter: "?",
-        }),
+        ...getStoreMeta(sp.store.chain),
       };
     })
     .sort((a, b) => {
