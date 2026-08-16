@@ -42,4 +42,4 @@ export function getStoreMeta(chain: string | null | undefined): StoreMeta {
 export const getStoreColor = (chain: string | null | undefined): string =>
   getStoreMeta(chain).color;
 
-export { STORE_META, DEFAULT_META };
+export { DEFAULT_META };

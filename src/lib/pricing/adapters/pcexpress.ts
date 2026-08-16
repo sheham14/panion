@@ -82,6 +82,14 @@ export type NormalizedPcProduct = {
   imageUrl: string | null;
   productUrl: string | null;
   inStock: boolean;
+  /**
+   * The search term that surfaced this product.
+   *
+   * PC Express exposes no category taxonomy — breadcrumbs, aisle and category
+   * facets all come back empty — so the term a product was found under is the
+   * only free category signal available.
+   */
+  foundVia?: string;
 };
 
 const num = (v: unknown): number | null =>
@@ -208,7 +216,9 @@ export async function fetchPcExpressProducts(
       }
 
       for (const p of parsePcExpressResponse(await res.json())) {
-        byCode.set(p.code, p);
+        // First term wins: a product found under "milk" is more likely dairy
+        // than one found later under a broader term.
+        if (!byCode.has(p.code)) byCode.set(p.code, { ...p, foundVia: term });
       }
     } catch (err) {
       errors.push(

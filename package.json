@@ -14,7 +14,10 @@
     "test:setup": "tsx tests/helpers/setup-test-db.ts",
     "seed": "tsx prisma/seed.ts",
     "scrape:flipp": "tsx scripts/scrape-flipp.ts",
-    "scrape:dominion": "tsx scripts/scrape-pcexpress.ts"
+    "scrape:dominion": "tsx scripts/scrape-pcexpress.ts",
+    "catalogue:import": "tsx scripts/import-catalogue.ts",
+    "snapshot:save": "tsx scripts/snapshot.ts save",
+    "snapshot:restore": "tsx scripts/snapshot.ts restore"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.88.0",
