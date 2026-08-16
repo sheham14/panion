@@ -7,6 +7,7 @@ import { ArrowLeft, Bell, BellOff, Plus } from "lucide-react";
 import AddToListSheet from "@/components/search/AddToListSheet";
 import ReportPriceSheet from "@/components/product/ReportPriceSheet";
 import { useGuest } from "@/hooks/useGuest";
+import { productImageSrc } from "@/lib/product-image";
 
 // ── Types ──────────────────────────────────────
 
@@ -174,7 +175,7 @@ export default function ProductDetailClient({
       <div className="relative h-[180px] bg-[#f7f7f7] dark:bg-[#242b2e] flex items-center justify-center flex-shrink-0">
         {product.imageUrl ? (
           <img
-            src={product.imageUrl}
+            src={productImageSrc(product.id, product.imageUrl)!}
             alt={product.name}
             className="h-full w-full object-cover"
           />
@@ -307,7 +308,7 @@ export default function ProductDetailClient({
                   <div className="w-10 h-10 rounded-[8px] bg-[#f7f7f7] dark:bg-[#242b2e] flex items-center justify-center text-[20px] mb-1.5 overflow-hidden">
                     {p.imageUrl ? (
                       <img
-                        src={p.imageUrl}
+                        src={productImageSrc(p.id, p.imageUrl)!}
                         alt={p.name}
                         className="w-full h-full object-cover"
                       />

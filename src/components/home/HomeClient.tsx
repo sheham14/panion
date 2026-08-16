@@ -13,6 +13,7 @@ import {
   Package2,
 } from "lucide-react";
 import AddToListSheet from "@/components/search/AddToListSheet";
+import { productImageSrc } from "@/lib/product-image";
 
 // ── Types ──────────────────────────────────────
 
@@ -222,7 +223,7 @@ function ProductCard({
           <div className="relative w-full aspect-square bg-[#f7f7f7] dark:bg-[#242b2e] flex items-center justify-center overflow-hidden">
             {item.imageUrl ? (
               <img
-                src={item.imageUrl}
+                src={productImageSrc(item.productId, item.imageUrl)!}
                 alt={item.name}
                 className="w-full h-full object-cover"
               />
@@ -339,7 +340,7 @@ function ProductCard({
           <div className="w-12 h-12 rounded-[10px] bg-[#f7f7f7] dark:bg-[#242b2e] flex items-center justify-center text-[22px] overflow-hidden">
             {item.imageUrl ? (
               <img
-                src={item.imageUrl}
+                src={productImageSrc(item.productId, item.imageUrl)!}
                 alt={item.name}
                 className="w-full h-full object-cover"
               />

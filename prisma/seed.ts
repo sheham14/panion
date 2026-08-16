@@ -80,22 +80,24 @@ async function main() {
   console.log(`✅ ${stores.length} chain stores created`);
 
   // ─── NL INDEPENDENT STORES (flyer-only) ───────────────────
-  // Verified present in Flipp's St. John's (A1B 4P1) results, so their weekly
-  // flyers are a real, reliable source. `chain` matches Flipp's merchant_name
-  // lowercased — that string is the join key the Flipp adapter maps on.
+  // Only independents with an actual St. John's metro presence belong here.
   //
-  // Addresses are intentionally null: these are multi-location independents and
-  // we serve chain-level pricing (PRICING-PIPELINE.md §12.1). Fill in a
-  // representative address per store when/if we go per-location.
+  // Flipp returns flyers for a *region*, not a city, so appearing in an
+  // A1B 4P1 query is NOT evidence of a St. John's location — Powell's,
+  // BidGood's, Clover Farm, Value Grocer and Marie's Mini Mart all surfaced
+  // that way and were removed. Verify a real local store before adding one.
+  //
+  // `chain` holds Flipp's merchant_name lowercased — the join key the Flipp
+  // adapter maps on. Address is null because Colemans is multi-location and we
+  // serve chain-level pricing (PRICING-PIPELINE.md §12.1).
   const localStores = await Promise.all(
     (
       [
-        { id: "store_powells", chain: "powell's supermarket", name: "Powell's Supermarket" },
         { id: "store_colemans", chain: "colemans", name: "Colemans" },
-        { id: "store_value_grocer", chain: "value grocer", name: "Value Grocer" },
-        { id: "store_bidgoods", chain: "bidgood's", name: "BidGood's" },
-        { id: "store_clover_farm", chain: "clover farm", name: "Clover Farm" },
-        { id: "store_maries_mini_mart", chain: "marie's mini mart", name: "Marie's Mini Mart" },
+        // Loblaw's discount banner. Flyer-only for now like Colemans; it runs
+        // on the same PC Express platform as Dominion, so it can move to full
+        // catalogue mapping once that adapter exists (PRICING-PIPELINE.md §6.1).
+        { id: "store_nofrills", chain: "no frills", name: "No Frills" },
       ] as const
     ).map((s) =>
       prisma.store.upsert({

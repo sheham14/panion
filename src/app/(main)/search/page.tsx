@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Search, X, Clock, Bell, BellOff, Plus, ArrowLeft } from "lucide-react";
 import AddToListSheet from "@/components/search/AddToListSheet";
 import { getStoreColor } from "@/lib/store-meta";
+import { productImageSrc } from "@/lib/product-image";
 
 // ── Types ──────────────────────────────────────
 
@@ -72,7 +73,7 @@ function ResultCard({
           <div className="w-12 h-12 rounded-[10px] bg-[#f7f7f7] dark:bg-[#242b2e] flex items-center justify-center overflow-hidden">
             {result.imageUrl ? (
               <img
-                src={result.imageUrl}
+                src={productImageSrc(result.id, result.imageUrl)!}
                 alt={result.name}
                 className="w-full h-full object-cover"
               />

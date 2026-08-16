@@ -27,13 +27,9 @@ const STORE_META: Record<string, StoreMeta> = {
   dominion: { color: "#c8102e", bg: "#c8102e18", letter: "D" },
   sobeys: { color: "#d62b2b", bg: "#d62b2b18", letter: "S" },
 
-  // ── NL independents (flyer-only, via Flipp) ───────────────────────────────
-  "powell's supermarket": { color: "#1b7a3d", bg: "#1b7a3d18", letter: "P" },
+  // ── Flyer-only, St. John's metro presence confirmed ──────────────────────
   colemans: { color: "#e4572e", bg: "#e4572e18", letter: "C" },
-  "value grocer": { color: "#7b2d8e", bg: "#7b2d8e18", letter: "V" },
-  "bidgood's": { color: "#0f766e", bg: "#0f766e18", letter: "B" },
-  "clover farm": { color: "#4d7c0f", bg: "#4d7c0f18", letter: "C" },
-  "marie's mini mart": { color: "#b45309", bg: "#b4530918", letter: "M" },
+  "no frills": { color: "#f5c518", bg: "#f5c51818", letter: "N" },
 };
 
 /** Display metadata for a chain. Never throws; unknown chains get a neutral style. */
