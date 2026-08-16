@@ -1,0 +1,838 @@
+{
+  "query": "milk",
+  "requestId": "dc17a8ac-2f67-490d-9799-1d8d7cbfaa7f",
+  "correctedQuery": "milk",
+  "results": [
+    {
+      "code": "20074415003_EA",
+      "name": "2% Partly Skimmed Milk",
+      "description": "Our partly skimmed and homogenized milks are always fresh, always delicious, and offer an excellent source of calcium, protein and vitamin D. Scotsburn has been delivering the best quality milk to Nova Scotia families for more than 100 years. Always fresh and local, Scotsburn has a long history of offering our customers 'nothing but the best' dairy products from Scotsburn, Nova Scotia.",
+      "brand": "Scotsburn",
+      "link": "/2-partly-skimmed-milk/p/20074415003_EA",
+      "imageAssets": [
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/20074415003_EA/en/1/20074415003_en_front_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/20074415003_EA/en/1/20074415003_en_front_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/20074415003_EA/en/1/20074415003_en_front_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/20074415003_EA/en/1/20074415003_en_front_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/20074415003_EA/en/1/20074415003_en_front_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/20074415003_EA/en/8/20074415003_enfr_beauty_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/20074415003_EA/en/8/20074415003_enfr_beauty_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/20074415003_EA/en/8/20074415003_enfr_beauty_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/20074415003_EA/en/8/20074415003_enfr_beauty_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/20074415003_EA/en/8/20074415003_enfr_beauty_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/20074415003_EA/en/10/20074415003_en_brand_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/20074415003_EA/en/10/20074415003_en_brand_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/20074415003_EA/en/10/20074415003_en_brand_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/20074415003_EA/en/10/20074415003_en_brand_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/20074415003_EA/en/10/20074415003_en_brand_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        }
+      ],
+      "packageSize": "2 l",
+      "shoppable": true,
+      "prices": {
+        "price": {
+          "value": 4.76,
+          "unit": "ea",
+          "quantity": 1,
+          "reasonCode": 4,
+          "type": "REGULAR",
+          "expiryDate": "9999-12-31T00:00"
+        },
+        "wasPrice": null,
+        "comparisonPrices": [
+          {
+            "value": 0.24,
+            "unit": "ml",
+            "quantity": 100,
+            "reasonCode": null,
+            "type": "REGULAR",
+            "expiryDate": null
+          }
+        ],
+        "memberOnlyPrice": null,
+        "memberOnlyComparisonPrices": [],
+        "ehfTotal": null,
+        "deposit": null,
+        "environmentalHandlingFee": null,
+        "taxInfo": ""
+      },
+      "pricingUnits": {
+        "type": "SOLD_BY_EACH",
+        "unit": "ea",
+        "interval": 1,
+        "minOrderQuantity": 1,
+        "maxOrderQuantity": 24,
+        "weighted": false
+      },
+      "badges": {
+        "textBadge": null,
+        "loyaltyBadge": null,
+        "dealBadge": null,
+        "newItemBadge": null,
+        "hotmBadge": null,
+        "promotionalBadge": null,
+        "recyclingFeeBadge": null,
+        "subscribeEarnBadge": null,
+        "mustTryBadge": null,
+        "preparedInCanadaBadge": null,
+        "madeInCanadaBadge": null,
+        "productOfCanadaBadge": null,
+        "tariffAppliedBadge": null,
+        "preparedInQuebecBadge": null
+      },
+      "dealPrice": null,
+      "mopDealPrice": null,
+      "stockStatus": "OK",
+      "articleNumber": "20074415003",
+      "ingredients": null,
+      "promotions": [],
+      "memberOnlyPromotions": null,
+      "isVariant": false,
+      "offerType": "OG",
+      "variantTheme": null,
+      "hasMultipleOffers": false,
+      "sponsored": false,
+      "sponsoredCreative": null,
+      "aisle": null,
+      "sellerId": null,
+      "upcs": [
+        "06312420220"
+      ],
+      "sellerName": null,
+      "uom": "EA",
+      "taxes": null,
+      "fees": null,
+      "ratings": null
+    },
+    {
+      "code": "20074415004_EA",
+      "name": "1% Partly Skimmed Milk",
+      "description": "Our partly skimmed and homogenized milks are always fresh, always delicious, and offer an excellent source of calcium, protein and vitamin D. Scotsburn has been delivering the best quality milk to Nova Scotia families for more than 100 years. Always fresh and local, Scotsburn has a long history of offering our customers 'nothing but the best' dairy products from Scotsburn, Nova Scotia.",
+      "brand": "Scotsburn",
+      "link": "/1-partly-skimmed-milk/p/20074415004_EA",
+      "imageAssets": [
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/20074415004_EA/en/1/20074415004_en_front_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/20074415004_EA/en/1/20074415004_en_front_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/20074415004_EA/en/1/20074415004_en_front_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/20074415004_EA/en/1/20074415004_en_front_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/20074415004_EA/en/1/20074415004_en_front_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/20074415004_EA/en/8/20074415004_enfr_beauty_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/20074415004_EA/en/8/20074415004_enfr_beauty_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/20074415004_EA/en/8/20074415004_enfr_beauty_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/20074415004_EA/en/8/20074415004_enfr_beauty_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/20074415004_EA/en/8/20074415004_enfr_beauty_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/20074415004_EA/en/10/20074415004_en_brand_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/20074415004_EA/en/10/20074415004_en_brand_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/20074415004_EA/en/10/20074415004_en_brand_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/20074415004_EA/en/10/20074415004_en_brand_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/20074415004_EA/en/10/20074415004_en_brand_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        }
+      ],
+      "packageSize": "2 l",
+      "shoppable": true,
+      "prices": {
+        "price": {
+          "value": 4.76,
+          "unit": "ea",
+          "quantity": 1,
+          "reasonCode": 4,
+          "type": "REGULAR",
+          "expiryDate": "9999-12-31T00:00"
+        },
+        "wasPrice": null,
+        "comparisonPrices": [
+          {
+            "value": 0.24,
+            "unit": "ml",
+            "quantity": 100,
+            "reasonCode": null,
+            "type": "REGULAR",
+            "expiryDate": null
+          }
+        ],
+        "memberOnlyPrice": null,
+        "memberOnlyComparisonPrices": [],
+        "ehfTotal": null,
+        "deposit": null,
+        "environmentalHandlingFee": null,
+        "taxInfo": ""
+      },
+      "pricingUnits": {
+        "type": "SOLD_BY_EACH",
+        "unit": "ea",
+        "interval": 1,
+        "minOrderQuantity": 1,
+        "maxOrderQuantity": 24,
+        "weighted": false
+      },
+      "badges": {
+        "textBadge": null,
+        "loyaltyBadge": null,
+        "dealBadge": null,
+        "newItemBadge": null,
+        "hotmBadge": null,
+        "promotionalBadge": null,
+        "recyclingFeeBadge": null,
+        "subscribeEarnBadge": null,
+        "mustTryBadge": null,
+        "preparedInCanadaBadge": null,
+        "madeInCanadaBadge": null,
+        "productOfCanadaBadge": null,
+        "tariffAppliedBadge": null,
+        "preparedInQuebecBadge": null
+      },
+      "dealPrice": null,
+      "mopDealPrice": null,
+      "stockStatus": "OK",
+      "articleNumber": "20074415004",
+      "ingredients": null,
+      "promotions": [],
+      "memberOnlyPromotions": null,
+      "isVariant": false,
+      "offerType": "OG",
+      "variantTheme": null,
+      "hasMultipleOffers": false,
+      "sponsored": false,
+      "sponsoredCreative": null,
+      "aisle": null,
+      "sellerId": null,
+      "upcs": [
+        "06312420320"
+      ],
+      "sellerName": null,
+      "uom": "EA",
+      "taxes": null,
+      "fees": null,
+      "ratings": null
+    },
+    {
+      "code": "20025203001_EA",
+      "name": "2% Partly Skimmed Milk",
+      "description": "Our partly skimmed and homogenized milks are always fresh, always delicious, and offer an excellent source of calcium, protein and vitamin D. Scotsburn has been delivering the best quality milk to Nova Scotia families for more than 100 years. Always fresh and local, Scotsburn has a long history of offering our customers 'nothing but the best' dairy products from Scotsburn, Nova Scotia.",
+      "brand": "Scotsburn",
+      "link": "/2-partly-skimmed-milk/p/20025203001_EA",
+      "imageAssets": [
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/20025203001_EA/en/1/20025203001_en_front_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/20025203001_EA/en/1/20025203001_en_front_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/20025203001_EA/en/1/20025203001_en_front_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/20025203001_EA/en/1/20025203001_en_front_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/20025203001_EA/en/1/20025203001_en_front_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/20025203001_EA/en/8/20025203001_enfr_beauty_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/20025203001_EA/en/8/20025203001_enfr_beauty_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/20025203001_EA/en/8/20025203001_enfr_beauty_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/20025203001_EA/en/8/20025203001_enfr_beauty_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/20025203001_EA/en/8/20025203001_enfr_beauty_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/20025203001_EA/en/10/20025203001_en_brand_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/20025203001_EA/en/10/20025203001_en_brand_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/20025203001_EA/en/10/20025203001_en_brand_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/20025203001_EA/en/10/20025203001_en_brand_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/20025203001_EA/en/10/20025203001_en_brand_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        }
+      ],
+      "packageSize": "1 l",
+      "shoppable": true,
+      "prices": {
+        "price": {
+          "value": 3.44,
+          "unit": "ea",
+          "quantity": 1,
+          "reasonCode": 4,
+          "type": "REGULAR",
+          "expiryDate": "9999-12-31T00:00"
+        },
+        "wasPrice": null,
+        "comparisonPrices": [
+          {
+            "value": 0.34,
+            "unit": "ml",
+            "quantity": 100,
+            "reasonCode": null,
+            "type": "REGULAR",
+            "expiryDate": null
+          }
+        ],
+        "memberOnlyPrice": null,
+        "memberOnlyComparisonPrices": [],
+        "ehfTotal": null,
+        "deposit": null,
+        "environmentalHandlingFee": null,
+        "taxInfo": ""
+      },
+      "pricingUnits": {
+        "type": "SOLD_BY_EACH",
+        "unit": "ea",
+        "interval": 1,
+        "minOrderQuantity": 1,
+        "maxOrderQuantity": 24,
+        "weighted": false
+      },
+      "badges": {
+        "textBadge": null,
+        "loyaltyBadge": null,
+        "dealBadge": null,
+        "newItemBadge": null,
+        "hotmBadge": null,
+        "promotionalBadge": null,
+        "recyclingFeeBadge": null,
+        "subscribeEarnBadge": null,
+        "mustTryBadge": null,
+        "preparedInCanadaBadge": null,
+        "madeInCanadaBadge": null,
+        "productOfCanadaBadge": null,
+        "tariffAppliedBadge": null,
+        "preparedInQuebecBadge": null
+      },
+      "dealPrice": null,
+      "mopDealPrice": null,
+      "stockStatus": "OK",
+      "articleNumber": "20025203001",
+      "ingredients": null,
+      "promotions": [],
+      "memberOnlyPromotions": null,
+      "isVariant": false,
+      "offerType": "OG",
+      "variantTheme": null,
+      "hasMultipleOffers": false,
+      "sponsored": false,
+      "sponsoredCreative": null,
+      "aisle": null,
+      "sellerId": null,
+      "upcs": [
+        "06312420240"
+      ],
+      "sellerName": null,
+      "uom": "EA",
+      "taxes": null,
+      "fees": null,
+      "ratings": null
+    },
+    {
+      "code": "21436900_EA",
+      "name": "Almond And Oat Non Dairy Caramel Macchiato Coffee Enhancer",
+      "description": "<p>Now you can enjoy your favourite STARBUCKS café flavour in the comfort of your own home with STARBUCKS Almond & Oat Non Dairy Caramel Macchiato Coffee Enhancer (828 ml). Inspired by STARBUCKS classic and delicious Caramel Macchiato, we crafted a smooth blend of almond and oat along with sweet, buttery caramel and vanilla flavours, so you can always look forward to enjoying your morning, afternoon or evening treat. Add this STARBUCKS enhancer to hot or iced coffee drinks as a non dairy alternative to creamer or half and half. Simply shake well before use to elevate your cup of coffee!</p><ul><li>Flavoured coffee enhancer with a smooth blend of almond and oat, and layers of sweet, buttery caramel with hints of vanilla flavour</li><li>STARBUCKS Almond & Oat Non Dairy Caramel Macchiato Coffee Enhancer (828 ml) is a delightful non dairy alternative to milk, creamer or half-and-half</li><li>Delicious in hot and cold coffee drinks with a perfectly smooth and balanced taste that pairs well with your favourite STARBUCKS roast</li><li>Only 30 calories per tablespoon (15 ml)</li><li>Proudly prepared in Canada with no artificial colours & flavours</li></ul>",
+      "brand": "Starbucks",
+      "link": "/almond-and-oat-non-dairy-caramel-macchiato-coffee/p/21436900_EA",
+      "imageAssets": [
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/1/21436900_en_1_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/1/21436900_en_1_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/1/21436900_en_1_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/1/21436900_en_1_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/1/21436900_en_1_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/2/21436900_en_2_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/2/21436900_en_2_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/2/21436900_en_2_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/2/21436900_en_2_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/2/21436900_en_2_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/3/21436900_en_3_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/3/21436900_en_3_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/3/21436900_en_3_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/3/21436900_en_3_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/3/21436900_en_3_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/4/21436900_en_4_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/4/21436900_en_4_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/4/21436900_en_4_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/4/21436900_en_4_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/4/21436900_en_4_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/5/21436900_en_5_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/5/21436900_en_5_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/5/21436900_en_5_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/5/21436900_en_5_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/5/21436900_en_5_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/6/21436900_en_6_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/6/21436900_en_6_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/6/21436900_en_6_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/6/21436900_en_6_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/6/21436900_en_6_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/7/21436900_en_7_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/7/21436900_en_7_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/7/21436900_en_7_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/7/21436900_en_7_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/7/21436900_en_7_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/8/21436900_en_8_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/8/21436900_en_8_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/8/21436900_en_8_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/8/21436900_en_8_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/8/21436900_en_8_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/9/21436900_en_9_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/9/21436900_en_9_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/9/21436900_en_9_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/9/21436900_en_9_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/9/21436900_en_9_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/10/21436900_en_10_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/10/21436900_en_10_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/10/21436900_en_10_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/10/21436900_en_10_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21436900_EA/en/10/21436900_en_10_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        }
+      ],
+      "packageSize": "828 ml",
+      "shoppable": true,
+      "prices": {
+        "price": {
+          "value": 7.75,
+          "unit": "ea",
+          "quantity": 1,
+          "reasonCode": 3,
+          "type": "SPECIAL",
+          "expiryDate": "2026-08-26T00:00"
+        },
+        "wasPrice": {
+          "value": 8.99,
+          "unit": "ea",
+          "quantity": 1,
+          "reasonCode": null,
+          "type": "WAS",
+          "expiryDate": null
+        },
+        "comparisonPrices": [
+          {
+            "value": 0.94,
+            "unit": "ml",
+            "quantity": 100,
+            "reasonCode": null,
+            "type": "REGULAR",
+            "expiryDate": null
+          }
+        ],
+        "memberOnlyPrice": null,
+        "memberOnlyComparisonPrices": [],
+        "ehfTotal": null,
+        "deposit": null,
+        "environmentalHandlingFee": null,
+        "taxInfo": ""
+      },
+      "pricingUnits": {
+        "type": "SOLD_BY_EACH",
+        "unit": "ea",
+        "interval": 1,
+        "minOrderQuantity": 1,
+        "maxOrderQuantity": 24,
+        "weighted": false
+      },
+      "badges": {
+        "textBadge": null,
+        "loyaltyBadge": null,
+        "dealBadge": {
+          "type": "SALE",
+          "text": "SAVE $1.24",
+          "mopDealText": null,
+          "points": null,
+          "name": "SALE",
+          "expiryDate": "2026-08-26T00:00:00Z",
+          "promoType": null
+        },
+        "newItemBadge": null,
+        "hotmBadge": null,
+        "promotionalBadge": null,
+        "recyclingFeeBadge": null,
+        "subscribeEarnBadge": null,
+        "mustTryBadge": null,
+        "preparedInCanadaBadge": {
+          "type": "PREPARED_IN_CANADA",
+          "text": "Prepared in Canada",
+          "mopDealText": null,
+          "points": null,
+          "name": "PREPARED_IN_CANADA",
+          "expiryDate": null,
+          "promoType": null
+        },
+        "madeInCanadaBadge": null,
+        "productOfCanadaBadge": null,
+        "tariffAppliedBadge": null,
+        "preparedInQuebecBadge": null
+      },
+      "dealPrice": null,
+      "mopDealPrice": null,
+      "stockStatus": "OK",
+      "articleNumber": "21436900",
+      "ingredients": null,
+      "promotions": [],
+      "memberOnlyPromotions": null,
+      "isVariant": false,
+      "offerType": "OG",
+      "variantTheme": null,
+      "hasMultipleOffers": false,
+      "sponsored": true,
+      "sponsoredCreative": {
+        "adServingId": "e118a31a-71cf-46b8-a0e6-01c6b8a8ab5c",
+        "adPlacement": {
+          "adPlacementId": "3cd084d9-5457-49b9-b690-a420253064e3",
+          "adPlacementType": null
+        },
+        "creativeId": "b5d28272-19bf-4ee4-845d-b2f79bb57796",
+        "creativeBrandId": null,
+        "creativeCampaignId": "8a875295-d2ec-483e-af31-b6e32623c5d6",
+        "adGroupId": "42e91c6e-c679-4bb0-a0db-9a7e13708bd2",
+        "creativeCost": {
+          "costModel": "CPC",
+          "rate": "RBOPO7L4es+xltz2SrtcC+Ahc06OH+rT13kK4eLwPMQ="
+        },
+        "target": "milk",
+        "searchType": "SEARCH",
+        "targetAdType": "CROSS_CATEGORY",
+        "matchType": "EXACT_MATCH",
+        "targetedKeyword": "milk",
+        "targetPageType": null
+      },
+      "aisle": null,
+      "sellerId": null,
+      "upcs": [
+        "05500020114"
+      ],
+      "sellerName": null,
+      "uom": "EA",
+      "taxes": null,
+      "fees": null,
+      "ratings": null
+    },
+    {
+      "code": "21460123_EA",
+      "name": "Almond And Oat Non Dairy Pumpkin Spice Latte Coffee Enhancer",
+      "description": "<p>Now you can enjoy your favourite STARBUCKS café flavour in the comfort of your own home with STARBUCKS Almond & Oat Non-Dairy Pumpkin Spice Latte Coffee Enhancer (828 ml). Inspired by STARBUCKS classic and delicious Pumpkin Spice Latte, we crafted a smooth blend of almond and oat along with delicious flavours of pumpkin, cinnamon and nutmeg to pair with our coffee for a perfect taste of fall. Add this STARBUCKS enhancer to hot or iced coffee drinks as a non-dairy alternative to creamer or half and half. Simply shake well before use to elevate your cup of coffee!</p><ul><li>Flavoured coffee enhancer with a smooth blend of almond and oat, and delicious flavours of pumpkin, cinnamon and nutmeg to pair with our coffee for a perfect taste of fall</li><li>STARBUCKS Almond & Oat Non-Dairy Pumpkin Spice Latte Coffee Enhancer (828 ml) is a delightful non-dairy alternative to milk, creamer or half-and-half</li><li>Delicious in hot and cold coffee drinks with a perfectly smooth and balanced taste that pairs well with your favourite STARBUCKS roast</li><li>Only 30 calories per tablespoon (15 ml)</li><li>Proudly prepared in Canada with no artificial colours & flavours</li></ul>",
+      "brand": "Starbucks",
+      "link": "/almond-and-oat-non-dairy-pumpkin-spice-latte-coffe/p/21460123_EA",
+      "imageAssets": [
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/1/21460123_en_1_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/1/21460123_en_1_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/1/21460123_en_1_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/1/21460123_en_1_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/1/21460123_en_1_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/2/21460123_en_2_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/2/21460123_en_2_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/2/21460123_en_2_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/2/21460123_en_2_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/2/21460123_en_2_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/3/21460123_en_3_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/3/21460123_en_3_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/3/21460123_en_3_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/3/21460123_en_3_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/3/21460123_en_3_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/4/21460123_en_4_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/4/21460123_en_4_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/4/21460123_en_4_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/4/21460123_en_4_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/4/21460123_en_4_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/5/21460123_en_5_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/5/21460123_en_5_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/5/21460123_en_5_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/5/21460123_en_5_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/5/21460123_en_5_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/6/21460123_en_6_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/6/21460123_en_6_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/6/21460123_en_6_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/6/21460123_en_6_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/6/21460123_en_6_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/7/21460123_en_7_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/7/21460123_en_7_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/7/21460123_en_7_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/7/21460123_en_7_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/7/21460123_en_7_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/8/21460123_en_8_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/8/21460123_en_8_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/8/21460123_en_8_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/8/21460123_en_8_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/8/21460123_en_8_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/9/21460123_en_9_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/9/21460123_en_9_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/9/21460123_en_9_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/9/21460123_en_9_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/9/21460123_en_9_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/10/21460123_en_10_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/10/21460123_en_10_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/10/21460123_en_10_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/10/21460123_en_10_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21460123_EA/en/10/21460123_en_10_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        }
+      ],
+      "packageSize": "828 ml",
+      "shoppable": true,
+      "prices": {
+        "price": {
+          "value": 7.75,
+          "unit": "ea",
+          "quantity": 1,
+          "reasonCode": 3,
+          "type": "SPECIAL",
+          "expiryDate": "2026-08-26T00:00"
+        },
+        "wasPrice": null,
+        "comparisonPrices": [
+          {
+            "value": 0.94,
+            "unit": "ml",
+            "quantity": 100,
+            "reasonCode": null,
+            "type": "REGULAR",
+            "expiryDate": null
+          }
+        ],
+        "memberOnlyPrice": null,
+        "memberOnlyComparisonPrices": [],
+        "ehfTotal": null,
+        "deposit": null,
+        "environmentalHandlingFee": null,
+        "taxInfo": ""
+      },
+      "pricingUnits": {
+        "type": "SOLD_BY_EACH",
+        "unit": "ea",
+        "interval": 1,
+        "minOrderQuantity": 1,
+        "maxOrderQuantity": 25,
+        "weighted": false
+      },
+      "badges": {
+        "textBadge": null,
+        "loyaltyBadge": null,
+        "dealBadge": null,
+        "newItemBadge": null,
+        "hotmBadge": null,
+        "promotionalBadge": null,
+        "recyclingFeeBadge": null,
+        "subscribeEarnBadge": null,
+        "mustTryBadge": null,
+        "preparedInCanadaBadge": {
+          "type": "PREPARED_IN_CANADA",
+          "text": "Prepared in Canada",
+          "mopDealText": null,
+          "points": null,
+          "name": "PREPARED_IN_CANADA",
+          "expiryDate": null,
+          "promoType": null
+        },
+        "madeInCanadaBadge": null,
+        "productOfCanadaBadge": null,
+        "tariffAppliedBadge": null,
+        "preparedInQuebecBadge": null
+      },
+      "dealPrice": null,
+      "mopDealPrice": null,
+      "stockStatus": "OK",
+      "articleNumber": "21460123",
+      "ingredients": null,
+      "promotions": [],
+      "memberOnlyPromotions": null,
+      "isVariant": false,
+      "offerType": "OG",
+      "variantTheme": null,
+      "hasMultipleOffers": false,
+      "sponsored": true,
+      "sponsoredCreative": {
+        "adServingId": "e118a31a-71cf-46b8-a0e6-01c6b8a8ab5c",
+        "adPlacement": {
+          "adPlacementId": "3cd084d9-5457-49b9-b690-a420253064e3",
+          "adPlacementType": null
+        },
+        "creativeId": "e02ac5ea-0825-4f89-8a6a-1fad43299de5",
+        "creativeBrandId": null,
+        "creativeCampaignId": "8a875295-d2ec-483e-af31-b6e32623c5d6",
+        "adGroupId": "42e91c6e-c679-4bb0-a0db-9a7e13708bd2",
+        "creativeCost": {
+          "costModel": "CPC",
+          "rate": "JhUY0dhKIn+RzhDDoZnaoyTOj2zPkC3K7KKHynShqnA="
+        },
+        "target": "milk",
+        "searchType": "SEARCH",
+        "targetAdType": "CROSS_CATEGORY",
+        "matchType": "EXACT_MATCH",
+        "targetedKeyword": "milk",
+        "targetPageType": null
+      },
+      "aisle": null,
+      "sellerId": null,
+      "upcs": [
+        "05500020417"
+      ],
+      "sellerName": null,
+      "uom": "EA",
+      "taxes": null,
+      "fees": null,
+      "ratings": null
+    }
+  ],
+  "pagination": {
+    "pageNumber": 0,
+    "pageSize": 3,
+    "totalResults": 64
+  },
+  "categoryName": null,
+  "modelVersion": "cim-retriever-loblawspcx-v20260807",
+  "searchVariation": "PCX_SEARCH_CIMULATE:SEARCH_CIMULATE_ENABLED|PCX_SEARCH_PERSONALIZATION:P13N_DISABLED",
+  "offerTypes": {
+    "OG": 62
+  },
+  "canonicalTerm": "milk",
+  "ml_corrected_term": "",
+  "es_corrected_term": "",
+  "qu_corrected_term": "",
+  "selectedCategory": null
+}

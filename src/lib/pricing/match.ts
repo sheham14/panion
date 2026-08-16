@@ -18,7 +18,61 @@ export type CanonicalProduct = {
   unitSize: string | null;
   unitQuantity: number | null;
   unitMeasure: string | null;
+  barcode?: string | null;
 };
+
+/**
+ * Normalize a UPC/EAN for comparison.
+ *
+ * Retailers pad and trim these inconsistently — the same product can appear as
+ * `05749801032`, `5749801032` or `0005749801032`. Strip non-digits and leading
+ * zeros so all three compare equal.
+ */
+export function normalizeBarcode(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const digits = raw.replace(/\D/g, "").replace(/^0+/, "");
+  // Shorter than 8 digits isn't a GS1 identifier; likely a PLU or garbage.
+  return digits.length >= 8 ? digits : null;
+}
+
+/**
+ * Exact match on barcode.
+ *
+ * This is the reliable path and should always be tried first. A UPC is a
+ * manufacturer-assigned GS1 identity, so it is the same number at every
+ * retailer for a national brand, and it encodes pack size — which makes the
+ * 400g-vs-750g confusion §8 warns about structurally impossible. Name matching
+ * is the fallback for loose produce (PLU, not UPC), in-store butcher/bakery
+ * items (store-generated barcodes), and store brands.
+ */
+export function matchByBarcode(
+  barcode: string | null | undefined,
+  products: CanonicalProduct[],
+): MatchResult | null {
+  const target = normalizeBarcode(barcode);
+  if (!target) return null;
+
+  for (const p of products) {
+    if (normalizeBarcode(p.barcode) === target) {
+      return { productId: p.id, confidence: 1, reason: `barcode=${target}` };
+    }
+  }
+  return null;
+}
+
+/**
+ * Barcode first, name matching as fallback.
+ *
+ * The single entry point adapters should use.
+ */
+export function matchProductByBarcodeOrName(
+  input: { barcode?: string | null; name: string },
+  products: CanonicalProduct[],
+): MatchResult | null {
+  return (
+    matchByBarcode(input.barcode, products) ?? matchProduct(input.name, products)
+  );
+}
 
 export type MatchResult = {
   productId: string;
@@ -36,14 +90,21 @@ const STOP_WORDS = new Set([
 
 /** Lowercase, strip punctuation and accents, collapse whitespace. */
 export function normalizeName(raw: string): string {
-  return raw
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "") // strip diacritics
-    .replace(/[®™©]/g, "")
-    .replace(/[^a-z0-9\s.]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+  return (
+    raw
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "") // strip diacritics
+      .replace(/[®™©]/g, "")
+      // Percentages carry identity — milk fat especially. "2%" and "3.25%" must
+      // survive tokenization, so fold them into a word before bare numbers get
+      // stripped. Without this, "2% Milk" and "3.25% Homogenized Milk"
+      // tokenized identically and matched each other.
+      .replace(/(\d+(?:\.\d+)?)\s*%/g, "$1pct")
+      .replace(/[^a-z0-9\s.]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+  );
 }
 
 /** Content tokens, minus stop words and bare numbers. */
@@ -159,6 +220,8 @@ const VARIANT_MARKERS = [
   "unsalted", "lactose", "gluten", "organic", "vegan",
   "chocolate", "strawberry", "vanilla",
   "mini", "jumbo pack", "bites",
+  // format variants: a stick pack is not a block
+  "sticks", "spread", "whipped", "powder", "concentrate",
 ];
 
 /** True when the two names disagree on a mutually-exclusive attribute. */
@@ -180,6 +243,17 @@ export function hasConflictingAttribute(
   // Asymmetric case: a variant marker on the item but not the product.
   for (const marker of VARIANT_MARKERS) {
     if (items.has(marker) && !products.has(marker)) return true;
+  }
+
+  // Percentages (milk fat, cream, ground beef lean) identify the variant. If
+  // both sides state one and they differ, it's a different product — 2% milk
+  // is not 3.25% homogenized.
+  const pct = (set: Set<string>) =>
+    [...set].filter((t) => /^\d+(\.\d+)?pct$/.test(t));
+  const itemPct = pct(items);
+  const productPct = pct(products);
+  if (itemPct.length && productPct.length) {
+    if (!itemPct.some((p) => productPct.includes(p))) return true;
   }
 
   return false;

@@ -13,7 +13,8 @@
     "test:coverage": "vitest run --coverage",
     "test:setup": "tsx tests/helpers/setup-test-db.ts",
     "seed": "tsx prisma/seed.ts",
-    "scrape:flipp": "tsx scripts/scrape-flipp.ts"
+    "scrape:flipp": "tsx scripts/scrape-flipp.ts",
+    "scrape:dominion": "tsx scripts/scrape-pcexpress.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.88.0",

@@ -5,6 +5,9 @@ import {
   sizesCompatible,
   isMultiProductListing,
   hasConflictingAttribute,
+  normalizeBarcode,
+  matchByBarcode,
+  matchProductByBarcodeOrName,
   normalizeName,
   tokenize,
   type CanonicalProduct,
@@ -195,5 +198,76 @@ describe("hasConflictingAttribute", () => {
   it("allows agreement or absence", () => {
     expect(hasConflictingAttribute(["chicken", "breast"], ["chicken", "breast"])).toBe(false);
     expect(hasConflictingAttribute(["chicken"], ["chicken", "breast"])).toBe(false);
+  });
+});
+
+describe("matchProduct — bugs found building the Dominion adapter", () => {
+  const DAIRY: CanonicalProduct[] = [
+    { id: "milk_2pct_2l", name: "Central Dairies 2% Milk", brand: "Central Dairies", unitSize: "2L", unitQuantity: 2, unitMeasure: "L" },
+    { id: "butter_lactantia", name: "Lactantia Butter Salted", brand: "Lactantia", unitSize: "454g", unitQuantity: 454, unitMeasure: "g" },
+  ];
+  const m = (n: string) => matchProduct(n, DAIRY)?.productId ?? null;
+
+  it("does not match a different fat percentage", () => {
+    // 05749801031 is 3.25% homogenized; tokenizing dropped the bare number so
+    // it looked identical to the 2% product.
+    expect(m("Central Dairies 3.25% Homogenized Milk 2 l")).toBeNull();
+    expect(m("Central Dairies 1% Milk 2 l")).toBeNull();
+    expect(m("Central Dairies 2% Milk 2 l")).toBe("milk_2pct_2l");
+  });
+
+  it("does not match a different pack size of the same product", () => {
+    // 05749801042 is the 1L. Only caught when packageSize is part of the name
+    // passed to the matcher.
+    expect(m("Central Dairies 2% Milk 1 l")).toBeNull();
+    expect(m("Central Dairies 2% Milk 473 ml")).toBeNull();
+  });
+
+  it("does not match a different format at the same weight", () => {
+    // Sea Salted Butter Sticks 454g vs a 454g block.
+    expect(m("Lactantia Sea Salted Butter Sticks 454 g")).toBeNull();
+    expect(m("Lactantia Salted Butter 454 g")).toBe("butter_lactantia");
+  });
+});
+
+describe("barcode matching", () => {
+  const WITH_BARCODES: CanonicalProduct[] = [
+    { id: "p1", name: "Central Dairies 2% Milk", brand: "Central Dairies", unitSize: "2L", unitQuantity: 2, unitMeasure: "L", barcode: "05749801032" },
+  ];
+
+  it("normalizes padding so retailer variants compare equal", () => {
+    expect(normalizeBarcode("05749801032")).toBe("5749801032");
+    expect(normalizeBarcode("5749801032")).toBe("5749801032");
+    expect(normalizeBarcode("0005749801032")).toBe("5749801032");
+  });
+
+  it("rejects PLU codes and junk as barcodes", () => {
+    expect(normalizeBarcode("4011")).toBeNull(); // loose-produce PLU
+    expect(normalizeBarcode("")).toBeNull();
+    expect(normalizeBarcode(null)).toBeNull();
+  });
+
+  it("matches exactly on barcode regardless of name", () => {
+    const r = matchByBarcode("5749801032", WITH_BARCODES);
+    expect(r?.productId).toBe("p1");
+    expect(r?.confidence).toBe(1);
+  });
+
+  it("prefers barcode over name when both could match", () => {
+    const r = matchProductByBarcodeOrName(
+      { barcode: "05749801032", name: "something else entirely" },
+      WITH_BARCODES,
+    );
+    expect(r?.productId).toBe("p1");
+    expect(r?.reason).toContain("barcode=");
+  });
+
+  it("falls back to name matching when there is no barcode", () => {
+    const r = matchProductByBarcodeOrName(
+      { barcode: null, name: "Central Dairies 2% Milk 2 l" },
+      WITH_BARCODES,
+    );
+    expect(r?.productId).toBe("p1");
+    expect(r?.reason).not.toContain("barcode=");
   });
 });

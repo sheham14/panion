@@ -1,0 +1,1363 @@
+{
+  "query": "cheese",
+  "modelVersion": "cim-retriever-loblawspcx-v20260807",
+  "results": [
+    {
+      "code": "20975773_EA",
+      "name": "Marble Farmer's Cheese",
+      "description": "<p>Marble Farmer’s Cheese combines mild creaminess with rich cheddar flavour for a perfectly balanced taste. Smooth, sliceable, and easy to shred, it’s ideal for sandwiches, burgers, casseroles, or charcuterie boards. A versatile everyday cheese, it melts beautifully for that classic gooey finish.</p><p>The †Simple Check™ symbol appears on no name® products made without 10 ingredients such as synthetic colours*, artificial flavours and artificial sweeteners. *As defined in Canadian regulations. To learn more visit noname.ca/simplecheck</p>",
+      "brand": "No Name",
+      "link": "/marble-farmer-s-cheese/p/20975773_EA",
+      "imageAssets": [
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/20975773_EA/en/1/20975773_en_front_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/20975773_EA/en/1/20975773_en_front_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/20975773_EA/en/1/20975773_en_front_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/20975773_EA/en/1/20975773_en_front_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/20975773_EA/en/1/20975773_en_front_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/20975773_EA/en/2/20975773_en_angle_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/20975773_EA/en/2/20975773_en_angle_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/20975773_EA/en/2/20975773_en_angle_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/20975773_EA/en/2/20975773_en_angle_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/20975773_EA/en/2/20975773_en_angle_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        }
+      ],
+      "packageSize": "700 g",
+      "shoppable": true,
+      "prices": {
+        "price": {
+          "value": 10.99,
+          "unit": "ea",
+          "quantity": 1,
+          "reasonCode": 4,
+          "type": "REGULAR",
+          "expiryDate": "9999-12-31T00:00"
+        },
+        "wasPrice": null,
+        "comparisonPrices": [
+          {
+            "value": 1.57,
+            "unit": "g",
+            "quantity": 100,
+            "reasonCode": null,
+            "type": "REGULAR",
+            "expiryDate": null
+          }
+        ],
+        "memberOnlyPrice": null,
+        "memberOnlyComparisonPrices": [],
+        "ehfTotal": null,
+        "deposit": null,
+        "environmentalHandlingFee": null,
+        "taxInfo": ""
+      },
+      "pricingUnits": {
+        "type": "SOLD_BY_EACH",
+        "unit": "ea",
+        "interval": 1,
+        "minOrderQuantity": 1,
+        "maxOrderQuantity": 24,
+        "weighted": false
+      },
+      "badges": {
+        "textBadge": null,
+        "loyaltyBadge": null,
+        "dealBadge": null,
+        "newItemBadge": null,
+        "hotmBadge": null,
+        "promotionalBadge": null,
+        "recyclingFeeBadge": null,
+        "subscribeEarnBadge": null,
+        "mustTryBadge": null,
+        "preparedInCanadaBadge": {
+          "type": "PREPARED_IN_CANADA",
+          "text": "Prepared in Canada",
+          "mopDealText": null,
+          "points": null,
+          "name": "PREPARED_IN_CANADA",
+          "expiryDate": null,
+          "promoType": null
+        },
+        "madeInCanadaBadge": null,
+        "productOfCanadaBadge": null,
+        "tariffAppliedBadge": null,
+        "preparedInQuebecBadge": null
+      },
+      "dealPrice": null,
+      "mopDealPrice": null,
+      "stockStatus": "OK",
+      "articleNumber": "20975773",
+      "ingredients": null,
+      "promotions": [],
+      "memberOnlyPromotions": null,
+      "isVariant": false,
+      "offerType": "OG",
+      "variantTheme": null,
+      "hasMultipleOffers": false,
+      "sponsored": false,
+      "sponsoredCreative": null,
+      "aisle": null,
+      "sellerId": null,
+      "upcs": [
+        "06038317543"
+      ],
+      "sellerName": null,
+      "uom": "EA",
+      "taxes": null,
+      "fees": null,
+      "ratings": null
+    },
+    {
+      "code": "21279221_EA",
+      "name": "Marble Cheddar Cheese Bar",
+      "description": "<p>With its delicious blend of white and orange cheddars, the Black Diamond Marble Cheese Bar is an essential addition to any family kitchen, and a proud Canadian product that you can feel good about buying. This bar cheese has a firm texture and rich flavour that’s ideal for creating the foods you love to share with the family you love. A medium cheese with a light, nutty note, Black Diamond marble cheese is perfect for snacking, shredding, entertaining, melting, cooking, and topping off your favourite dishes. High in protein and a good source of calcium, this convenient 400g bar cheese is made with the same commitment to quality that Black Diamond has been known for since 1933.</p><ul><li>Proud Product of Canada</li><li>Delicious marble cheese blend of white and orange cheddars</li><li>Medium flavour with a light nutty note</li><li>Firm texture is ideal for snacking, shredding, melting, and more</li><li>37% Moisture, 32% M.F.</li><li>High in protein</li><li>Good source of calcium</li><li>A trusted Canadian brand since 1933</li><li>400g bar</li></ul>",
+      "brand": "Black Diamond",
+      "link": "/marble-cheddar-cheese-bar/p/21279221_EA",
+      "imageAssets": [
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21279221_EA/en/1/21279221_en_front_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21279221_EA/en/1/21279221_en_front_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21279221_EA/en/1/21279221_en_front_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21279221_EA/en/1/21279221_en_front_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21279221_EA/en/1/21279221_en_front_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21279221_EA/en/2/21279221_en_angle_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21279221_EA/en/2/21279221_en_angle_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21279221_EA/en/2/21279221_en_angle_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21279221_EA/en/2/21279221_en_angle_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21279221_EA/en/2/21279221_en_angle_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21279221_EA/en/3/21279221_en_side_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21279221_EA/en/3/21279221_en_side_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21279221_EA/en/3/21279221_en_side_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21279221_EA/en/3/21279221_en_side_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21279221_EA/en/3/21279221_en_side_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21279221_EA/en/4/21279221_en_back_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21279221_EA/en/4/21279221_en_back_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21279221_EA/en/4/21279221_en_back_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21279221_EA/en/4/21279221_en_back_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21279221_EA/en/4/21279221_en_back_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21279221_EA/en/5/21279221_en_top_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21279221_EA/en/5/21279221_en_top_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21279221_EA/en/5/21279221_en_top_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21279221_EA/en/5/21279221_en_top_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21279221_EA/en/5/21279221_en_top_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21279221_EA/en/6/21279221_en_open_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21279221_EA/en/6/21279221_en_open_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21279221_EA/en/6/21279221_en_open_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21279221_EA/en/6/21279221_en_open_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21279221_EA/en/6/21279221_en_open_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21279221_EA/en/7/21279221_en_closed_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21279221_EA/en/7/21279221_en_closed_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21279221_EA/en/7/21279221_en_closed_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21279221_EA/en/7/21279221_en_closed_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21279221_EA/en/7/21279221_en_closed_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        }
+      ],
+      "packageSize": "400 g",
+      "shoppable": true,
+      "prices": {
+        "price": {
+          "value": 6.5,
+          "unit": "ea",
+          "quantity": 1,
+          "reasonCode": 3,
+          "type": "SPECIAL",
+          "expiryDate": "2026-08-19T00:00"
+        },
+        "wasPrice": null,
+        "comparisonPrices": [
+          {
+            "value": 1.63,
+            "unit": "g",
+            "quantity": 100,
+            "reasonCode": null,
+            "type": "REGULAR",
+            "expiryDate": null
+          }
+        ],
+        "memberOnlyPrice": null,
+        "memberOnlyComparisonPrices": [],
+        "ehfTotal": null,
+        "deposit": null,
+        "environmentalHandlingFee": null,
+        "taxInfo": ""
+      },
+      "pricingUnits": {
+        "type": "SOLD_BY_EACH",
+        "unit": "ea",
+        "interval": 1,
+        "minOrderQuantity": 1,
+        "maxOrderQuantity": 24,
+        "weighted": false
+      },
+      "badges": {
+        "textBadge": null,
+        "loyaltyBadge": null,
+        "dealBadge": null,
+        "newItemBadge": null,
+        "hotmBadge": null,
+        "promotionalBadge": null,
+        "recyclingFeeBadge": null,
+        "subscribeEarnBadge": null,
+        "mustTryBadge": null,
+        "preparedInCanadaBadge": {
+          "type": "PREPARED_IN_CANADA",
+          "text": "Prepared in Canada",
+          "mopDealText": null,
+          "points": null,
+          "name": "PREPARED_IN_CANADA",
+          "expiryDate": null,
+          "promoType": null
+        },
+        "madeInCanadaBadge": null,
+        "productOfCanadaBadge": null,
+        "tariffAppliedBadge": null,
+        "preparedInQuebecBadge": null
+      },
+      "dealPrice": null,
+      "mopDealPrice": null,
+      "stockStatus": "OK",
+      "articleNumber": "21279221",
+      "ingredients": null,
+      "promotions": [],
+      "memberOnlyPromotions": null,
+      "isVariant": false,
+      "offerType": "OG",
+      "variantTheme": null,
+      "hasMultipleOffers": false,
+      "sponsored": false,
+      "sponsoredCreative": null,
+      "aisle": null,
+      "sellerId": null,
+      "upcs": [
+        "06820088511"
+      ],
+      "sellerName": null,
+      "uom": "EA",
+      "taxes": null,
+      "fees": null,
+      "ratings": null
+    },
+    {
+      "code": "21289745_EA",
+      "name": "Marble Farmer's Cheese",
+      "description": "<p>Marble Farmer's Cheese blends white and orange cheddar into one smooth, creamy bite with a mild, balanced flavour that works across just about anything. Its firm texture slices cleanly and melts evenly, making it perfect for sandwiches, grilled cheese, burgers, or baked dishes. Cube it for easy sharing or shred it into recipes for a quick, cheesy finish.</p><br><br><p>The †Simple Check™ symbol appears on no name® products made without 10 ingredients such as synthetic colours*, artificial flavours and artificial sweeteners. *As defined in Canadian regulations. To learn more visit noname.ca/simplecheck</p>",
+      "brand": "No Name",
+      "link": "/marble-farmer-s-cheese/p/21289745_EA",
+      "imageAssets": [
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21289745_EA/en/1/21289745_en_front_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21289745_EA/en/1/21289745_en_front_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21289745_EA/en/1/21289745_en_front_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21289745_EA/en/1/21289745_en_front_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21289745_EA/en/1/21289745_en_front_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21289745_EA/en/2/21289745_en_angle_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21289745_EA/en/2/21289745_en_angle_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21289745_EA/en/2/21289745_en_angle_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21289745_EA/en/2/21289745_en_angle_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21289745_EA/en/2/21289745_en_angle_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        }
+      ],
+      "packageSize": "400 g",
+      "shoppable": true,
+      "prices": {
+        "price": {
+          "value": 6.79,
+          "unit": "ea",
+          "quantity": 1,
+          "reasonCode": 4,
+          "type": "REGULAR",
+          "expiryDate": "9999-12-31T00:00"
+        },
+        "wasPrice": null,
+        "comparisonPrices": [
+          {
+            "value": 1.7,
+            "unit": "g",
+            "quantity": 100,
+            "reasonCode": null,
+            "type": "REGULAR",
+            "expiryDate": null
+          }
+        ],
+        "memberOnlyPrice": null,
+        "memberOnlyComparisonPrices": [],
+        "ehfTotal": null,
+        "deposit": null,
+        "environmentalHandlingFee": null,
+        "taxInfo": ""
+      },
+      "pricingUnits": {
+        "type": "SOLD_BY_EACH",
+        "unit": "ea",
+        "interval": 1,
+        "minOrderQuantity": 1,
+        "maxOrderQuantity": 24,
+        "weighted": false
+      },
+      "badges": {
+        "textBadge": null,
+        "loyaltyBadge": null,
+        "dealBadge": {
+          "type": "MULTI",
+          "text": "$6.00 MIN 2",
+          "mopDealText": null,
+          "points": null,
+          "name": "MULTI",
+          "expiryDate": null,
+          "promoType": "ZRP3"
+        },
+        "newItemBadge": null,
+        "hotmBadge": null,
+        "promotionalBadge": null,
+        "recyclingFeeBadge": null,
+        "subscribeEarnBadge": null,
+        "mustTryBadge": null,
+        "preparedInCanadaBadge": {
+          "type": "PREPARED_IN_CANADA",
+          "text": "Prepared in Canada",
+          "mopDealText": null,
+          "points": null,
+          "name": "PREPARED_IN_CANADA",
+          "expiryDate": null,
+          "promoType": null
+        },
+        "madeInCanadaBadge": null,
+        "productOfCanadaBadge": null,
+        "tariffAppliedBadge": null,
+        "preparedInQuebecBadge": null
+      },
+      "dealPrice": 6.0,
+      "mopDealPrice": null,
+      "stockStatus": "OK",
+      "articleNumber": "21289745",
+      "ingredients": null,
+      "promotions": [
+        {
+          "type": "DEAL",
+          "quantity": null,
+          "savings": null,
+          "value": null,
+          "promoCode": "000002890488",
+          "expiryDate": "9999-12-31T00:00:00Z",
+          "title": null,
+          "promoType": null,
+          "pricingMethod": "3",
+          "text": "PC Optimum Points",
+          "reward": "$_FIXED",
+          "callToAction": null
+        }
+      ],
+      "memberOnlyPromotions": null,
+      "isVariant": false,
+      "offerType": "OG",
+      "variantTheme": null,
+      "hasMultipleOffers": false,
+      "sponsored": false,
+      "sponsoredCreative": null,
+      "aisle": null,
+      "sellerId": null,
+      "upcs": [
+        "06038300666"
+      ],
+      "sellerName": null,
+      "uom": "EA",
+      "taxes": null,
+      "fees": null,
+      "ratings": null
+    },
+    {
+      "code": "21289751_EA",
+      "name": "Old Cheddar Cheese",
+      "description": "<p>Old Cheddar Cheese has a tangy, slightly nutty flavour with a firm texture that slices clean and crumbles just right. Rich and full-bodied, it brings a sharper, more pronounced taste that stands out in every bite. Layer it into sandwiches, grate it over pastas and soups, or add it to your charcuterie boards with meats and crackers for serving guests.</p><br><br><p>The †Simple Check™ symbol appears on no name® products made without 10 ingredients such as synthetic colours*, artificial flavours and artificial sweeteners. *As defined in Canadian regulations. To learn more visit noname.ca/simplecheck</p>",
+      "brand": "No Name",
+      "link": "/old-cheddar-cheese/p/21289751_EA",
+      "imageAssets": [
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21289751_EA/en/1/21289751_en_front_v1_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21289751_EA/en/1/21289751_en_front_v1_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21289751_EA/en/1/21289751_en_front_v1_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21289751_EA/en/1/21289751_en_front_v1_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21289751_EA/en/1/21289751_en_front_v1_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21289751_EA/en/2/21289751_en_angle_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21289751_EA/en/2/21289751_en_angle_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21289751_EA/en/2/21289751_en_angle_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21289751_EA/en/2/21289751_en_angle_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21289751_EA/en/2/21289751_en_angle_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        }
+      ],
+      "packageSize": "400 g",
+      "shoppable": true,
+      "prices": {
+        "price": {
+          "value": 6.79,
+          "unit": "ea",
+          "quantity": 1,
+          "reasonCode": 4,
+          "type": "REGULAR",
+          "expiryDate": "9999-12-31T00:00"
+        },
+        "wasPrice": null,
+        "comparisonPrices": [
+          {
+            "value": 1.7,
+            "unit": "g",
+            "quantity": 100,
+            "reasonCode": null,
+            "type": "REGULAR",
+            "expiryDate": null
+          }
+        ],
+        "memberOnlyPrice": null,
+        "memberOnlyComparisonPrices": [],
+        "ehfTotal": null,
+        "deposit": null,
+        "environmentalHandlingFee": null,
+        "taxInfo": ""
+      },
+      "pricingUnits": {
+        "type": "SOLD_BY_EACH",
+        "unit": "ea",
+        "interval": 1,
+        "minOrderQuantity": 1,
+        "maxOrderQuantity": 24,
+        "weighted": false
+      },
+      "badges": {
+        "textBadge": null,
+        "loyaltyBadge": null,
+        "dealBadge": {
+          "type": "MULTI",
+          "text": "$6.00 MIN 2",
+          "mopDealText": null,
+          "points": null,
+          "name": "MULTI",
+          "expiryDate": null,
+          "promoType": "ZRP3"
+        },
+        "newItemBadge": null,
+        "hotmBadge": null,
+        "promotionalBadge": null,
+        "recyclingFeeBadge": null,
+        "subscribeEarnBadge": null,
+        "mustTryBadge": null,
+        "preparedInCanadaBadge": {
+          "type": "PREPARED_IN_CANADA",
+          "text": "Prepared in Canada",
+          "mopDealText": null,
+          "points": null,
+          "name": "PREPARED_IN_CANADA",
+          "expiryDate": null,
+          "promoType": null
+        },
+        "madeInCanadaBadge": null,
+        "productOfCanadaBadge": null,
+        "tariffAppliedBadge": null,
+        "preparedInQuebecBadge": null
+      },
+      "dealPrice": 6.0,
+      "mopDealPrice": null,
+      "stockStatus": "OK",
+      "articleNumber": "21289751",
+      "ingredients": null,
+      "promotions": [
+        {
+          "type": "DEAL",
+          "quantity": null,
+          "savings": null,
+          "value": null,
+          "promoCode": "000002890488",
+          "expiryDate": "9999-12-31T00:00:00Z",
+          "title": null,
+          "promoType": null,
+          "pricingMethod": "3",
+          "text": "PC Optimum Points",
+          "reward": "$_FIXED",
+          "callToAction": null
+        }
+      ],
+      "memberOnlyPromotions": null,
+      "isVariant": false,
+      "offerType": "OG",
+      "variantTheme": null,
+      "hasMultipleOffers": false,
+      "sponsored": false,
+      "sponsoredCreative": null,
+      "aisle": null,
+      "sellerId": null,
+      "upcs": [
+        "06038300665"
+      ],
+      "sellerName": null,
+      "uom": "EA",
+      "taxes": null,
+      "fees": null,
+      "ratings": null
+    },
+    {
+      "code": "21060183_EA",
+      "name": "Triple Cheddar Shredded Cheese Blend",
+      "description": "<p>Add rich cheddar flavour to your favourite comfort foods with Triple Cheddar Shredded Cheese Blend. This shredded blend of old, medium, and mild cheddar cheeses melts smoothly over omelettes, casseroles, baked potatoes, and more. Pre-shredded for convenience and a good source of calcium, it's an easy way to add cheesy goodness to everyday meals.</p>",
+      "brand": "President's Choice",
+      "link": "/triple-cheddar-shredded-cheese-blend/p/21060183_EA",
+      "imageAssets": [
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21060183_EA/en/1/21060183_en_front_v1_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21060183_EA/en/1/21060183_en_front_v1_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21060183_EA/en/1/21060183_en_front_v1_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21060183_EA/en/1/21060183_en_front_v1_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21060183_EA/en/1/21060183_en_front_v1_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21060183_EA/en/2/21060183_en_angle_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21060183_EA/en/2/21060183_en_angle_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21060183_EA/en/2/21060183_en_angle_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21060183_EA/en/2/21060183_en_angle_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21060183_EA/en/2/21060183_en_angle_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        }
+      ],
+      "packageSize": "320 g",
+      "shoppable": true,
+      "prices": {
+        "price": {
+          "value": 6.5,
+          "unit": "ea",
+          "quantity": 1,
+          "reasonCode": 1,
+          "type": "SPECIAL",
+          "expiryDate": "2026-08-19T00:00"
+        },
+        "wasPrice": null,
+        "comparisonPrices": [
+          {
+            "value": 2.03,
+            "unit": "g",
+            "quantity": 100,
+            "reasonCode": null,
+            "type": "REGULAR",
+            "expiryDate": null
+          }
+        ],
+        "memberOnlyPrice": null,
+        "memberOnlyComparisonPrices": [],
+        "ehfTotal": null,
+        "deposit": null,
+        "environmentalHandlingFee": null,
+        "taxInfo": ""
+      },
+      "pricingUnits": {
+        "type": "SOLD_BY_EACH",
+        "unit": "ea",
+        "interval": 1,
+        "minOrderQuantity": 1,
+        "maxOrderQuantity": 24,
+        "weighted": false
+      },
+      "badges": {
+        "textBadge": null,
+        "loyaltyBadge": null,
+        "dealBadge": null,
+        "newItemBadge": null,
+        "hotmBadge": null,
+        "promotionalBadge": null,
+        "recyclingFeeBadge": null,
+        "subscribeEarnBadge": null,
+        "mustTryBadge": null,
+        "preparedInCanadaBadge": {
+          "type": "PREPARED_IN_CANADA",
+          "text": "Prepared in Canada",
+          "mopDealText": null,
+          "points": null,
+          "name": "PREPARED_IN_CANADA",
+          "expiryDate": null,
+          "promoType": null
+        },
+        "madeInCanadaBadge": null,
+        "productOfCanadaBadge": null,
+        "tariffAppliedBadge": null,
+        "preparedInQuebecBadge": null
+      },
+      "dealPrice": null,
+      "mopDealPrice": null,
+      "stockStatus": "LOW",
+      "articleNumber": "21060183",
+      "ingredients": null,
+      "promotions": [],
+      "memberOnlyPromotions": null,
+      "isVariant": false,
+      "offerType": "OG",
+      "variantTheme": null,
+      "hasMultipleOffers": false,
+      "sponsored": false,
+      "sponsoredCreative": null,
+      "aisle": null,
+      "sellerId": null,
+      "upcs": [
+        "06038319590"
+      ],
+      "sellerName": null,
+      "uom": "EA",
+      "taxes": null,
+      "fees": null,
+      "ratings": null
+    },
+    {
+      "code": "21208649_EA",
+      "name": "Old Cheddar Cheese Bar",
+      "description": "<p>Bring bold flavour to your favourite dishes with the stronger, sharper cheddar taste of our Black Diamond Old Cheddar Cheese Bar, a proud Canadian product. This mature orange cheddar cheese melts to perfection, so you can confidently create and share delicious meals with your loved ones. High in protein and a good source of calcium, this old cheddar cheese is great for any dish that requires that extra cheddar bite. This convenient 400g cheese block is made with the same commitment to quality that Black Diamond has been known for since 1933.</p><ul><li>Proud Product of Canada</li><li>Naturally aged with a stronger, sharper cheddar cheese flavour and a slightly nutty essence</li><li>Firm texture is ideal for slicing, shredding, and melting</li><li>High in protein</li><li>Good source of calcium</li><li>A trusted Canadian brand since 1933</li><li>400g</li></ul>",
+      "brand": "Black Diamond",
+      "link": "/old-cheddar-cheese-bar/p/21208649_EA",
+      "imageAssets": [
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21208649_EA/en/1/21208649_en_front_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21208649_EA/en/1/21208649_en_front_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21208649_EA/en/1/21208649_en_front_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21208649_EA/en/1/21208649_en_front_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21208649_EA/en/1/21208649_en_front_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21208649_EA/en/2/21208649_en_angle_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21208649_EA/en/2/21208649_en_angle_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21208649_EA/en/2/21208649_en_angle_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21208649_EA/en/2/21208649_en_angle_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21208649_EA/en/2/21208649_en_angle_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21208649_EA/en/3/21208649_en_side_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21208649_EA/en/3/21208649_en_side_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21208649_EA/en/3/21208649_en_side_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21208649_EA/en/3/21208649_en_side_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21208649_EA/en/3/21208649_en_side_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21208649_EA/en/4/21208649_en_back_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21208649_EA/en/4/21208649_en_back_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21208649_EA/en/4/21208649_en_back_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21208649_EA/en/4/21208649_en_back_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21208649_EA/en/4/21208649_en_back_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21208649_EA/en/5/21208649_en_top_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21208649_EA/en/5/21208649_en_top_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21208649_EA/en/5/21208649_en_top_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21208649_EA/en/5/21208649_en_top_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21208649_EA/en/5/21208649_en_top_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21208649_EA/en/6/21208649_en_open_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21208649_EA/en/6/21208649_en_open_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21208649_EA/en/6/21208649_en_open_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21208649_EA/en/6/21208649_en_open_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21208649_EA/en/6/21208649_en_open_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21208649_EA/en/7/21208649_en_closed_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21208649_EA/en/7/21208649_en_closed_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21208649_EA/en/7/21208649_en_closed_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21208649_EA/en/7/21208649_en_closed_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21208649_EA/en/7/21208649_en_closed_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        }
+      ],
+      "packageSize": "400 g",
+      "shoppable": true,
+      "prices": {
+        "price": {
+          "value": 6.5,
+          "unit": "ea",
+          "quantity": 1,
+          "reasonCode": 3,
+          "type": "SPECIAL",
+          "expiryDate": "2026-08-19T00:00"
+        },
+        "wasPrice": null,
+        "comparisonPrices": [
+          {
+            "value": 1.63,
+            "unit": "g",
+            "quantity": 100,
+            "reasonCode": null,
+            "type": "REGULAR",
+            "expiryDate": null
+          }
+        ],
+        "memberOnlyPrice": null,
+        "memberOnlyComparisonPrices": [],
+        "ehfTotal": null,
+        "deposit": null,
+        "environmentalHandlingFee": null,
+        "taxInfo": ""
+      },
+      "pricingUnits": {
+        "type": "SOLD_BY_EACH",
+        "unit": "ea",
+        "interval": 1,
+        "minOrderQuantity": 1,
+        "maxOrderQuantity": 24,
+        "weighted": false
+      },
+      "badges": {
+        "textBadge": null,
+        "loyaltyBadge": null,
+        "dealBadge": null,
+        "newItemBadge": null,
+        "hotmBadge": null,
+        "promotionalBadge": null,
+        "recyclingFeeBadge": null,
+        "subscribeEarnBadge": null,
+        "mustTryBadge": null,
+        "preparedInCanadaBadge": {
+          "type": "PREPARED_IN_CANADA",
+          "text": "Prepared in Canada",
+          "mopDealText": null,
+          "points": null,
+          "name": "PREPARED_IN_CANADA",
+          "expiryDate": null,
+          "promoType": null
+        },
+        "madeInCanadaBadge": null,
+        "productOfCanadaBadge": null,
+        "tariffAppliedBadge": null,
+        "preparedInQuebecBadge": null
+      },
+      "dealPrice": null,
+      "mopDealPrice": null,
+      "stockStatus": "OK",
+      "articleNumber": "21208649",
+      "ingredients": null,
+      "promotions": [],
+      "memberOnlyPromotions": null,
+      "isVariant": false,
+      "offerType": "OG",
+      "variantTheme": null,
+      "hasMultipleOffers": false,
+      "sponsored": false,
+      "sponsoredCreative": null,
+      "aisle": null,
+      "sellerId": null,
+      "upcs": [
+        "06820088551"
+      ],
+      "sellerName": null,
+      "uom": "EA",
+      "taxes": null,
+      "fees": null,
+      "ratings": null
+    },
+    {
+      "code": "21252564_EA",
+      "name": "Original Cheddar Cheese Slices",
+      "description": "<p>With their cheesy flavour and extra smooth texture, Black Diamond Original Cheddar Cheese Slices are everyday family favourites. A classic choice for grilled cheese sandwiches, burgers and more, these individually wrapped cheese slices are great for cookouts, picnics or straight-up snacking. This convenient pack of 22 cheddar cheese slices is made with the same commitment to quality that Black Diamond has been known for since 1933.</p><ul><li>Prepared in Canada</li><li>Delicious and classic cheddar cheese slices</li><li>Flavourful cheese slices with a smooth texture</li><li>Made with quality milk from Canadian dairies</li><li>Great for sandwiches, burgers and more</li><li>Individually wrapped for convenience</li><li>Source of calcium</li><li>A trusted Canadian brand since 1933</li><li>22 slices, 410g</li></ul>",
+      "brand": "Black Diamond",
+      "link": "/original-cheddar-cheese-slices/p/21252564_EA",
+      "imageAssets": [
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21252564_EA/en/1/21252564_en_front_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21252564_EA/en/1/21252564_en_front_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21252564_EA/en/1/21252564_en_front_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21252564_EA/en/1/21252564_en_front_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21252564_EA/en/1/21252564_en_front_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21252564_EA/en/2/21252564_en_angle_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21252564_EA/en/2/21252564_en_angle_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21252564_EA/en/2/21252564_en_angle_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21252564_EA/en/2/21252564_en_angle_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21252564_EA/en/2/21252564_en_angle_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21252564_EA/en/3/21252564_en_side_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21252564_EA/en/3/21252564_en_side_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21252564_EA/en/3/21252564_en_side_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21252564_EA/en/3/21252564_en_side_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21252564_EA/en/3/21252564_en_side_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21252564_EA/en/4/21252564_en_back_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21252564_EA/en/4/21252564_en_back_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21252564_EA/en/4/21252564_en_back_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21252564_EA/en/4/21252564_en_back_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21252564_EA/en/4/21252564_en_back_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21252564_EA/en/5/21252564_en_top_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21252564_EA/en/5/21252564_en_top_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21252564_EA/en/5/21252564_en_top_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21252564_EA/en/5/21252564_en_top_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21252564_EA/en/5/21252564_en_top_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21252564_EA/en/6/21252564_en_open_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21252564_EA/en/6/21252564_en_open_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21252564_EA/en/6/21252564_en_open_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21252564_EA/en/6/21252564_en_open_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21252564_EA/en/6/21252564_en_open_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        }
+      ],
+      "packageSize": "410 g",
+      "shoppable": true,
+      "prices": {
+        "price": {
+          "value": 3.5,
+          "unit": "ea",
+          "quantity": 1,
+          "reasonCode": 2,
+          "type": "SPECIAL",
+          "expiryDate": "2026-09-09T00:00"
+        },
+        "wasPrice": {
+          "value": 5.49,
+          "unit": "ea",
+          "quantity": 1,
+          "reasonCode": null,
+          "type": "WAS",
+          "expiryDate": null
+        },
+        "comparisonPrices": [
+          {
+            "value": 0.85,
+            "unit": "g",
+            "quantity": 100,
+            "reasonCode": null,
+            "type": "REGULAR",
+            "expiryDate": null
+          }
+        ],
+        "memberOnlyPrice": null,
+        "memberOnlyComparisonPrices": [],
+        "ehfTotal": null,
+        "deposit": null,
+        "environmentalHandlingFee": null,
+        "taxInfo": ""
+      },
+      "pricingUnits": {
+        "type": "SOLD_BY_EACH",
+        "unit": "ea",
+        "interval": 1,
+        "minOrderQuantity": 1,
+        "maxOrderQuantity": 24,
+        "weighted": false
+      },
+      "badges": {
+        "textBadge": null,
+        "loyaltyBadge": null,
+        "dealBadge": {
+          "type": "SALE",
+          "text": "SAVE $1.99",
+          "mopDealText": null,
+          "points": null,
+          "name": "SALE",
+          "expiryDate": "2026-09-09T00:00:00Z",
+          "promoType": null
+        },
+        "newItemBadge": null,
+        "hotmBadge": null,
+        "promotionalBadge": null,
+        "recyclingFeeBadge": null,
+        "subscribeEarnBadge": null,
+        "mustTryBadge": null,
+        "preparedInCanadaBadge": {
+          "type": "PREPARED_IN_CANADA",
+          "text": "Prepared in Canada",
+          "mopDealText": null,
+          "points": null,
+          "name": "PREPARED_IN_CANADA",
+          "expiryDate": null,
+          "promoType": null
+        },
+        "madeInCanadaBadge": null,
+        "productOfCanadaBadge": null,
+        "tariffAppliedBadge": null,
+        "preparedInQuebecBadge": null
+      },
+      "dealPrice": null,
+      "mopDealPrice": null,
+      "stockStatus": "OK",
+      "articleNumber": "21252564",
+      "ingredients": null,
+      "promotions": [],
+      "memberOnlyPromotions": null,
+      "isVariant": false,
+      "offerType": "OG",
+      "variantTheme": null,
+      "hasMultipleOffers": false,
+      "sponsored": false,
+      "sponsoredCreative": null,
+      "aisle": null,
+      "sellerId": null,
+      "upcs": [
+        "06820087780"
+      ],
+      "sellerName": null,
+      "uom": "EA",
+      "taxes": null,
+      "fees": null,
+      "ratings": null
+    },
+    {
+      "code": "21495455_EA",
+      "name": "Extra Old Cheddar Cheese",
+      "description": "<p>Balderson's Extra Old Cheddar is expertly aged to perfection, delivering a rich, bold flavour with a satisfyingly sharp bite. This premium cheddar boasts a firm texture and crumbly composition, with a distinctive pale yellow hue. Its pronounced, full-bodied taste makes it an ideal choice for those who appreciate a strong, mature cheese. Whether enjoyed on its own, added to a charcuterie board, or incorporated into gourmet recipes, aged cheese offers an indulgent, refined experience for the true cheese connoisseur. Made in Canada with 100% Canadian milk.Since 1881, Balderson has been dedicated to aging premium cheese in Ontario. While the world has evolved, our commitment to quality and craftsmanship remains unchanged. Balderson cheese is a premium brand cherished by Canadians for over 140 years, known for its exceptional taste and meticulous attention to detail.</p><ul><li>Premium, sharp aged cheddar flavour</li><li>Drier and crumblier consistency</li><li>Pale yellow colour</li><li>Aged 14-18 months</li><li>Made in Canada with 100% Canadian milk</li><li>Over 140 years of Canadian cheesemaking heritage</li><li>Premium brand with exceptional taste</li><li>250 g</li></ul>",
+      "brand": "Balderson",
+      "link": "/extra-old-cheddar-cheese/p/21495455_EA",
+      "imageAssets": [
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21495455_EA/en/1/21495455_en_front_v1_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21495455_EA/en/1/21495455_en_front_v1_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21495455_EA/en/1/21495455_en_front_v1_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21495455_EA/en/1/21495455_en_front_v1_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21495455_EA/en/1/21495455_en_front_v1_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21495455_EA/en/2/21495455_en_angle_v2_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21495455_EA/en/2/21495455_en_angle_v2_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21495455_EA/en/2/21495455_en_angle_v2_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21495455_EA/en/2/21495455_en_angle_v2_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21495455_EA/en/2/21495455_en_angle_v2_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21495455_EA/en/3/21495455_en_side_v1_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21495455_EA/en/3/21495455_en_side_v1_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21495455_EA/en/3/21495455_en_side_v1_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21495455_EA/en/3/21495455_en_side_v1_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21495455_EA/en/3/21495455_en_side_v1_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21495455_EA/en/4/21495455_en_back_v1_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21495455_EA/en/4/21495455_en_back_v1_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21495455_EA/en/4/21495455_en_back_v1_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21495455_EA/en/4/21495455_en_back_v1_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21495455_EA/en/4/21495455_en_back_v1_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21495455_EA/en/5/21495455_en_top_v1_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21495455_EA/en/5/21495455_en_top_v1_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21495455_EA/en/5/21495455_en_top_v1_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21495455_EA/en/5/21495455_en_top_v1_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21495455_EA/en/5/21495455_en_top_v1_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21495455_EA/en/6/21495455_en_open_v1_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/21495455_EA/en/6/21495455_en_open_v1_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21495455_EA/en/6/21495455_en_open_v1_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21495455_EA/en/6/21495455_en_open_v1_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21495455_EA/en/6/21495455_en_open_v1_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        }
+      ],
+      "packageSize": "250 g",
+      "shoppable": true,
+      "prices": {
+        "price": {
+          "value": 6.0,
+          "unit": "ea",
+          "quantity": 1,
+          "reasonCode": 1,
+          "type": "SPECIAL",
+          "expiryDate": "2026-08-19T00:00"
+        },
+        "wasPrice": {
+          "value": 10.79,
+          "unit": "ea",
+          "quantity": 1,
+          "reasonCode": null,
+          "type": "WAS",
+          "expiryDate": null
+        },
+        "comparisonPrices": [
+          {
+            "value": 2.4,
+            "unit": "g",
+            "quantity": 100,
+            "reasonCode": null,
+            "type": "REGULAR",
+            "expiryDate": null
+          }
+        ],
+        "memberOnlyPrice": null,
+        "memberOnlyComparisonPrices": [],
+        "ehfTotal": null,
+        "deposit": null,
+        "environmentalHandlingFee": null,
+        "taxInfo": ""
+      },
+      "pricingUnits": {
+        "type": "SOLD_BY_EACH",
+        "unit": "ea",
+        "interval": 1,
+        "minOrderQuantity": 1,
+        "maxOrderQuantity": 24,
+        "weighted": false
+      },
+      "badges": {
+        "textBadge": null,
+        "loyaltyBadge": null,
+        "dealBadge": {
+          "type": "SALE",
+          "text": "SAVE $4.79",
+          "mopDealText": null,
+          "points": null,
+          "name": "SALE",
+          "expiryDate": "2026-08-19T00:00:00Z",
+          "promoType": null
+        },
+        "newItemBadge": null,
+        "hotmBadge": null,
+        "promotionalBadge": null,
+        "recyclingFeeBadge": null,
+        "subscribeEarnBadge": null,
+        "mustTryBadge": null,
+        "preparedInCanadaBadge": {
+          "type": "PREPARED_IN_CANADA",
+          "text": "Prepared in Canada",
+          "mopDealText": null,
+          "points": null,
+          "name": "PREPARED_IN_CANADA",
+          "expiryDate": null,
+          "promoType": null
+        },
+        "madeInCanadaBadge": null,
+        "productOfCanadaBadge": null,
+        "tariffAppliedBadge": null,
+        "preparedInQuebecBadge": null
+      },
+      "dealPrice": null,
+      "mopDealPrice": null,
+      "stockStatus": "OK",
+      "articleNumber": "21495455",
+      "ingredients": null,
+      "promotions": [],
+      "memberOnlyPromotions": null,
+      "isVariant": false,
+      "offerType": "OG",
+      "variantTheme": null,
+      "hasMultipleOffers": false,
+      "sponsored": false,
+      "sponsoredCreative": null,
+      "aisle": null,
+      "sellerId": null,
+      "upcs": [
+        "06820081045"
+      ],
+      "sellerName": null,
+      "uom": "EA",
+      "taxes": null,
+      "fees": null,
+      "ratings": null
+    },
+    {
+      "code": "20763661_EA",
+      "name": "Marble Cheestrings",
+      "description": "<p>Made with 100% real cheese, any way you string ‘em, Black Diamond Cheestrings snacks always promise to be fun and nutritious. These marble cheese strings are a great-tasting blend of white and orange cheeses, and are made with 100% Canadian milk. Eat them straight up or peel them piece by piece— Cheestrings are always fun and nutritious snacks. With no artificial colours or flavours and no added preservatives, like all other Pizza Mozzarella, there’s only one rule of Black Diamond Cheestrings – always play with your food.</p><ul><li>Great tasting blend of 100% real white and orange cheeses</li><li>Fun stringable marble cheese sticks for interactive snacking</li><li>Made with 100% Canadian milk</li><li>Product of Canada</li><li>High in protein</li><li>Source of calcium</li><li>No artificial colours, flavours, or preservatives</li><li>Individually wrapped for convenience</li><li>18% M.F.</li><li>16-Pack, 336 g</li></ul>",
+      "brand": "Black Diamond",
+      "link": "/marble-cheestrings/p/20763661_EA",
+      "imageAssets": [
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/20763661_EA/en/1/20763661_enfr_front_v2_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/20763661_EA/en/1/20763661_enfr_front_v2_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/20763661_EA/en/1/20763661_enfr_front_v2_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/20763661_EA/en/1/20763661_enfr_front_v2_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/20763661_EA/en/1/20763661_enfr_front_v2_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/20763661_EA/en/2/20763661_enfr_angle_v2_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/20763661_EA/en/2/20763661_enfr_angle_v2_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/20763661_EA/en/2/20763661_enfr_angle_v2_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/20763661_EA/en/2/20763661_enfr_angle_v2_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/20763661_EA/en/2/20763661_enfr_angle_v2_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/20763661_EA/en/3/20763661_enfr_side_v2_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/20763661_EA/en/3/20763661_enfr_side_v2_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/20763661_EA/en/3/20763661_enfr_side_v2_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/20763661_EA/en/3/20763661_enfr_side_v2_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/20763661_EA/en/3/20763661_enfr_side_v2_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/20763661_EA/en/4/20763661_enfr_back_v2_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/20763661_EA/en/4/20763661_enfr_back_v2_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/20763661_EA/en/4/20763661_enfr_back_v2_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/20763661_EA/en/4/20763661_enfr_back_v2_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/20763661_EA/en/4/20763661_enfr_back_v2_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        },
+        {
+          "imageUrl": null,
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/20763661_EA/en/5/20763661_enfr_top_120.png",
+          "smallUrl": "https://digital.loblaws.ca/PCX/20763661_EA/en/5/20763661_enfr_top_250.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/20763661_EA/en/5/20763661_enfr_top_400.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/20763661_EA/en/5/20763661_enfr_top_800.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/20763661_EA/en/5/20763661_enfr_top_1200.png",
+          "smallRetinaUrl": null,
+          "mediumRetinaUrl": null,
+          "largeRetinaUrl": null
+        }
+      ],
+      "packageSize": "336 g",
+      "shoppable": true,
+      "prices": {
+        "price": {
+          "value": 5.97,
+          "unit": "ea",
+          "quantity": 1,
+          "reasonCode": 1,
+          "type": "SPECIAL",
+          "expiryDate": "2026-08-19T00:00"
+        },
+        "wasPrice": {
+          "value": 7.0,
+          "unit": "ea",
+          "quantity": 1,
+          "reasonCode": null,
+          "type": "WAS",
+          "expiryDate": null
+        },
+        "comparisonPrices": [
+          {
+            "value": 1.78,
+            "unit": "g",
+            "quantity": 100,
+            "reasonCode": null,
+            "type": "REGULAR",
+            "expiryDate": null
+          }
+        ],
+        "memberOnlyPrice": null,
+        "memberOnlyComparisonPrices": [],
+        "ehfTotal": null,
+        "deposit": null,
+        "environmentalHandlingFee": null,
+        "taxInfo": ""
+      },
+      "pricingUnits": {
+        "type": "SOLD_BY_EACH",
+        "unit": "ea",
+        "interval": 1,
+        "minOrderQuantity": 1,
+        "maxOrderQuantity": 24,
+        "weighted": false
+      },
+      "badges": {
+        "textBadge": null,
+        "loyaltyBadge": null,
+        "dealBadge": {
+          "type": "SALE",
+          "text": "SAVE $1.03",
+          "mopDealText": null,
+          "points": null,
+          "name": "SALE",
+          "expiryDate": "2026-08-19T00:00:00Z",
+          "promoType": null
+        },
+        "newItemBadge": null,
+        "hotmBadge": null,
+        "promotionalBadge": null,
+        "recyclingFeeBadge": null,
+        "subscribeEarnBadge": null,
+        "mustTryBadge": null,
+        "preparedInCanadaBadge": {
+          "type": "PREPARED_IN_CANADA",
+          "text": "Prepared in Canada",
+          "mopDealText": null,
+          "points": null,
+          "name": "PREPARED_IN_CANADA",
+          "expiryDate": null,
+          "promoType": null
+        },
+        "madeInCanadaBadge": null,
+        "productOfCanadaBadge": null,
+        "tariffAppliedBadge": null,
+        "preparedInQuebecBadge": null
+      },
+      "dealPrice": null,
+      "mopDealPrice": null,
+      "stockStatus": "OK",
+      "articleNumber": "20763661",
+      "ingredients": null,
+      "promotions": [],
+      "memberOnlyPromotions": null,
+      "isVariant": false,
+      "offerType": "OG",
+      "variantTheme": null,
+      "hasMultipleOffers": false,
+      "sponsored": false,
+      "sponsoredCreative": null,
+      "aisle": null,
+      "sellerId": null,
+      "upcs": [
+        "06820085824"
+      ],
+      "sellerName": null,
+      "uom": "EA",
+      "taxes": null,
+      "fees": null,
+      "ratings": null
+    }
+  ]
+}
