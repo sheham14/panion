@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "// build": "prisma generate is explicit: Prisma 7 dropped @prisma/client's postinstall auto-generate, and prisma/generated is gitignored, so a fresh checkout (Vercel) has no client without this.",
+    "// build": "prisma generate is explicit: Prisma 7 dropped @prisma/client's postinstall auto-generate, and prisma/generated is gitignored, so a fresh checkout (Vercel) has no client without this. NOTE: do not run this while `npm run dev` is live — it overwrites .next underneath the dev server and newly-added routes start returning Next's HTML 404.",
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint .",
