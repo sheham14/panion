@@ -20,11 +20,23 @@ import { notFound } from "@/lib/api-error";
  * cannot make the server fetch an arbitrary host.
  */
 
-/** Hosts we will fetch product imagery from. */
+/**
+ * Hosts we will fetch product imagery from.
+ *
+ * Keep this in step with the adapters — every entry here is a host some adapter
+ * actually writes into `Product.imageUrl`. Adding an adapter without adding its
+ * CDN silently 404s every image it imports, which is exactly what happened when
+ * the PC Express import landed on `digital.loblaws.ca` while this list guessed
+ * at `assets.shop.loblaws.ca`.
+ */
 const ALLOWED_IMAGE_HOSTS = [
+  // Flipp flyer imagery
   "f.wishabi.net",
   "images.wishabi.net",
+  // PC Express (Dominion / No Frills) — verified from a real imageAssets URL
+  "digital.loblaws.ca",
   "assets.shop.loblaws.ca",
+  // Reserved for the Walmart adapter
   "i5.walmartimages.ca",
 ];
 
