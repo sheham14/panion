@@ -8,6 +8,7 @@ import {
 } from "@/lib/pricing/adapters/pcexpress";
 import { ALL_CATALOGUE_TERMS, TERM_TO_CATEGORY } from "@/lib/pricing/catalogue-terms";
 import { normalizeBarcode, parseSize } from "@/lib/pricing/match";
+import { classifyGroups } from "@/lib/pricing/classify-groups";
 import { ingestObservations } from "@/lib/pricing/ingest";
 import type { PriceObservation } from "@/lib/pricing/types";
 
@@ -107,11 +108,15 @@ export const isPrivateLabel = (brand: string | null | undefined): boolean =>
   !!brand && PRIVATE_LABEL_PATTERNS.some((re) => re.test(brand.trim()));
 
 /**
- * Score a product for inclusion in a bounded demo catalogue.
+ * Score a product for inclusion.
  *
- * The catalogue exists to be *compared*, so the dominant criterion is whether
- * another store could plausibly carry the same item — which means national
- * brands with a barcode, not store brands.
+ * Note what is deliberately NOT here: a private-label penalty. An earlier
+ * version demoted store brands because they can't be UPC-matched across
+ * retailers — but that optimised for the wrong comparison. "Is the Compliments
+ * soup or the No Name soup cheaper?" is the question a budget shopper actually
+ * asks, and store brands are usually the cheap answer. Excluding them removed
+ * the answer. Cross-store matching is one axis; cross-brand within a group is
+ * the other, and private label is essential to the second.
  */
 function qualityScore(p: NormalizedPcProduct): number {
   let score = 0;
@@ -120,10 +125,6 @@ function qualityScore(p: NormalizedPcProduct): number {
   if (p.packageSize && parseSize(p.packageSize)) score += 2;
   if (p.brand) score += 1;
   if (p.price >= 0.5 && p.price <= 100) score += 1; // avoid odd bulk/edge SKUs
-
-  // Heavily demote private label — comparable beats merely well-formed.
-  if (isPrivateLabel(p.brand)) score -= 8;
-
   return score;
 }
 
@@ -136,6 +137,10 @@ export type ImportOptions = {
   verbose?: boolean;
   /** Roughly how many canonical products to keep. */
   targetSize?: number;
+  /** Candidates per category sent to the group classifier. */
+  candidatesPerCategory?: number;
+  /** Max products kept per equivalence group. */
+  perGroup?: number;
 };
 
 export type ImportSummary = {
@@ -144,6 +149,8 @@ export type ImportSummary = {
   created: number;
   updated: number;
   byCategory: Record<string, number>;
+  groups: number;
+  groupsWithPrivateLabel: number;
   pricesWritten: number;
   errors: string[];
 };
@@ -179,39 +186,101 @@ export async function importCatalogue(
   });
   log(`Fetched ${fetched.length} distinct products (${errors.length} errors)`);
 
-  // ── Select a balanced subset ─────────────────────────────────────────────
-  // Round-robin across categories so every aisle is represented, rather than
-  // letting whichever category returned most results dominate.
+  // ── Classify into equivalence groups ─────────────────────────────────────
   const inStock = fetched.filter((p) => p.inStock && p.price > 0);
-  const byCategory = new Map<ProductCategory, NormalizedPcProduct[]>();
 
+  // Classifying 6000+ products would be wasteful, so pre-trim to the
+  // best-formed candidates per category first, then group those.
+  const preByCategory = new Map<ProductCategory, NormalizedPcProduct[]>();
   for (const p of inStock) {
     const cat = categoryFor(p.foundVia);
-    const list = byCategory.get(cat) ?? [];
+    const list = preByCategory.get(cat) ?? [];
     list.push(p);
-    byCategory.set(cat, list);
+    preByCategory.set(cat, list);
   }
-  for (const list of byCategory.values()) {
+  const candidates: NormalizedPcProduct[] = [];
+  for (const list of preByCategory.values()) {
     list.sort((a, b) => qualityScore(b) - qualityScore(a));
+    candidates.push(...list.slice(0, opts.candidatesPerCategory ?? 80));
   }
 
-  const selected: { product: NormalizedPcProduct; category: ProductCategory }[] = [];
-  const cursors = new Map<ProductCategory, number>();
-  let exhausted = false;
-  while (selected.length < targetSize && !exhausted) {
-    exhausted = true;
-    for (const [cat, list] of byCategory) {
+  log(`Classifying ${candidates.length} candidates into groups…`);
+  const groups = await classifyGroups(
+    candidates.map((p) => ({
+      id: p.code,
+      name: p.name,
+      brand: p.brand,
+      packageSize: p.packageSize,
+    })),
+    {
+      onProgress: (done, total) => {
+        if (opts.verbose && done % 200 === 0) log(`  …${done}/${total}`);
+      },
+    },
+  );
+  log(`Assigned ${groups.size} products to groups`);
+
+  // ── Select for comparability, not breadth ────────────────────────────────
+  // A product with nothing to compare against is decoration. Prefer groups
+  // that contain several brands, and especially groups containing both a
+  // national brand and a store brand — that pairing is the comparison a budget
+  // shopper actually wants to see.
+  const byGroup = new Map<string, NormalizedPcProduct[]>();
+  for (const p of candidates) {
+    const g = groups.get(p.code);
+    if (!g) continue;
+    const list = byGroup.get(g) ?? [];
+    list.push(p);
+    byGroup.set(g, list);
+  }
+
+  const distinctBrands = (list: NormalizedPcProduct[]) =>
+    new Set(list.map((p) => (p.brand ?? "").toLowerCase()).filter(Boolean)).size;
+
+  const rankedGroups = [...byGroup.entries()]
+    .map(([group, list]) => {
+      const brands = distinctBrands(list);
+      const hasPrivate = list.some((p) => isPrivateLabel(p.brand));
+      const hasNational = list.some((p) => p.brand && !isPrivateLabel(p.brand));
+      return {
+        group,
+        list,
+        // Multi-brand is the point; national + store brand together is the
+        // headline comparison.
+        score: brands * 2 + (hasPrivate && hasNational ? 6 : 0),
+      };
+    })
+    .filter((g) => distinctBrands(g.list) >= 2) // nothing to compare otherwise
+    .sort((a, b) => b.score - a.score);
+
+  const perGroup = opts.perGroup ?? 4;
+  const selected: {
+    product: NormalizedPcProduct;
+    category: ProductCategory;
+    group: string;
+  }[] = [];
+
+  for (const { group, list } of rankedGroups) {
+    if (selected.length >= targetSize) break;
+
+    // Within a group, keep the cheapest-per-brand so the comparison shows
+    // distinct brands rather than four sizes of the same one.
+    const bestPerBrand = new Map<string, NormalizedPcProduct>();
+    for (const p of [...list].sort((a, b) => qualityScore(b) - qualityScore(a))) {
+      const key = (p.brand ?? p.name).toLowerCase();
+      if (!bestPerBrand.has(key)) bestPerBrand.set(key, p);
+    }
+
+    for (const p of [...bestPerBrand.values()].slice(0, perGroup)) {
       if (selected.length >= targetSize) break;
-      const i = cursors.get(cat) ?? 0;
-      if (i < list.length) {
-        selected.push({ product: list[i], category: cat });
-        cursors.set(cat, i + 1);
-        exhausted = false;
-      }
+      selected.push({ product: p, category: categoryFor(p.foundVia), group });
     }
   }
 
-  log(`Selected ${selected.length} across ${byCategory.size} categories`);
+  const groupCount = new Set(selected.map((s) => s.group)).size;
+  log(
+    `Selected ${selected.length} products across ${groupCount} comparable groups`,
+  );
 
   // ── Upsert canonical products ────────────────────────────────────────────
   let created = 0;
@@ -219,7 +288,9 @@ export async function importCatalogue(
   const categoryCounts: Record<string, number> = {};
   const observations: PriceObservation[] = [];
 
-  for (const { product, category } of selected) {
+  const groupsSeen = new Set<string>();
+  for (const { product, category, group } of selected) {
+    groupsSeen.add(group);
     const barcode = normalizeBarcode(product.barcode);
     const units = unitFields(product.packageSize);
 
@@ -237,6 +308,8 @@ export async function importCatalogue(
       name: displayName(product),
       brand: product.brand,
       category,
+      // The equivalence group — what cross-brand comparison joins on.
+      subcategory: group,
       ...units,
       ...(barcode ? { barcode } : {}),
       ...(product.imageUrl ? { imageUrl: product.imageUrl } : {}),
@@ -286,12 +359,18 @@ export async function importCatalogue(
   const ingest = await ingestObservations(observations, { now: observedAt });
   log(`Wrote ${ingest.accepted} prices (${ingest.rejected.length} rejected)`);
 
+  const privateLabelGroups = new Set(
+    selected.filter((s) => isPrivateLabel(s.product.brand)).map((s) => s.group),
+  );
+
   return {
     fetched: fetched.length,
     kept: selected.length,
     created,
     updated,
     byCategory: categoryCounts,
+    groups: groupsSeen.size,
+    groupsWithPrivateLabel: privateLabelGroups.size,
     pricesWritten: ingest.accepted,
     errors,
   };

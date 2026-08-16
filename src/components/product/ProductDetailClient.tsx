@@ -8,6 +8,7 @@ import AddToListSheet from "@/components/search/AddToListSheet";
 import ReportPriceSheet from "@/components/product/ReportPriceSheet";
 import { useGuest } from "@/hooks/useGuest";
 import { productImageSrc } from "@/lib/product-image";
+import CheaperAlternatives from "@/components/product/CheaperAlternatives";
 
 // ── Types ──────────────────────────────────────
 
@@ -291,6 +292,9 @@ export default function ProductDetailClient({
         >
           Price looks wrong? <span className="text-[#00b89e]">Report it</span>
         </button>
+
+        {/* Cross-brand comparison — usually the bigger saving */}
+        <CheaperAlternatives productId={product.id} />
 
         {/* Similar products */}
         {similar.length > 0 && (

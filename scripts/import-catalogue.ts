@@ -90,6 +90,7 @@ async function main() {
   console.log(`  created   : ${s.created}`);
   console.log(`  updated   : ${s.updated}`);
   console.log(`  prices    : ${s.pricesWritten}`);
+  console.log(`  groups    : ${s.groups} (${s.groupsWithPrivateLabel} include a store brand)`);
   console.log(`  by category:`);
   for (const [c, n] of Object.entries(s.byCategory).sort((a, b) => b[1] - a[1])) {
     console.log(`      ${c.padEnd(20)} ${n}`);
