@@ -4,12 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { validateBody, idSchema } from "@/lib/validate";
 import { badRequest, forbidden, notFound } from "@/lib/api-error";
 import { requireElevatedRole, canWriteStore } from "@/lib/admin/require-role";
-import {
-  matchProductByBarcodeOrName,
-  type CanonicalProduct,
-} from "@/lib/pricing/match";
-import { ingestObservations } from "@/lib/pricing/ingest";
-import type { PriceObservation } from "@/lib/pricing/types";
+import { resolveAndIngest } from "@/lib/admin/ingest-items";
 import { MIN_PRICE, MAX_PRICE } from "@/lib/pricing/types";
 
 /**
@@ -55,6 +50,16 @@ const ItemSchema = z
 const BodySchema = z.object({
   storeId: idSchema,
   /**
+   * Resolve and report without writing anything.
+   *
+   * The import UI previews with this before committing. That review step is
+   * the point: captures from Walmart and Voilà carry no barcode, so every
+   * match is name-and-size and the same code path once matched a bag of
+   * chicken nuggets to a pack of chicken breasts. Seeing what will be written
+   * is how that gets caught before it is in the database rather than after.
+   */
+  dryRun: z.boolean().optional().default(false),
+  /**
    * When the prices were seen. Defaults to now; entering yesterday's aisle
    * notes should not claim to be today's observation, because
    * `shouldReplaceCurrent()` resolves conflicts by recency.
@@ -62,14 +67,6 @@ const BodySchema = z.object({
   observedAt: z.coerce.date().optional(),
   items: z.array(ItemSchema).min(1).max(500),
 });
-
-/** Why an item could not be attached to a product. */
-type Unresolved = {
-  index: number;
-  barcode: string | null;
-  name: string | null;
-  reason: "no_match" | "low_confidence";
-};
 
 export async function POST(req: NextRequest) {
   const { user, role, managedStoreId, error } = await requireElevatedRole();
@@ -98,99 +95,27 @@ export async function POST(req: NextRequest) {
     return badRequest("observedAt cannot be in the future");
   }
 
-  // The whole active catalogue is the match space. At 250 products this is one
-  // cheap query; if the catalogue grows past a few thousand this should become
-  // a barcode-indexed lookup plus a narrowed name-match candidate set.
-  const catalogue: CanonicalProduct[] = (
-    await prisma.product.findMany({
-      where: { isActive: true },
-      select: {
-        id: true,
-        name: true,
-        brand: true,
-        unitSize: true,
-        unitQuantity: true,
-        unitMeasure: true,
-        barcode: true,
-      },
-    })
-  ).map((p) => ({
-    ...p,
-    unitQuantity: p.unitQuantity === null ? null : Number(p.unitQuantity),
-  }));
-
-  const observations: PriceObservation[] = [];
-  const unresolved: Unresolved[] = [];
-  const resolved: { index: number; productId: string; via: string }[] = [];
-
-  // One product may only be observed once per submission — a duplicated row
-  // would otherwise append two history entries for the same sighting.
-  const seenProductIds = new Set<string>();
-
-  for (const [index, item] of items.entries()) {
-    const match = matchProductByBarcodeOrName(
-      { barcode: item.barcode, name: item.name ?? "" },
-      catalogue,
-    );
-
-    if (!match) {
-      unresolved.push({
-        index,
-        barcode: item.barcode ?? null,
-        name: item.name ?? null,
-        reason: "no_match",
-      });
-      continue;
-    }
-
-    if (seenProductIds.has(match.productId)) continue;
-    seenProductIds.add(match.productId);
-
-    resolved.push({ index, productId: match.productId, via: match.reason });
-
-    observations.push({
-      storeId,
-      productId: match.productId,
-      price: item.price,
-      isSale: item.isSale,
-      regularPrice: item.regularPrice ?? null,
-      saleEndDate: item.saleEndDate ?? null,
-      source: "manual",
-      observedAt,
-      submittedBy: user.id,
-      storeProductName: item.name ?? null,
-      storeSku: item.storeSku ?? null,
-    });
-  }
-
-  // `ingestObservations()` rejects an observation whose StoreProduct row does
-  // not exist — and for a store being seeded for the first time, none do.
-  await Promise.all(
-    observations.map((o) =>
-      prisma.storeProduct.upsert({
-        where: { storeId_productId: { storeId, productId: o.productId } },
-        create: { storeId, productId: o.productId, isActive: true },
-        update: { isActive: true },
-      }),
-    ),
-  );
-
-  const result = await ingestObservations(observations, { now });
+  const result = await resolveAndIngest({
+    storeId,
+    items: items.map((i) => ({
+      barcode: i.barcode,
+      name: i.name,
+      price: i.price,
+      isSale: i.isSale,
+      regularPrice: i.regularPrice,
+      saleEndDate: i.saleEndDate,
+      storeSku: i.storeSku,
+    })),
+    submittedBy: user.id,
+    observedAt,
+    now,
+    dryRun: data.dryRun,
+  });
 
   return NextResponse.json({
+    dryRun: data.dryRun,
     store: { id: store.id, name: store.name },
     observedAt,
-    submitted: items.length,
-    resolved: resolved.length,
-    accepted: result.accepted,
-    updated: result.updated,
-    unresolved,
-    // Surfaced verbatim so the entry UI can show *why* a price bounced —
-    // an implausible swing usually means a per-kg price typed as per-item.
-    rejected: result.rejected.map((r) => ({
-      productId: r.observation.productId,
-      reason: r.reason,
-      detail: r.detail,
-    })),
+    ...result,
   });
 }

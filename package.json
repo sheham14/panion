@@ -19,7 +19,8 @@
     "catalogue:import": "tsx scripts/import-catalogue.ts",
     "snapshot:save": "tsx scripts/snapshot.ts save",
     "snapshot:restore": "tsx scripts/snapshot.ts restore",
-    "coverage": "tsx scripts/coverage.ts"
+    "coverage": "tsx scripts/coverage.ts",
+    "role": "tsx scripts/grant-role.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.88.0",
