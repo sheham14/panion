@@ -77,10 +77,24 @@ async function main() {
     for (const sp of p.storeProducts)
       byStore.set(sp.store.name, (byStore.get(sp.store.name) ?? 0) + 1);
 
+  /**
+   * A Loblaw banner's denominator is the whole catalogue — it is the only
+   * chain that can stock No Name and President's Choice. Measuring it against
+   * the addressable subset produced the nonsense "Dominion: 140%".
+   */
+  const LOBLAW_CHAINS = new Set(["dominion", "no frills"]);
+  const chainOf = new Map<string, string>();
+  for (const p of products)
+    for (const sp of p.storeProducts) chainOf.set(sp.store.name, sp.store.chain);
+
   console.log(`\n─── Prices per store ───`);
   for (const [store, n] of [...byStore].sort((a, b) => b[1] - a[1])) {
-    const pct = ((n / addressable) * 100).toFixed(0);
-    console.log(`  ${store.padEnd(34)} ${String(n).padStart(4)}  (${pct}% of addressable)`);
+    const loblaw = LOBLAW_CHAINS.has(chainOf.get(store) ?? "");
+    const denom = loblaw ? products.length : addressable;
+    const pct = ((n / denom) * 100).toFixed(0);
+    console.log(
+      `  ${store.padEnd(34)} ${String(n).padStart(4)}  (${pct}% of ${loblaw ? "catalogue" : "addressable"})`,
+    );
   }
 
   const suspicious = multiStore
