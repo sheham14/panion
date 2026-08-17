@@ -36,8 +36,11 @@ const ALLOWED_IMAGE_HOSTS = [
   // PC Express (Dominion / No Frills) — verified from a real imageAssets URL
   "digital.loblaws.ca",
   "assets.shop.loblaws.ca",
+  // Voilà (Sobeys) — verified from a real product `image.src`
+  "voila.ca",
   // Reserved for the Walmart adapter
   "i5.walmartimages.ca",
+  "i5.walmartimages.com",
 ];
 
 /** Cached hard at the edge — flyer imagery is immutable per flyer cycle. */

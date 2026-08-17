@@ -48,6 +48,10 @@ next-env.d.ts
 # audit notes (private)
 OPUS_AUDIT.md
 
+# data provenance / legal risk record — deliberately not published. Records a
+# knowing decision about source access; belongs with the author, not the repo.
+DATA-SOURCING.md
+
 # marketing/portfolio artifacts (handed off, not part of the app)
 panion-landing.tsx
 prisma/snapshots/

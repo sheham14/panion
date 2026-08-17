@@ -9,6 +9,11 @@ import {
   parseFlippResponse,
   normalizeFlippItem,
 } from "@/lib/pricing/adapters/flipp";
+import {
+  parseVoilaResponse,
+  normalizeVoilaProduct,
+  looksRegionScoped,
+} from "@/lib/pricing/adapters/voila";
 
 /**
  * Adapters are tested against **real captured responses**, per
@@ -114,5 +119,90 @@ describe("Flipp adapter", () => {
       flyer_item_id: 123,
     });
     expect(i?.price).toBe(4.99);
+  });
+});
+
+describe("Voilà adapter", () => {
+  const milk = fixture("voila-search-milk.json");
+
+  it("parses a real search response", () => {
+    const products = parseVoilaResponse(milk);
+    expect(products.length).toBeGreaterThan(0);
+    const p = products[0];
+    expect(typeof p.name).toBe("string");
+    expect(p.price).toBeGreaterThan(0);
+  });
+
+  it("carries no barcode, so matching is name-and-size only", () => {
+    // Documents the constraint rather than asserting a bug: unlike PC Express,
+    // nothing in this payload can serve as an exact cross-store join key.
+    const products = parseVoilaResponse(milk);
+    for (const p of products) {
+      expect(p).not.toHaveProperty("barcode");
+    }
+  });
+
+  it("treats a promoPrice below the shelf price as a sale", () => {
+    const products = parseVoilaResponse(milk);
+    const organic = products.find((p) => /Natrel Organic 2%/i.test(p.name));
+    expect(organic?.isSale).toBe(true);
+    expect(organic?.price).toBe(7.29);
+    expect(organic?.regularPrice).toBe(8.49);
+  });
+
+  it("does NOT treat a promotion badge without a promoPrice as a sale", () => {
+    // Voilà attaches promotion badges to multibuys and loyalty offers that
+    // leave the shelf price alone. Trusting the badge would record the regular
+    // price as a sale price, which then blocks later regular observations via
+    // the live-sale rule in shouldReplaceCurrent().
+    const silk = parseVoilaResponse(milk).find((p) => /Silk/i.test(p.name));
+    expect(silk?.isSale).toBe(false);
+    expect(silk?.price).toBe(5.99);
+    expect(silk?.regularPrice).toBeNull();
+  });
+
+  it("keeps Voilà's own unit price and its basis", () => {
+    const cd = parseVoilaResponse(milk).find((p) =>
+      /Central Dairies/i.test(p.name),
+    );
+    expect(cd?.unitPrice?.basis).toBe("PER_100ML");
+    expect(cd?.unitPrice?.value).toBeGreaterThan(0);
+  });
+
+  it("keeps the category path Loblaw never exposes", () => {
+    const cd = parseVoilaResponse(milk).find((p) =>
+      /Central Dairies/i.test(p.name),
+    );
+    expect(cd?.categoryPath).toContain("Dairy & Eggs");
+  });
+
+  it("detects a St. John's-scoped session by its local dairies", () => {
+    // The dangerous failure is a de-scoped session: a valid 200 for the wrong
+    // province. Central Dairies and Scotsburn are absent from the default
+    // region, so their presence is the region check.
+    expect(looksRegionScoped(parseVoilaResponse(milk))).toBe(true);
+    expect(
+      looksRegionScoped([
+        { brand: "Natrel", name: "Natrel 2% Milk 2 L" },
+      ] as never),
+    ).toBe(false);
+  });
+
+  it("drops entries with no usable price", () => {
+    expect(normalizeVoilaProduct({ productId: "x", name: "No price" })).toBeNull();
+    expect(
+      normalizeVoilaProduct({
+        productId: "x",
+        name: "Bad amount",
+        price: { amount: "not-a-number" },
+      }),
+    ).toBeNull();
+  });
+
+  it("survives a shape change without throwing", () => {
+    expect(parseVoilaResponse(null)).toEqual([]);
+    expect(parseVoilaResponse({})).toEqual([]);
+    expect(parseVoilaResponse({ productGroups: "nope" })).toEqual([]);
+    expect(parseVoilaResponse({ productGroups: [{}] })).toEqual([]);
   });
 });

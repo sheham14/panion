@@ -195,8 +195,18 @@ function productCoverage(itemTokens: string[], productTokens: string[]): number 
  * Chicken Breast" purely on brand + "chicken".
  */
 const EXCLUSIVE_ATTRIBUTES: string[][] = [
-  // cuts / forms
-  ["breast", "thigh", "thighs", "wing", "wings", "drumstick", "drumsticks", "patties", "ground"],
+  // Cuts / forms — singular only; membership is tested after `singularize()`.
+  //
+  // Listing both "breast" and "breasts" here would make them conflict with each
+  // other, which is why the plurals that used to sit alongside "thigh" and
+  // "wing" were a latent bug. The gap this closes: "breasts" was absent
+  // entirely, so "Watson Ridge chicken nuggets" matched "Watson Ridge Chicken
+  // Breasts" on brand + "chicken" alone and priced a $5.97 bag of nuggets as a
+  // $16.00 pack of breasts.
+  [
+    "breast", "thigh", "wing", "drumstick", "patty", "ground",
+    "nugget", "strip", "tender", "fillet", "cutlet", "roast",
+  ],
   // milk fat / flavour
   ["skim", "whole", "chocolate", "buttermilk", "cream"],
   // diet vs regular
@@ -224,6 +234,19 @@ const VARIANT_MARKERS = [
   "sticks", "spread", "whipped", "powder", "concentrate",
 ];
 
+/**
+ * Crude singularizer, used only for exclusive-attribute membership.
+ *
+ * Deliberately not applied in `tokenize()`: stemming the whole name would
+ * collapse distinctions elsewhere. Here it only has to make "breasts" and
+ * "breast" the same attribute so a group can list each cut once.
+ */
+function singularize(token: string): string {
+  if (token.endsWith("ies") && token.length > 4) return `${token.slice(0, -3)}y`;
+  if (token.endsWith("ss") || token.length <= 3) return token;
+  return token.endsWith("s") ? token.slice(0, -1) : token;
+}
+
 /** True when the two names disagree on a mutually-exclusive attribute. */
 export function hasConflictingAttribute(
   itemTokens: string[],
@@ -231,10 +254,12 @@ export function hasConflictingAttribute(
 ): boolean {
   const items = new Set(itemTokens);
   const products = new Set(productTokens);
+  const itemStems = new Set(itemTokens.map(singularize));
+  const productStems = new Set(productTokens.map(singularize));
 
   for (const group of EXCLUSIVE_ATTRIBUTES) {
-    const inItem = group.filter((g) => items.has(g));
-    const inProduct = group.filter((g) => products.has(g));
+    const inItem = group.filter((g) => itemStems.has(g));
+    const inProduct = group.filter((g) => productStems.has(g));
     if (inItem.length === 0 || inProduct.length === 0) continue;
     // Both name an attribute from this group — they must overlap.
     if (!inItem.some((a) => inProduct.includes(a))) return true;

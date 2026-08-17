@@ -271,3 +271,40 @@ describe("barcode matching", () => {
     expect(r?.reason).not.toContain("barcode=");
   });
 });
+
+describe("matchProduct — mismatch found on the first live Sobeys run", () => {
+  const POULTRY: CanonicalProduct[] = [
+    {
+      id: "prod_wr_breasts",
+      name: "Watson Ridge Chicken Breasts",
+      brand: "Watson Ridge",
+      unitSize: "800g",
+      unitQuantity: 800,
+      unitMeasure: "g",
+    },
+  ];
+  const m = (n: string) => matchProduct(n, POULTRY)?.productId ?? null;
+
+  it("does not match nuggets to breasts", () => {
+    // Live: a $5.97 Walmart flyer bag of "Watson Ridge chicken nuggets" was
+    // priced against the $16.00 800g pack of breasts — a 2.7x spread that read
+    // as a bargain rather than as the bad match it was. "breasts" (plural) was
+    // absent from the cuts group, so nothing conflicted.
+    expect(m("Watson Ridge chicken nuggets")).toBeNull();
+  });
+
+  it("does not match other prepared forms to a raw cut", () => {
+    expect(m("Watson Ridge Chicken Strips 800g")).toBeNull();
+    expect(m("Watson Ridge Chicken Tenders 800g")).toBeNull();
+    expect(m("Watson Ridge Chicken Patties 800g")).toBeNull();
+  });
+
+  it("still matches the same cut", () => {
+    expect(m("Watson Ridge Chicken Breasts 800g")).toBe("prod_wr_breasts");
+  });
+
+  it("treats singular and plural cuts as the same attribute", () => {
+    expect(hasConflictingAttribute(["chicken", "breasts"], ["chicken", "breast"])).toBe(false);
+    expect(hasConflictingAttribute(["chicken", "nuggets"], ["chicken", "breasts"])).toBe(true);
+  });
+});

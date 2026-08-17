@@ -24,7 +24,15 @@ export default function ReportPriceSheet({
   onClose,
   isGuest = false,
 }: Props) {
-  const availableStores = storePrices.filter((sp) => sp.price !== null);
+  /**
+   * Every store is selectable, including ones we hold no price for.
+   *
+   * This used to filter to `sp.price !== null`, which excluded exactly the
+   * stores a report is most valuable for: a store with no price could never be
+   * chosen, so the gap could never be filled. Sobeys had zero prices and was
+   * therefore absent from its own dropdown.
+   */
+  const availableStores = storePrices;
 
   const [selectedStoreId, setSelectedStoreId] = useState(defaultStoreId);
   const [price, setPrice] = useState(
@@ -38,9 +46,13 @@ export default function ReportPriceSheet({
   function handleStoreSelect(storeId: string) {
     setSelectedStoreId(storeId);
     const storePrice = availableStores.find((sp) => sp.storeId === storeId)?.price;
-    if (storePrice !== undefined && storePrice !== null) {
-      setPrice(storePrice.toFixed(2));
-    }
+    // Clear rather than keep the previous store's figure — leaving it prefilled
+    // invites submitting one store's price against another.
+    setPrice(
+      storePrice !== undefined && storePrice !== null
+        ? storePrice.toFixed(2)
+        : "",
+    );
   }
 
   async function handleSubmit() {

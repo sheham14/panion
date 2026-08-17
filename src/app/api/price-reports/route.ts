@@ -34,12 +34,32 @@ export async function POST(req: NextRequest) {
 
   const { productId, storeId, reportedPrice, notes } = data;
 
-  const storeProduct = await prisma.storeProduct.findUnique({
+  /**
+   * A missing StoreProduct is not an error — it is the most useful report.
+   *
+   * This used to 404 whenever the row was absent, which meant a store we hold
+   * no price for could never receive one: the report that would fill the gap
+   * was the only one rejected. Since the row is just the (store, product) join,
+   * create it on demand and let the report attach.
+   *
+   * The product and store are verified first so this cannot be used to
+   * fabricate rows for ids that do not exist.
+   */
+  const [product, store] = await Promise.all([
+    prisma.product.findUnique({ where: { id: productId }, select: { id: true } }),
+    prisma.store.findUnique({
+      where: { id: storeId },
+      select: { id: true, isActive: true },
+    }),
+  ]);
+  if (!product) return notFound("Product not found");
+  if (!store?.isActive) return notFound("Store not found");
+
+  const storeProduct = await prisma.storeProduct.upsert({
     where: { storeId_productId: { storeId, productId } },
+    create: { storeId, productId, isActive: true },
+    update: {},
   });
-  if (!storeProduct) {
-    return notFound("Store product not found");
-  }
 
   const report = await prisma.priceReport.create({
     data: {

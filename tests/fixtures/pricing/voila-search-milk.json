@@ -1,0 +1,184 @@
+{
+  "productGroups": [
+    {
+      "type": "cluster",
+      "decoratedProducts": [
+        {
+          "productId": "e31b9e70-1af0-4a41-bc14-243d9585c891",
+          "retailerProductId": "882534EA",
+          "type": "REGULAR",
+          "name": "Central Dairies 2% Milk Partly Skim  2 L",
+          "brand": "Central Dairies",
+          "packSizeDescription": "2L",
+          "price": {
+            "amount": "4.78",
+            "currency": "CAD"
+          },
+          "unitPrice": {
+            "price": {
+              "amount": "0.24",
+              "currency": "CAD"
+            },
+            "unit": "fop.price.per.100ml",
+            "unitName": "PER_100ML"
+          },
+          "available": true,
+          "categoryPath": [
+            "Dairy & Eggs",
+            "Milk",
+            "Dairy Milk"
+          ],
+          "image": {
+            "src": "https://voila.ca/images-v3/2d92d19c-0354-49c0-8a91-5260ed0bf531/41c16642-fe06-4c3f-8a55-69011ddf85ae/300x300.jpg",
+            "imageId": "41c16642-fe06-4c3f-8a55-69011ddf85ae"
+          }
+        },
+        {
+          "productId": "b48410b0-f86c-475c-8ee2-7d05944d6a00",
+          "retailerProductId": "872031EA",
+          "type": "REGULAR",
+          "name": "Scotsburn  2% Partly Skimmed Milk 2 L",
+          "brand": "Scotsburn",
+          "packSizeDescription": "2L",
+          "price": {
+            "amount": "5.25",
+            "currency": "CAD"
+          },
+          "unitPrice": {
+            "price": {
+              "amount": "0.26",
+              "currency": "CAD"
+            },
+            "unit": "fop.price.per.100ml",
+            "unitName": "PER_100ML"
+          },
+          "available": true,
+          "categoryPath": [
+            "Dairy & Eggs",
+            "Milk",
+            "Dairy Milk"
+          ],
+          "image": {
+            "src": "https://voila.ca/images-v3/2d92d19c-0354-49c0-8a91-5260ed0bf531/b2032e60-5699-4cd5-9865-76d4b6eb4357/300x300.jpg",
+            "imageId": "b2032e60-5699-4cd5-9865-76d4b6eb4357"
+          }
+        },
+        {
+          "productId": "bea94bcd-2de7-4871-bff6-2c4dd1879cf2",
+          "retailerProductId": "577689EA",
+          "type": "REGULAR",
+          "name": "Natrel Organic 2% Milk Partly Skimmed 2 L",
+          "brand": "Natrel",
+          "packSizeDescription": "2L",
+          "price": {
+            "amount": "8.49",
+            "currency": "CAD"
+          },
+          "promoPrice": {
+            "amount": "7.29",
+            "currency": "CAD"
+          },
+          "unitPrice": {
+            "price": {
+              "amount": "0.42",
+              "currency": "CAD"
+            },
+            "unit": "fop.price.per.100ml",
+            "unitName": "PER_100ML"
+          },
+          "promotions": [
+            {
+              "promoId": "e6b08b1d-6fc2-478f-8223-14e08062b72f",
+              "retailerPromotionId": "1000295846_45ee2006-7c4c-48cd-b060-d88747640983",
+              "description": "SALE",
+              "type": "OFFER",
+              "presentationMode": "DEFAULT",
+              "limitReached": false
+            }
+          ],
+          "available": true,
+          "categoryPath": [
+            "Dairy & Eggs",
+            "Milk",
+            "Dairy Milk"
+          ],
+          "image": {
+            "src": "https://voila.ca/images-v3/2d92d19c-0354-49c0-8a91-5260ed0bf531/bbec109b-9e95-4afe-8e5b-0bda1ee2fb8e/300x300.jpg",
+            "imageId": "bbec109b-9e95-4afe-8e5b-0bda1ee2fb8e"
+          }
+        },
+        {
+          "productId": "de2e30ad-443d-42ad-b650-e68c495da8a7",
+          "retailerProductId": "184388EA",
+          "type": "REGULAR",
+          "name": "Silk Dairy-Free Soy Beverage Original Unsweetened 1.89 L",
+          "brand": "Silk",
+          "packSizeDescription": "1.89L",
+          "price": {
+            "amount": "5.99",
+            "currency": "CAD"
+          },
+          "unitPrice": {
+            "price": {
+              "amount": "0.32",
+              "currency": "CAD"
+            },
+            "unit": "fop.price.per.100ml",
+            "unitName": "PER_100ML"
+          },
+          "promotions": [
+            {
+              "promoId": "e286d7ff-3dcd-4dde-9938-f307c21c8a0c",
+              "retailerPromotionId": "1000292126_266049db-c1c2-4fe4-b114-e422842ec016",
+              "description": "SALE",
+              "type": "OFFER",
+              "presentationMode": "DEFAULT",
+              "limitReached": false
+            }
+          ],
+          "available": true,
+          "categoryPath": [
+            "Dairy & Eggs",
+            "Milk",
+            "Non-Dairy Milk"
+          ],
+          "image": {
+            "src": "https://voila.ca/images-v3/2d92d19c-0354-49c0-8a91-5260ed0bf531/bfdecdaf-2ad9-4512-af19-e86fef574d81/300x300.jpg",
+            "imageId": "bfdecdaf-2ad9-4512-af19-e86fef574d81"
+          }
+        },
+        {
+          "productId": "cde6fb0e-bddb-4dd1-b62c-3656dc23246c",
+          "retailerProductId": "638563EA",
+          "type": "REGULAR",
+          "name": "Farmers 0.4% Cultured Buttermilk 1 L",
+          "brand": "Farmers",
+          "packSizeDescription": "1L",
+          "price": {
+            "amount": "4.49",
+            "currency": "CAD"
+          },
+          "unitPrice": {
+            "price": {
+              "amount": "0.45",
+              "currency": "CAD"
+            },
+            "unit": "fop.price.per.100ml",
+            "unitName": "PER_100ML"
+          },
+          "available": true,
+          "categoryPath": [
+            "Dairy & Eggs",
+            "Milk",
+            "Dairy Milk"
+          ],
+          "image": {
+            "src": "https://voila.ca/images-v3/2d92d19c-0354-49c0-8a91-5260ed0bf531/c957a247-ad5e-4f2f-a55d-3a78ed27c456/300x300.jpg",
+            "imageId": "c957a247-ad5e-4f2f-a55d-3a78ed27c456"
+          }
+        }
+      ],
+      "otherProductIds": []
+    }
+  ]
+}
