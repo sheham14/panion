@@ -98,11 +98,20 @@ const BOOKMARKLET_SOURCE = `(function(){
    * tiles are the only place products exist. Copy each tile's raw text
    * verbatim; parse-capture.ts owns the interpretation.
    */
+  /*
+   * Voilà's data-test hooks (seen live 2026-08-25): the wrapper value is
+   * suffixed with the product UUID ("fop-wrapper:11dc9b2a-..."), so tile
+   * matching is by prefix and the UUID doubles as the item id. The unit
+   * price span nests INSIDE the size element and must not pollute either
+   * the size or be mistaken for the price.
+   */
   var DOM_CONFIGS = [
     { tile: '[data-item-id]', title: '[data-automation-id="product-title"]',
       price: '[data-automation-id="product-price"]', idAttr: 'data-item-id' },
-    { tile: '[data-test="fop-wrapper"]', title: '[data-test="fop-title"]',
-      price: '[data-test="fop-price"]', size: '[data-test="fop-size"]' }
+    { tile: '[data-test^="fop-wrapper"]', title: '[data-test^="fop-title"]',
+      price: '[data-test^="fop-price"]:not([data-test="fop-price-per-unit"])',
+      size: '[data-test="fop-size"]', perUnit: '[data-test="fop-price-per-unit"]',
+      idFromDataTest: true }
   ];
   var domItems = [];
   if (!best || !best.items.length) {
@@ -113,15 +122,41 @@ const BOOKMARKLET_SOURCE = `(function(){
         var tile = tiles[d];
         var titleEl = tile.querySelector(cfg.title);
         var priceEl = tile.querySelector(cfg.price);
-        if (!titleEl || !priceEl) continue;
-        var sizeEl = cfg.size ? tile.querySelector(cfg.size) : null;
+        /* No named price hook — fall back to any price-shaped leaf that is
+           not the per-unit price. */
+        if (!priceEl && cfg.perUnit) {
+          var cand = tile.getElementsByTagName('*');
+          for (var pc=0; pc<cand.length; pc++){
+            var ct = cand[pc].textContent || '';
+            if (cand[pc].childElementCount === 0 && ct.length < 30 &&
+                /\\$\\s?\\d{1,4}\\.\\d{2}/.test(ct) && ct.indexOf('per') === -1 &&
+                !cand[pc].closest(cfg.perUnit)) { priceEl = cand[pc]; break; }
+          }
+        }
         var linkEl = tile.querySelector('a[href*="/ip/"]') || tile.querySelector('a[href]');
+        /* The tile's link text is a serviceable name when no title hook exists. */
+        var name = titleEl ? (titleEl.textContent || '').trim()
+                 : linkEl ? (linkEl.textContent || '').trim() : '';
+        if (!name || name.length < 2 || !priceEl) continue;
+        var sizeTxt = null;
+        if (cfg.size) {
+          var sizeEl = tile.querySelector(cfg.size);
+          if (sizeEl) {
+            sizeTxt = (sizeEl.textContent || '').trim();
+            var perEl = cfg.perUnit ? sizeEl.querySelector(cfg.perUnit) : null;
+            if (perEl) sizeTxt = sizeTxt.replace((perEl.textContent || '').trim(), ' ').trim();
+            sizeTxt = sizeTxt.slice(0,60) || null;
+          }
+        }
+        var itemId = cfg.idAttr ? tile.getAttribute(cfg.idAttr)
+                   : cfg.idFromDataTest ? ((tile.getAttribute('data-test') || '').split(':')[1] || null)
+                   : null;
         var imgEl = tile.querySelector('img');
         domItems.push({
-          name: (titleEl.textContent || '').trim(),
+          name: name,
           priceText: (priceEl.textContent || '').trim().slice(0,200),
-          size: sizeEl ? (sizeEl.textContent || '').trim().slice(0,60) : null,
-          itemId: cfg.idAttr ? tile.getAttribute(cfg.idAttr) : null,
+          size: sizeTxt,
+          itemId: itemId,
           link: linkEl ? linkEl.href : null,
           image: imgEl ? (imgEl.currentSrc || imgEl.src || null) : null
         });
