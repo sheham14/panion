@@ -4,6 +4,7 @@ import {
   normalizeCaptured,
   coercePrice,
   extractDisplayPrice,
+  deriveSizeFromUnitPrice,
   matchNameFor,
 } from "@/lib/capture/parse-capture";
 
@@ -59,7 +60,55 @@ describe("extractDisplayPrice", () => {
   });
 });
 
+describe("deriveSizeFromUnitPrice", () => {
+  // Walmart tiles often omit the size from the name; price ÷ unit price
+  // recovers it. Strings are real tiles from the 2026-08-25 capture.
+  it("derives size from a cents-per-100ml unit price", () => {
+    // $4.76 at 24¢/100ml is the 2L jug: 1983 ml, within the 10% guard of 2000.
+    expect(deriveSizeFromUnitPrice(4.76, "$476current price $4.7624¢/100ml")).toBe("~1983 ml");
+    expect(deriveSizeFromUnitPrice(3.44, "$344current price $3.4434¢/100ml")).toBe("~1012 ml");
+  });
+
+  it("derives size from a dollars-per-100lt unit price", () => {
+    expect(deriveSizeFromUnitPrice(4.77, "$477current price $4.77$272.57/100lt")).toBe("~1750 ml");
+  });
+
+  it("refuses to guess without the current-price label", () => {
+    // Without the label the fused digits cannot be untangled, and a wrongly
+    // derived size hard-rejects correct matches.
+    expect(deriveSizeFromUnitPrice(4.98, "$4.9826¢/100ml")).toBeNull();
+  });
+
+  it("returns null when there is no unit price", () => {
+    expect(deriveSizeFromUnitPrice(4.98, "$498current price $4.98")).toBeNull();
+  });
+
+  it("rejects implausible derived sizes", () => {
+    // A parse gone wrong lands outside grocery package bounds.
+    expect(deriveSizeFromUnitPrice(0.05, "current price $0.05 24¢/100ml")).toBeNull();
+  });
+});
+
 describe("normalizeCaptured", () => {
+  it("fills the size from the unit price when the name omits it", () => {
+    const item = normalizeCaptured({
+      name: "Scotsburn 2% Partly Skimmed Milk",
+      priceText: "$476current price $4.7624¢/100ml",
+      itemId: "PRD6000196944380",
+    });
+    expect(item?.price).toBe(4.76);
+    expect(item?.size).toBe("~1983 ml");
+  });
+
+  it("leaves the size alone when the name already states it", () => {
+    const item = normalizeCaptured({
+      name: "Natrel Organic Fine Filtered 3.8% Milk 2L",
+      priceText: "$756current price $7.5638¢/100ml",
+      itemId: "PRD10219672",
+    });
+    expect(item?.size).toBeNull();
+  });
+
   it("normalizes a DOM-tier Walmart tile with a display-text price", () => {
     const item = normalizeCaptured({
       name: "Great Value 2% Milk, 4 L",

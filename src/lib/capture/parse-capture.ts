@@ -11,6 +11,8 @@
  * in their own browser, which is the whole point — see DATA-SOURCING.md.
  */
 
+import { parseSize } from "@/lib/pricing/match";
+
 export type CaptureSource = "walmart" | "voila" | "generic";
 
 /** What the bookmarklet puts on the clipboard. */
@@ -102,6 +104,53 @@ export function extractDisplayPrice(text: string): number | null {
   return null;
 }
 
+/**
+ * Derive a package size from a tile's unit price.
+ *
+ * Many Walmart tiles omit the size from the product name entirely — the same
+ * "Scotsburn 2% Partly Skimmed Milk" title covers both the 2L and the 1L —
+ * but almost all carry a unit price (`24¢/100ml`, `$272.57/100lt`), and
+ * price ÷ unit price recovers the package size the name withholds. The
+ * matcher's 10% size tolerance absorbs the rounding in a displayed unit
+ * price, so the raw derived figure is emitted as-is (`~1983 ml`).
+ *
+ * The concatenated text fuses adjacent numbers (`"$4.6423¢/100ml"` is $4.64
+ * followed by 23¢), so the known price spans are stripped first — and if the
+ * `current price` label is missing we refuse to guess: a wrongly derived
+ * size would hard-reject correct matches, which is worse than no size.
+ */
+export function deriveSizeFromUnitPrice(
+  price: number,
+  text: string,
+): string | null {
+  let labelFound = false;
+  const cleaned = text
+    .replace(/current\s*price\s*(?:now\s*)?\$\s*[0-9,]+(?:\.\d{1,2})?/gi, () => {
+      labelFound = true;
+      return " ";
+    })
+    .replace(/(?:was|now)\s*\$\s*[0-9,]+(?:\.\d{1,2})?/gi, " ");
+  if (!labelFound) return null;
+
+  const m = cleaned.match(
+    /(?:\$\s*([0-9,]+(?:\.\d+)?)|(\d{1,3}(?:\.\d)?)\s*¢)\s*\/\s*(\d*)\s*(ml|l|lt|litre|g|kg)\b/i,
+  );
+  if (!m) return null;
+
+  const dollars = m[1] ? Number(m[1].replace(/,/g, "")) : Number(m[2]) / 100;
+  const unitWord = m[4].toLowerCase();
+  const perThousand = unitWord === "kg" || unitWord === "l" || unitWord === "lt" || unitWord === "litre";
+  const denom = (m[3] ? Number(m[3]) : 1) * (perThousand ? 1000 : 1);
+  if (!Number.isFinite(dollars) || dollars <= 0 || denom <= 0) return null;
+
+  const qty = price / (dollars / denom);
+  // Outside plausible grocery package bounds means the parse went wrong.
+  if (!Number.isFinite(qty) || qty < 30 || qty > 20000) return null;
+
+  const unit = unitWord === "g" || unitWord === "kg" ? "g" : "ml";
+  return `~${Math.round(qty)} ${unit}`;
+}
+
 /** First non-empty string among the given keys. */
 function pickString(
   obj: Record<string, unknown>,
@@ -172,10 +221,17 @@ export function normalizeCaptured(raw: unknown): CapturedItem | null {
   // echo the current price into the list-price field.
   const isSale = regularPrice !== null && regularPrice > price;
 
+  // A DOM-tier tile whose name carries no size can often recover it from the
+  // unit price; a name that already states its size needs no help.
+  let size = pickString(raw, SIZE_KEYS);
+  if (!size && priceText && parseSize(name) === null) {
+    size = deriveSizeFromUnitPrice(price, priceText);
+  }
+
   return {
     name,
     brand: pickString(raw, BRAND_KEYS),
-    size: pickString(raw, SIZE_KEYS),
+    size,
     price,
     isSale,
     regularPrice: isSale ? regularPrice : null,
