@@ -3,6 +3,7 @@ import {
   parseCapture,
   normalizeCaptured,
   coercePrice,
+  extractDisplayPrice,
   matchNameFor,
 } from "@/lib/capture/parse-capture";
 
@@ -33,7 +34,60 @@ describe("coercePrice", () => {
   });
 });
 
+describe("extractDisplayPrice", () => {
+  // Walmart.ca renders search results client-side, so the DOM tier copies a
+  // tile's price block as display text; the current price renders first,
+  // before was-prices and cent-denominated unit prices.
+  it("trusts the screen-reader label over the mangled visual spans", () => {
+    // Real tiles from a live 2026-08-25 capture: the visual price's
+    // dollar/cent spans concatenate to "$498" for a $4.98 product.
+    expect(extractDisplayPrice("$498current price $4.9826¢/100ml")).toBe(4.98);
+    expect(extractDisplayPrice("$477current price $4.77$272.57/100lt")).toBe(4.77);
+    expect(extractDisplayPrice("$344current price $3.4434¢/100ml")).toBe(3.44);
+  });
+
+  it("reads unlabeled dollar amounts, preferring one with a decimal point", () => {
+    expect(extractDisplayPrice("$4.97")).toBe(4.97);
+    expect(extractDisplayPrice("current price Now $4.97 Was $5.97")).toBe(4.97);
+    expect(extractDisplayPrice("$1,299.00")).toBe(1299);
+  });
+
+  it("falls back to cents only when no dollar amount exists", () => {
+    expect(extractDisplayPrice("97 ¢")).toBe(0.97);
+    expect(extractDisplayPrice("")).toBeNull();
+    expect(extractDisplayPrice("Rollback")).toBeNull();
+  });
+});
+
 describe("normalizeCaptured", () => {
+  it("normalizes a DOM-tier Walmart tile with a display-text price", () => {
+    const item = normalizeCaptured({
+      name: "Great Value 2% Milk, 4 L",
+      priceText: "current price Now $5.47, was $6.27, 13.7 ¢/100 ml",
+      itemId: "6000203002170",
+      link: "https://www.walmart.ca/en/ip/great-value-2-milk/6000203002170",
+    });
+    expect(item).toMatchObject({
+      name: "Great Value 2% Milk, 4 L",
+      price: 5.47,
+      isSale: true,
+      regularPrice: 6.27,
+      storeSku: "6000203002170",
+    });
+  });
+
+  it("does not read a was-only price block as a sale on itself", () => {
+    // The first dollar amount is the current price; a was-price equal to it
+    // must not register as a sale.
+    const item = normalizeCaptured({
+      name: "Wonder White Bread",
+      priceText: "current price $5.00, was $5.00",
+    });
+    expect(item?.price).toBe(5.0);
+    expect(item?.isSale).toBe(false);
+    expect(item?.regularPrice).toBeNull();
+  });
+
   it("normalizes a Walmart-shaped tile", () => {
     const item = normalizeCaptured({
       usItemId: "6000203002170",

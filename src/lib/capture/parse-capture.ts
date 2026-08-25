@@ -72,6 +72,36 @@ export function coercePrice(v: unknown): number | null {
   return null;
 }
 
+/**
+ * Extract a price from human-readable display text — the DOM tier of the
+ * bookmarklet copies a tile's price block verbatim.
+ *
+ * The visual price renders dollars and cents as separate spans, which
+ * `textContent` concatenates into a mangled figure: a real Walmart tile
+ * reads `"$498current price $4.9826¢/100ml"` for a $4.98 product. The
+ * screen-reader label (`current price $4.98`) is therefore the trusted
+ * reading; a bare dollar figure is only believed when it carries an
+ * explicit decimal point. Cents-only prices (`"97 ¢"`) are tried last.
+ */
+export function extractDisplayPrice(text: string): number | null {
+  const positive = (s: string): number | null => {
+    const n = Number(s.replace(/,/g, ""));
+    return Number.isFinite(n) && n > 0 ? n : null;
+  };
+  const labeled = text.match(/current\s*price\s*\$\s*([0-9,]+(?:\.\d{1,2})?)/i);
+  if (labeled) return positive(labeled[1]);
+  const withCents = text.match(/\$\s*([0-9,]+\.\d{2})/);
+  if (withCents) return positive(withCents[1]);
+  const bare = text.match(/\$\s*([0-9,]+)/);
+  if (bare) return positive(bare[1]);
+  const cents = text.match(/(\d{1,3}(?:\.\d+)?)\s*¢/);
+  if (cents) {
+    const n = Number(cents[1]) / 100;
+    return Number.isFinite(n) && n > 0 ? n : null;
+  }
+  return null;
+}
+
 /** First non-empty string among the given keys. */
 function pickString(
   obj: Record<string, unknown>,
@@ -119,12 +149,23 @@ export function normalizeCaptured(raw: unknown): CapturedItem | null {
     price = coercePrice(raw[k]);
     if (price !== null) break;
   }
+
+  // DOM-tier captures carry the tile's price block as raw display text.
+  const priceText = typeof raw.priceText === "string" ? raw.priceText : null;
+  if (price === null && priceText) price = extractDisplayPrice(priceText);
   if (price === null) return null;
 
   let regularPrice: number | null = null;
   for (const k of WAS_PRICE_KEYS) {
     regularPrice = coercePrice(raw[k]);
     if (regularPrice !== null) break;
+  }
+  if (regularPrice === null && priceText) {
+    const was = priceText.match(/was\s*\$\s*([0-9,]+(?:\.\d{1,2})?)/i);
+    if (was) {
+      const n = Number(was[1].replace(/,/g, ""));
+      regularPrice = Number.isFinite(n) && n > 0 ? n : null;
+    }
   }
 
   // A "was" price that isn't actually higher is not a sale — some payloads

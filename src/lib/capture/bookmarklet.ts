@@ -73,6 +73,13 @@ const BOOKMARKLET_SOURCE = `(function(){
   if (window.__NEXT_DATA__) roots.push(window.__NEXT_DATA__);
   if (window.__PRELOADED_STATE__) roots.push(window.__PRELOADED_STATE__);
   if (window.__APOLLO_STATE__) roots.push(window.__APOLLO_STATE__);
+  if (window.__WML_REDUX_INITIAL_STATE__) roots.push(window.__WML_REDUX_INITIAL_STATE__);
+  /* Embedded JSON blobs (incl. ld+json ItemList) are page content too. */
+  var tags = document.querySelectorAll('script[type="application/json"],script[type="application/ld+json"]');
+  for (var t=0;t<tags.length;t++){
+    if (tags[t].id === '__NEXT_DATA__') continue;
+    try { var parsed = JSON.parse(tags[t].textContent); if (parsed && typeof parsed === 'object') roots.push(parsed); } catch(e){}
+  }
   /* Next.js App Router streams into self.__next_f rather than __NEXT_DATA__. */
   if (self.__next_f && self.__next_f.length) {
     try {
@@ -84,6 +91,32 @@ const BOOKMARKLET_SOURCE = `(function(){
 
   for (var r=0;r<roots.length;r++) walk(roots[r], 0);
 
+  /*
+   * DOM tier. Walmart.ca fetches search results client-side (persisted
+   * GraphQL queries), so they never appear in __NEXT_DATA__ or any script
+   * tag — the rendered tiles are the only place they exist. Copy each
+   * tile's raw text verbatim; parse-capture.ts owns the interpretation.
+   */
+  var domItems = [];
+  if (!best || !best.items.length) {
+    var tiles = document.querySelectorAll('[data-item-id]');
+    for (var d=0; d<tiles.length; d++){
+      var tile = tiles[d];
+      var titleEl = tile.querySelector('[data-automation-id="product-title"]');
+      var priceEl = tile.querySelector('[data-automation-id="product-price"]');
+      if (!titleEl || !priceEl) continue;
+      var linkEl = tile.querySelector('a[href*="/ip/"]') || tile.querySelector('a[href]');
+      var imgEl = tile.querySelector('img');
+      domItems.push({
+        name: (titleEl.textContent || '').trim(),
+        priceText: (priceEl.textContent || '').trim().slice(0,200),
+        itemId: tile.getAttribute('data-item-id'),
+        link: linkEl ? linkEl.href : null,
+        image: imgEl ? (imgEl.currentSrc || imgEl.src || null) : null
+      });
+    }
+  }
+
   var host = location.hostname.replace(/^www\\./,'');
   var source = host.indexOf('walmart') > -1 ? 'walmart'
              : host.indexOf('voila') > -1 ? 'voila' : 'generic';
@@ -91,14 +124,46 @@ const BOOKMARKLET_SOURCE = `(function(){
   var payload;
   if (best && best.items.length) {
     payload = { source: source, url: location.href, capturedAt: new Date().toISOString(), items: best.items };
+  } else if (domItems.length) {
+    payload = { source: source, url: location.href, capturedAt: new Date().toISOString(), capturedFrom: 'dom', items: domItems };
   } else {
     /* Nothing found — copy the shape so the extractor can be fixed. */
     var shape = {};
     for (var rr=0; rr<roots.length; rr++){
       try { shape['root'+rr] = Object.keys(roots[rr]).slice(0,40); } catch(e){}
     }
+    /*
+     * Survey every array in the data: path, length, and the keys of its
+     * first element. The top-level keys alone proved too shallow to fix an
+     * extractor from — this makes the failed capture name the exact path
+     * where the products actually live.
+     */
+    var arrays = [];
+    var seen2 = new Set();
+    function survey(node, path, depth){
+      if (!node || depth > 12) return;
+      if (Array.isArray(node)) {
+        var entry = { path: path, length: node.length };
+        if (isObj(node[0])) entry.keys = Object.keys(node[0]).slice(0,30);
+        if (node.length) arrays.push(entry);
+        var lim = node.length < 3 ? node.length : 3;
+        for (var i=0;i<lim;i++) survey(node[i], path + '.' + i, depth+1);
+        return;
+      }
+      if (isObj(node)) {
+        if (seen2.has(node)) return;
+        seen2.add(node);
+        for (var k in node) { try { survey(node[k], path + '.' + k, depth+1); } catch(e){} }
+      }
+    }
+    for (var sv=0; sv<roots.length; sv++) survey(roots[sv], 'root'+sv, 0);
+    arrays.sort(function(a,b){ return b.length - a.length; });
     payload = { source: source, url: location.href, capturedAt: new Date().toISOString(),
-                diagnostic: { roots: roots.length, keys: shape, hasNextData: !!window.__NEXT_DATA__, hasAppRouter: !!self.__next_f } };
+                diagnostic: { roots: roots.length, keys: shape, arrays: arrays.slice(0,25), totalArrays: arrays.length,
+                              dom: { tiles: document.querySelectorAll('[data-item-id]').length,
+                                     titles: document.querySelectorAll('[data-automation-id="product-title"]').length,
+                                     prices: document.querySelectorAll('[data-automation-id="product-price"]').length },
+                              hasNextData: !!window.__NEXT_DATA__, hasAppRouter: !!self.__next_f } };
   }
 
   var text = JSON.stringify(payload);
