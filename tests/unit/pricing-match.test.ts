@@ -308,3 +308,41 @@ describe("matchProduct — mismatch found on the first live Sobeys run", () => {
     expect(hasConflictingAttribute(["chicken", "nuggets"], ["chicken", "breasts"])).toBe(true);
   });
 });
+
+describe("matchProduct — mismatch found on the first live Voilà bread capture", () => {
+  const BREAD: CanonicalProduct[] = [
+    {
+      id: "prod_dempsters_ww",
+      name: "Dempster's 100% Whole Wheat Bread",
+      brand: "Dempster's",
+      unitSize: "570 g",
+      unitQuantity: 570,
+      unitMeasure: "g",
+    },
+  ];
+  const m = (n: string) => matchProduct(n, BREAD)?.productId ?? null;
+
+  it("does not match other grains to whole wheat", () => {
+    // Live: FOUR distinct Dempster's loaves each scored 0.72–0.75 against the
+    // one Whole Wheat row. "dempsters", "100pct", "whole" and "bread" covered
+    // 4 of its 5 tokens, so the grain naming the loaf carried no weight. All
+    // four cost $4.49, so the >=1.8x check could not see it either — they
+    // collapsed onto one product and the preview read "1 of 12 matched".
+    expect(m("Dempster's 100% Whole Grains Bread 12 Grain 600 g")).toBeNull();
+    expect(m("Dempster's 100% Whole Grains Bread Ancient Grains With Quinoa 600 g")).toBeNull();
+    expect(m("Dempster's 100% Whole Grains Bread Honey & Oatmeal 600 g")).toBeNull();
+    expect(m("Dempster's Sandwich Bread 100% Whole Grains Multigrain 600 g")).toBeNull();
+  });
+
+  it("still matches whole wheat to whole wheat", () => {
+    expect(m("Dempster's 100% Whole Wheat Bread 570 g")).toBe("prod_dempsters_ww");
+  });
+
+  it("treats grain styles as mutually exclusive", () => {
+    expect(hasConflictingAttribute(["bread", "wheat"], ["bread", "grain"])).toBe(true);
+    expect(hasConflictingAttribute(["bread", "multigrain"], ["bread", "wheat"])).toBe(true);
+    expect(hasConflictingAttribute(["bread", "wheat"], ["bread", "wheat"])).toBe(false);
+    // A loaf naming both still matches the one naming a shared grain.
+    expect(hasConflictingAttribute(["whole", "grain", "wheat", "bread"], ["whole", "wheat", "bread"])).toBe(false);
+  });
+});

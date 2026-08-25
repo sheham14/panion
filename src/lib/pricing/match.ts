@@ -211,8 +211,20 @@ const EXCLUSIVE_ATTRIBUTES: string[][] = [
   ["skim", "whole", "chocolate", "buttermilk", "cream"],
   // diet vs regular
   ["diet", "zero", "regular"],
-  // bread styles
-  ["white", "rye", "sourdough", "pumpernickel"],
+  // Bread styles and grains.
+  //
+  // The grain terms were added after a Voilà bread capture matched FOUR
+  // distinct Dempster's loaves — 12 Grain, Ancient Grains With Quinoa,
+  // Honey & Oatmeal, and Sandwich Multigrain — all onto the single
+  // catalogue row "Dempster's 100% Whole Wheat Bread". Coverage was 0.80
+  // for each: "dempsters", "100pct", "whole" and "bread" all lined up, and
+  // "wheat" was the only product token missing. The grain that actually
+  // names the loaf carried no weight at all. Prices were identical ($4.49),
+  // so the ≥1.8× suspicious check could not see it either.
+  [
+    "white", "rye", "sourdough", "pumpernickel",
+    "wheat", "grain", "multigrain", "oatmeal", "oat", "sprouted",
+  ],
   // preparation
   ["smoked", "raw", "cooked", "breaded"],
 ];

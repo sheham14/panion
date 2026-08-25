@@ -17,7 +17,13 @@ type PreviewRow = {
   suspicious: boolean;
 };
 
-type Unresolved = { index: number; name: string | null; barcode: string | null };
+type Unresolved = {
+  index: number;
+  name: string | null;
+  barcode: string | null;
+  reason?: "no_match" | "duplicate_product";
+  collidedWith?: string | null;
+};
 
 type PreviewResponse = {
   dryRun: boolean;
@@ -116,6 +122,12 @@ export default function ImportClient({
   const willWrite = preview
     ? preview.preview.filter((r) => !skipped.includes(r.index)).length
     : 0;
+
+  // Rows that found nothing are routine; rows that collided with an already
+  // claimed product are a warning about the match that won.
+  const unresolved = preview?.unresolved ?? [];
+  const collided = unresolved.filter((u) => u.reason === "duplicate_product");
+  const noMatch = unresolved.filter((u) => u.reason !== "duplicate_product");
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
@@ -263,15 +275,39 @@ export default function ImportClient({
             })}
           </div>
 
-          {preview.unresolved.length > 0 && (
+          {noMatch.length > 0 && (
             <details className="mt-3">
               <summary className="text-[12px] text-[#888] cursor-pointer">
-                {preview.unresolved.length} not in the catalogue — ignored
+                {noMatch.length} not in the catalogue — ignored
               </summary>
               <div className="mt-2 flex flex-col gap-1">
-                {preview.unresolved.slice(0, 40).map((u) => (
+                {noMatch.slice(0, 40).map((u) => (
                   <p key={u.index} className="text-[11px] text-[#aaa] truncate">
                     {u.name}
+                  </p>
+                ))}
+              </div>
+            </details>
+          )}
+
+          {/*
+            Collisions are shown open and in warning colour, not folded away
+            with the ignored rows. Several distinct captures landing on one
+            catalogue product is the signature of a bad match — it is how four
+            different Dempster's loaves once resolved to a single Whole Wheat
+            row — so the row above is suspect even though nothing flagged it.
+          */}
+          {collided.length > 0 && (
+            <details open className="mt-3">
+              <summary className="text-[12px] text-[#b45309] cursor-pointer">
+                {collided.length} matched a product another row already claimed
+                — check the match above
+              </summary>
+              <div className="mt-2 flex flex-col gap-1">
+                {collided.slice(0, 40).map((u) => (
+                  <p key={u.index} className="text-[11px] text-[#aaa] truncate">
+                    {u.name}
+                    {u.collidedWith ? ` → ${u.collidedWith}` : ""}
                   </p>
                 ))}
               </div>

@@ -42,7 +42,17 @@ export type UnresolvedRow = {
   index: number;
   barcode: string | null;
   name: string | null;
-  reason: "no_match";
+  /**
+   * `duplicate_product` means this row matched a product another row in the
+   * same submission already claimed. It is reported rather than dropped: when
+   * several *distinct* captured items collapse onto one catalogue product,
+   * that is usually a matcher fault, and staying silent hides the evidence.
+   * A Voilà bread capture collapsed four different Dempster's loaves onto one
+   * catalogue row, and the preview showed 1 of 12 with no account of the rest.
+   */
+  reason: "no_match" | "duplicate_product";
+  /** For `duplicate_product`: what the row it lost to matched to. */
+  collidedWith?: string | null;
 };
 
 export type IngestItemsResult = {
@@ -118,7 +128,16 @@ export async function resolveAndIngest(opts: {
       });
       continue;
     }
-    if (seenProductIds.has(match.productId)) continue;
+    if (seenProductIds.has(match.productId)) {
+      unresolved.push({
+        index,
+        barcode: item.barcode ?? null,
+        name: item.name ?? null,
+        reason: "duplicate_product",
+        collidedWith: match.productId,
+      });
+      continue;
+    }
     seenProductIds.add(match.productId);
 
     resolved.push({ index, productId: match.productId, via: match.reason });
@@ -154,6 +173,14 @@ export async function resolveAndIngest(opts: {
     },
   });
   const byId = new Map(matched.map((p) => [p.id, p]));
+
+  // A collision names a product some earlier row resolved to, so it is always
+  // present in `byId`. Swap the id for something a reviewer can read.
+  for (const u of unresolved) {
+    if (u.reason !== "duplicate_product" || !u.collidedWith) continue;
+    const p = byId.get(u.collidedWith);
+    u.collidedWith = p ? [p.brand, p.name].filter(Boolean).join(" ") : null;
+  }
 
   const preview: PreviewRow[] = resolved.map((r) => {
     const p = byId.get(r.productId);
