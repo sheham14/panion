@@ -109,6 +109,30 @@ describe("normalizeCaptured", () => {
     expect(item?.size).toBeNull();
   });
 
+  it("normalizes a DOM-tier Voilà tile, reading 'Previous price' as the was-price", () => {
+    // Real tile from a live 2026-08-25 voila.ca capture.
+    const item = normalizeCaptured({
+      name: "Silver Hills Bakery 16 Grain Bread 615 g (frozen)",
+      priceText: "Price$5.99Previous price$6.99",
+      size: "615g",
+      itemId: "5735e6dd-3792-4383-9c48-40758b9d518f",
+    });
+    expect(item).toMatchObject({
+      price: 5.99,
+      isSale: true,
+      regularPrice: 6.99,
+      size: "615g",
+    });
+
+    const regular = normalizeCaptured({
+      name: "Ace Bakery Bistro Loaf Bread Sourdough 595 g (frozen)",
+      priceText: "Price$6.29",
+      size: "595g",
+    });
+    expect(regular?.price).toBe(6.29);
+    expect(regular?.isSale).toBe(false);
+  });
+
   it("normalizes a DOM-tier Walmart tile with a display-text price", () => {
     const item = normalizeCaptured({
       name: "Great Value 2% Milk, 4 L",

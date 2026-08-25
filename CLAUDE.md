@@ -116,7 +116,34 @@ see rule 1 for how to do it without destroying the catalogue.
 
 ---
 
-## 8. Windows Vitest flake
+## 8. Read a retailer's page, don't assume its shape
+
+Everything about browser capture was wrong on the first guess, and each
+correction came from a live diagnostic rather than from reasoning:
+
+- **Products are not in the page payload.** Walmart's search results arrive
+  client-side over persisted GraphQL; Voilà publishes only product URLs in
+  `ld+json`. Both needed the DOM tier.
+- **`textContent` is not the displayed price.** Walmart renders dollars and
+  cents as separate spans, so a $4.98 product reads `"$498current price $4.98…"`.
+  Taking the first dollar figure would have recorded **$498**. Trust the
+  screen-reader label; a bare figure is only believed with a decimal point.
+- **Selector values may be suffixed.** Voilà's is `fop-wrapper:<uuid>`, so
+  `[data-test="fop-wrapper"]` matched nothing while `^=` matched everything.
+
+When a capture fails, the bookmarklet copies a diagnostic: every array in the
+page data (path, length, first element's keys) and the ancestor chains of
+price-shaped leaf elements. **Fix extractors from that, never from a guess.**
+It named Voilà's entire markup in one round-trip.
+
+Also: the bookmarklet is a *copy* in the user's bookmarks bar. Any change to
+`bookmarklet.ts` requires re-dragging it, and forgetting means testing stale
+code. Related: React sanitizes a `javascript:` href set through JSX, so the
+link's href is set imperatively via a ref — do not "simplify" it back.
+
+---
+
+## 9. Windows Vitest flake
 
 Runs intermittently fail with `Timeout waiting for worker to respond` under
 load. It is not a test failure. Rerun with:
@@ -127,7 +154,7 @@ npx vitest run --pool=threads --no-file-parallelism
 
 ---
 
-## 9. There is no password login
+## 10. There is no password login
 
 Auth is **Google OAuth** plus an email magic link. `admin@sentinel.ca` and
 `test@sentinel.ca` are seeded rows that **nobody can authenticate as** — no

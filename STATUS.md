@@ -1,6 +1,6 @@
 # Panion — current state and next steps
 
-**Last updated: 2026-08-19.** Read this first, then `CLAUDE.md` for the rules.
+**Last updated: 2026-08-25.** Read this first, then `CLAUDE.md` for the rules.
 
 Everything below is **local Docker only**. Production (Neon) still has the old
 schema and the old fabricated seed data and has not been touched.
@@ -22,21 +22,24 @@ Panion compares grocery prices in St. John's, NL. Two comparison axes:
 catalogue                : 250 products
 Loblaw-exclusive brands  :  71  (No Name / PC — cannot exist off-Loblaw)
 addressable elsewhere    : 179
-comparable at 2+ stores  :  53
+comparable at 2+ stores  :  56
 
 Dominion - Stavanger Dr    250  (100% of catalogue)
 Sobeys - Mount Pearl        49  ( 27% of addressable)
+Walmart Supercentre         12  (  7% of addressable)
 No Frills                    3
-Walmart Supercentre          2
 ```
+
+Walmart went 2 → 12 from the first browser capture, and no suspicious
+spreads were reported afterwards.
 
 Run `npm run coverage` to refresh those numbers and to list any suspicious
 cross-store spreads (the bad-match detector).
 
 ### Verification state
 
-**114 tests passing, 0 lint errors, `tsc` clean, `npm run build` clean.**
-Working tree clean, everything pushed to `master` (`667f794`).
+**127 tests passing, 0 lint errors, `tsc` clean.**
+Everything pushed to `master`.
 
 ---
 
@@ -51,7 +54,7 @@ adapter.** What follows is only whether each one currently functions.
 | **PC Express** (Dominion, No Frills) | Regular prices, **UPCs**, sizes, images | Yes |
 | **Voilà** (Sobeys) | Regular prices, unit price, category path, images | Yes — needs a session cookie; no barcodes |
 | **Flipp** | Flyer/sale prices, all chains | Yes — overlay only; a full run matched 9 of 250 |
-| **Browser capture** (`/admin/import`) | Anything you can see in a browser | Built, **not yet verified against a live page** |
+| **Browser capture** (`/admin/import`) | Anything you can see in a browser | **Yes — verified live against Walmart and Voilà search (2026-08-25)** |
 | **Walmart, automated** | — | No. Bot-protected; not pursued. |
 
 Three operational facts that will bite anyone who forgets them:
@@ -70,9 +73,25 @@ Three operational facts that will bite anyone who forgets them:
 ---
 ## 3. What was built (most recent work first)
 
-- **Browser capture tooling** — bookmarklet + `/admin/import` paste-and-review
-  page + `/api/capture/import`. The legitimate answer to Walmart: a person
-  navigates, code parses only what that page already loaded.
+- **Browser capture, verified live against both Walmart and Voilà.** What the
+  first real runs taught, all of it now pinned by fixtures in
+  `tests/unit/parse-capture.test.ts`:
+  - **Neither site puts products in its page data.** Walmart fetches search
+    results client-side over persisted GraphQL; Voilà (Ocado, not Next.js)
+    publishes only product *URLs* in `ld+json`. The rendered tiles are the
+    only place products exist, so the bookmarklet has a **DOM tier** with a
+    per-site selector config.
+  - **Walmart's visual price is unreadable.** Dollars and cents are separate
+    spans, so `textContent` fuses `$4.98` into `"$498current price $4.9826¢/100ml"`.
+    The screen-reader `current price` label is the trusted reading.
+  - **Walmart often omits size from the name** — one title covers both the 2L
+    and the 1L — so size is derived from the unit price, giving the size guard
+    something to grip. Voilà supplies a clean size field and needs none of this.
+  - **Was-price wording differs**: Walmart `Was $5.97`, Voilà `Previous price$6.99`.
+  - When no selector matches, the diagnostic samples the **ancestor chains** of
+    price-shaped leaf elements. That is what produced Voilà's real hooks
+    (`fop-wrapper:<uuid>`, `fop-size`, `fop-price-per-unit`) in one round-trip;
+    it is the intended way to onboard the next site.
 - **`resolveAndIngest()`** (`src/lib/admin/ingest-items.ts`) — one core behind
   both the import UI and `/api/admin/observations`, so they cannot drift.
 - **Voilà (Sobeys) adapter** — took Sobeys from 0 to 49 prices, and cross-store
@@ -90,40 +109,48 @@ Three operational facts that will bite anyone who forgets them:
 
 ## 4. Next step — start here
 
-**Test the capture bookmarklet on a live Walmart search.** It has never been
-run against a real page, so the extractor is a best reading of a Next.js
-payload rather than something verified.
+**Run capture sessions across categories to build coverage**, and expand the
+catalogue where captures keep failing to resolve.
 
-```
-npm run dev
-```
+Capture works and needs no further engineering to use:
 
 1. Sign in at `localhost:3000` **with Google, as yourself** — there is no
    password login, and `admin@sentinel.ca` is a seeded row nobody can
    authenticate as. Signing in creates your `User` row.
 2. `npm run role -- grant <your-email> moderator`
 3. Go to `/admin/import`, drag **Capture → Panion** to the bookmarks bar.
-4. On walmart.ca search `milk`, click the bookmarklet, return and paste.
-
-**Expected outcomes.** Either it captures products and the preview lists them
-with what each matched to — or it finds nothing, copies a **diagnostic** of the
-page shape instead, and toasts "No products found". Paste that diagnostic into
-the session and the extractor can be fixed from it directly. It was built that
-way on purpose.
+   **Re-drag it after any change to `bookmarklet.ts`** — the old bookmark keeps
+   the old code.
+4. Search a category on walmart.ca or voila.ca, click the bookmarklet, return
+   and paste.
 
 The preview writes nothing until confirmed. Rows whose price moves ≥1.8× against
 the price already held are flagged and **start unticked** — a nuggets-class
 mismatch has to be opted into.
 
+**A capture that resolves few rows is usually correct, not broken.** The first
+Walmart run resolved 10 of 41: the rest were oat/soy/coconut milk and lactose-free
+variants that **have no catalogue entry at all**, plus near-misses the matcher
+rightly refused (catalogue has Silk Almond *Original*; the capture had Silk Almond
+*Vanilla* and Silk *Soy*). Import never invents products — a name-only capture is
+too thin to found a catalogue row on. To make a category comparable, add it to the
+catalogue from PC Express first, then re-capture elsewhere.
+
+If a capture ever finds nothing, it copies a **diagnostic** instead. Paste that
+into the session: the array survey and the price-leaf ancestor chains are enough
+to fix the extractor directly, and that is how Voilà was onboarded.
+
 ---
 
 ## 5. What is left, in rough priority order
 
-1. **Verify the Walmart capture** (above), then point the same tool at Voilà —
-   the parser is already source-agnostic.
+1. **Capture coverage, category by category.** Both sites work; this is now
+   operator time rather than engineering. Walmart is the bigger prize (12 of
+   179 addressable).
 2. **Sobeys coverage: 27% → higher.** The gap is name-matching against Loblaw's
    phrasing (`2% Milk` vs `2% Milk Partly Skim`). Tune with a fixture per
-   change; never loosen a gate without one. See `CLAUDE.md` rule 7.
+   change; never loosen a gate without one. See `CLAUDE.md` rule 7. Voilà
+   captures carry clean sizes, which helps.
 3. **Images.** Still hotlinked from retailer CDNs through the proxy, which is
    the sharpest legal exposure in the product. Plan: **Open Food Facts**
    (barcode-keyed, openly licensed — every product already has a real UPC) for

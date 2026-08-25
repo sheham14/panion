@@ -210,7 +210,8 @@ export function normalizeCaptured(raw: unknown): CapturedItem | null {
     if (regularPrice !== null) break;
   }
   if (regularPrice === null && priceText) {
-    const was = priceText.match(/was\s*\$\s*([0-9,]+(?:\.\d{1,2})?)/i);
+    // Walmart says "Was $5.97"; Voilà says "Previous price$6.99".
+    const was = priceText.match(/(?:was|previous\s*price)\s*\$\s*([0-9,]+(?:\.\d{1,2})?)/i);
     if (was) {
       const n = Number(was[1].replace(/,/g, ""));
       regularPrice = Number.isFinite(n) && n > 0 ? n : null;
