@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { AlertTriangle, Check, Download, Loader2 } from "lucide-react";
 
 type Store = { id: string; name: string; chain: string };
@@ -46,6 +46,20 @@ export default function ImportClient({
   bookmarkletHref: string;
 }) {
   const [storeId, setStoreId] = useState(stores[0]?.id ?? "");
+
+  /*
+   * React DOM sanitizes any `javascript:` href it renders, replacing it with a
+   * URL that throws "React has blocked a javascript: URL as a security
+   * precaution" — which would silently break the dragged bookmark. Setting the
+   * attribute imperatively, with no `href` prop in the JSX, keeps React's hands
+   * off it.
+   */
+  const bookmarkletRef = useCallback(
+    (el: HTMLAnchorElement | null) => {
+      el?.setAttribute("href", bookmarkletHref);
+    },
+    [bookmarkletHref],
+  );
   const [raw, setRaw] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -121,9 +135,8 @@ export default function ImportClient({
         <p className="text-[12px] text-[#888] mt-1">
           Drag this to your bookmarks bar. You only do this once.
         </p>
-        {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
         <a
-          href={bookmarkletHref}
+          ref={bookmarkletRef}
           onClick={(e) => e.preventDefault()}
           draggable
           className="inline-flex items-center gap-2 mt-3 px-3.5 py-2 rounded-[10px] bg-[#00E5C3] text-[#004d40] text-[13px] font-semibold cursor-grab active:cursor-grabbing"
