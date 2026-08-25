@@ -93,27 +93,39 @@ const BOOKMARKLET_SOURCE = `(function(){
 
   /*
    * DOM tier. Walmart.ca fetches search results client-side (persisted
-   * GraphQL queries), so they never appear in __NEXT_DATA__ or any script
-   * tag — the rendered tiles are the only place they exist. Copy each
-   * tile's raw text verbatim; parse-capture.ts owns the interpretation.
+   * GraphQL queries) and Voilà (Ocado platform, "fop" = front of pack)
+   * exposes only product URLs in its ld+json — for both, the rendered
+   * tiles are the only place products exist. Copy each tile's raw text
+   * verbatim; parse-capture.ts owns the interpretation.
    */
+  var DOM_CONFIGS = [
+    { tile: '[data-item-id]', title: '[data-automation-id="product-title"]',
+      price: '[data-automation-id="product-price"]', idAttr: 'data-item-id' },
+    { tile: '[data-test="fop-wrapper"]', title: '[data-test="fop-title"]',
+      price: '[data-test="fop-price"]', size: '[data-test="fop-size"]' }
+  ];
   var domItems = [];
   if (!best || !best.items.length) {
-    var tiles = document.querySelectorAll('[data-item-id]');
-    for (var d=0; d<tiles.length; d++){
-      var tile = tiles[d];
-      var titleEl = tile.querySelector('[data-automation-id="product-title"]');
-      var priceEl = tile.querySelector('[data-automation-id="product-price"]');
-      if (!titleEl || !priceEl) continue;
-      var linkEl = tile.querySelector('a[href*="/ip/"]') || tile.querySelector('a[href]');
-      var imgEl = tile.querySelector('img');
-      domItems.push({
-        name: (titleEl.textContent || '').trim(),
-        priceText: (priceEl.textContent || '').trim().slice(0,200),
-        itemId: tile.getAttribute('data-item-id'),
-        link: linkEl ? linkEl.href : null,
-        image: imgEl ? (imgEl.currentSrc || imgEl.src || null) : null
-      });
+    for (var c=0; c<DOM_CONFIGS.length && !domItems.length; c++){
+      var cfg = DOM_CONFIGS[c];
+      var tiles = document.querySelectorAll(cfg.tile);
+      for (var d=0; d<tiles.length; d++){
+        var tile = tiles[d];
+        var titleEl = tile.querySelector(cfg.title);
+        var priceEl = tile.querySelector(cfg.price);
+        if (!titleEl || !priceEl) continue;
+        var sizeEl = cfg.size ? tile.querySelector(cfg.size) : null;
+        var linkEl = tile.querySelector('a[href*="/ip/"]') || tile.querySelector('a[href]');
+        var imgEl = tile.querySelector('img');
+        domItems.push({
+          name: (titleEl.textContent || '').trim(),
+          priceText: (priceEl.textContent || '').trim().slice(0,200),
+          size: sizeEl ? (sizeEl.textContent || '').trim().slice(0,60) : null,
+          itemId: cfg.idAttr ? tile.getAttribute(cfg.idAttr) : null,
+          link: linkEl ? linkEl.href : null,
+          image: imgEl ? (imgEl.currentSrc || imgEl.src || null) : null
+        });
+      }
     }
   }
 
@@ -158,11 +170,39 @@ const BOOKMARKLET_SOURCE = `(function(){
     }
     for (var sv=0; sv<roots.length; sv++) survey(roots[sv], 'root'+sv, 0);
     arrays.sort(function(a,b){ return b.length - a.length; });
+    /*
+     * When no selector config matched, sample the ancestor chains of the
+     * first few price-looking leaf elements. Each chain names the tags and
+     * data-* hooks around a real on-screen price, which is exactly the
+     * selector information needed to add the site to DOM_CONFIGS.
+     */
+    var tileCounts = [];
+    for (var tc=0; tc<DOM_CONFIGS.length; tc++){
+      tileCounts.push(document.querySelectorAll(DOM_CONFIGS[tc].tile).length);
+    }
+    var samples = [];
+    var priceRe = /\\$\\s?\\d{1,4}\\.\\d{2}/;
+    var leaves = document.body.getElementsByTagName('*');
+    for (var pl=0; pl<leaves.length && samples.length<3; pl++){
+      var leaf = leaves[pl];
+      var txt = leaf.textContent || '';
+      if (leaf.childElementCount !== 0 || txt.length > 40 || !priceRe.test(txt)) continue;
+      var chain = [];
+      var n = leaf;
+      for (var up=0; up<8 && n && n !== document.body; up++){
+        var sig = n.tagName.toLowerCase();
+        var hook = n.getAttribute('data-test') || n.getAttribute('data-testid') || n.getAttribute('data-automation-id');
+        if (hook) sig += '[' + hook + ']';
+        else if (typeof n.className === 'string' && n.className) sig += '.' + n.className.split(' ').slice(0,2).join('.');
+        chain.push(sig.slice(0,70));
+        n = n.parentElement;
+      }
+      samples.push({ text: txt.trim().slice(0,40), ancestors: chain });
+      pl += 20; /* skip ahead so the samples come from different tiles */
+    }
     payload = { source: source, url: location.href, capturedAt: new Date().toISOString(),
                 diagnostic: { roots: roots.length, keys: shape, arrays: arrays.slice(0,25), totalArrays: arrays.length,
-                              dom: { tiles: document.querySelectorAll('[data-item-id]').length,
-                                     titles: document.querySelectorAll('[data-automation-id="product-title"]').length,
-                                     prices: document.querySelectorAll('[data-automation-id="product-price"]').length },
+                              dom: { tileCounts: tileCounts, priceLeafSamples: samples },
                               hasNextData: !!window.__NEXT_DATA__, hasAppRouter: !!self.__next_f } };
   }
 
