@@ -31,6 +31,13 @@ export const CATALOGUE_TERMS: Record<string, string[]> = {
   bakery_bread: [
     "bread", "whole wheat bread", "bagels", "english muffins", "tortillas",
     "hamburger buns", "hot dog buns", "croissant", "muffins", "cake",
+    // Grain and style variants. A live Voilà bread capture resolved 0 of 12:
+    // the catalogue held one Dempster's loaf (Whole Wheat) while the shelf
+    // carried 12 Grain, Ancient Grains, Honey & Oatmeal and Multigrain. Bread
+    // is brand- and variant-fragmented, so "bread" alone under-harvests it.
+    "multigrain bread", "whole grain bread", "12 grain bread", "rye bread",
+    "sourdough bread", "white bread", "sliced bread", "flatbread", "naan",
+    "pita bread", "dinner rolls", "baguette",
   ],
   frozen: [
     "frozen pizza", "ice cream", "frozen vegetables", "frozen fries",

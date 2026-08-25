@@ -338,6 +338,29 @@ describe("matchProduct — mismatch found on the first live Voilà bread capture
     expect(m("Dempster's 100% Whole Wheat Bread 570 g")).toBe("prod_dempsters_ww");
   });
 
+  it("separates loaves that share the word 'grain' but name different grains", () => {
+    // After the catalogue gained the 12 Grain loaf, three other Dempster's
+    // "100% Whole Grains" breads collapsed onto it: every one says "grain", so
+    // the exclusive group overlaps and passes, and coverage cannot see the
+    // extra word because it only measures the product's own tokens.
+    const TWELVE: CanonicalProduct[] = [
+      {
+        id: "prod_dempsters_12",
+        name: "Dempster's 100% Whole Grains 12 Grain Bread",
+        brand: "Dempster's",
+        unitSize: "600 g",
+        unitQuantity: 600,
+        unitMeasure: "g",
+      },
+    ];
+    const t = (n: string) => matchProduct(n, TWELVE)?.productId ?? null;
+
+    expect(t("Dempster's 100% Whole Grains Bread 12 Grain 600 g")).toBe("prod_dempsters_12");
+    expect(t("Dempster's 100% Whole Grains Bread Ancient Grains With Quinoa 600 g")).toBeNull();
+    expect(t("Dempster's 100% Whole Grains Bread Honey & Oatmeal 600 g")).toBeNull();
+    expect(t("Dempster's Sandwich Bread 100% Whole Grains Multigrain 600 g")).toBeNull();
+  });
+
   it("treats grain styles as mutually exclusive", () => {
     expect(hasConflictingAttribute(["bread", "wheat"], ["bread", "grain"])).toBe(true);
     expect(hasConflictingAttribute(["bread", "multigrain"], ["bread", "wheat"])).toBe(true);

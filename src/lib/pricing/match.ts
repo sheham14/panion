@@ -244,6 +244,19 @@ const VARIANT_MARKERS = [
   "mini", "jumbo pack", "bites",
   // format variants: a stick pack is not a block
   "sticks", "spread", "whipped", "powder", "concentrate",
+  // Bakery grains, seeds and flavours.
+  //
+  // The exclusive-attribute group cannot separate these, because every loaf in
+  // the family says "grain": "100% Whole Grains Ancient Grains With Quinoa"
+  // and "100% Whole Grains 12 Grain" overlap on `grain`, so the group check
+  // passes and coverage never notices "quinoa" — extra words in the *item* are
+  // free, since coverage only measures the product's own tokens. Three
+  // Dempster's loaves collapsed onto the 12 Grain row this way even after the
+  // grain styles were made exclusive. The asymmetric check is the right tool:
+  // a loaf naming a grain the catalogue row does not name is a different loaf.
+  "quinoa", "multigrain", "oatmeal", "ancient", "sprouted", "flax",
+  "sunflower", "sesame", "poppy", "raisin", "cinnamon", "everything",
+  "brioche", "sourdough", "pumpernickel",
 ];
 
 /**

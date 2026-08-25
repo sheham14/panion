@@ -11,6 +11,16 @@ loadEnv({ path: ".env.local", override: true });
  *   npm run catalogue:import -- --size 300
  *   npm run catalogue:import -- --purge-seed # drop the fabricated seed products first
  *
+ * Targeted expansion — deepen one category without re-harvesting everything:
+ *
+ *   npm run catalogue:import -- --category bakery_bread --size 40
+ *   npm run catalogue:import -- --terms "bread,bagels,sourdough" --size 30
+ *
+ * Both narrow the harvest to those search terms. The import is **purely
+ * additive** — it creates and updates, and never deletes or deactivates — so a
+ * scoped run cannot disturb products outside its terms. `--size` then bounds
+ * how many of the harvested candidates are kept, and applies to that run only.
+ *
  * `--purge-seed` deletes the hand-written products whose ids start with
  * "prod_" (the old seed's convention) along with anything referencing them.
  * Real imported products get cuid ids, so the two are trivially separable.
@@ -28,8 +38,30 @@ async function main() {
 
   const size = Number(arg("--size") ?? 250);
 
+  // Scope the harvest to one category group or an explicit term list.
+  const { CATALOGUE_TERMS } = await import("@/lib/pricing/catalogue-terms");
+  const category = arg("--category");
+  const termList = arg("--terms");
+  let terms: string[] | undefined;
+  if (termList) {
+    terms = termList.split(",").map((t) => t.trim()).filter(Boolean);
+  } else if (category) {
+    terms = CATALOGUE_TERMS[category];
+    if (!terms) {
+      console.error(
+        `\n❌ Unknown category "${category}". Known: ${Object.keys(CATALOGUE_TERMS).join(", ")}\n`,
+      );
+      process.exit(1);
+    }
+  }
+
   const host = (process.env.DATABASE_URL ?? "").match(/@([^/?]+)/)?.[1];
-  console.log(`\n▸ Catalogue import → ${host ?? "(unknown DB)"}  (target ${size})\n`);
+  console.log(`\n▸ Catalogue import → ${host ?? "(unknown DB)"}  (target ${size})`);
+  console.log(
+    terms
+      ? `  scope: ${terms.length} terms — ${terms.join(", ")}\n`
+      : `  scope: all terms\n`,
+  );
 
   const { prisma } = await import("@/lib/prisma");
 
@@ -81,6 +113,7 @@ async function main() {
   const s = await importCatalogue({
     verbose: true,
     targetSize: size,
+    ...(terms ? { terms } : {}),
     ...(fast ? { delayMs: { min: 0, max: 0 } } : {}),
   });
 
