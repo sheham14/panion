@@ -1,6 +1,14 @@
 # Panion — Grocery Price Intelligence
 
-Compare grocery prices across Walmart, Dominion, Sobeys, and Costco in St. John's, NL. Track your watchlist, manage shopping lists, log your pantry, and get AI-powered meal suggestions from Clove.
+Compare grocery prices across Dominion, Sobeys, Walmart and local NL grocers in
+St. John's, NL — both *the same product at different stores* and *the same
+thing under a different brand*, ranked by unit price. Track your watchlist,
+manage shopping lists, log your pantry, and get AI meal suggestions from Clove.
+
+> **Working on this repo?** Read [`STATUS.md`](STATUS.md) for current state and
+> the next step, then [`CLAUDE.md`](CLAUDE.md) for the rules. Costco was dropped
+> deliberately — it sells wholesale, so its prices aren't comparable to a normal
+> basket.
 
 **Live:** [panion.dev](https://panion.dev)
 

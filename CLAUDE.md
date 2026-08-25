@@ -1,5 +1,12 @@
 # Working notes for Claude
 
+**→ Read `STATUS.md` first.** It has the current state of the data, what was
+built last, and the exact next step. This file is the rules; that file is the
+situation.
+
+Everything is **local Docker only**. Production (Neon) has not been touched and
+still holds the old schema and the fabricated seed data.
+
 Rules learned the hard way on this repo. Each one exists because something
 broke; the incident is kept so the reason survives the rule.
 
@@ -117,3 +124,24 @@ load. It is not a test failure. Rerun with:
 ```
 npx vitest run --pool=threads --no-file-parallelism
 ```
+
+---
+
+## 9. There is no password login
+
+Auth is **Google OAuth** plus an email magic link. `admin@sentinel.ca` and
+`test@sentinel.ca` are seeded rows that **nobody can authenticate as** — no
+password exists, and the magic link would go to a domain the user doesn't own.
+Telling the user to "log in as admin@sentinel.ca" wastes their time; it was
+suggested once and did not work.
+
+To get an elevated account locally: sign in with Google as yourself first (that
+creates the `User` row), then
+
+```
+npm run role -- grant <your-email> moderator
+```
+
+No re-login is needed. `/admin/import` and `requireElevatedRole()` read the role
+from the database on every request rather than from the JWT, precisely so a
+stale token cannot retain privileges after a demotion.

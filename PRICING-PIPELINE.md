@@ -256,48 +256,76 @@ Production scraping runs via Inngest/Vercel and is unaffected.
 
 ## 11. Phased Build Plan
 
-Each phase is independently shippable and leaves the app better even if the next phase never happens.
+> **Status as of 2026-08-19.** Phases 0–4 are built. See `STATUS.md` for live
+> numbers and the current next step; this section records how the plan actually
+> turned out, including where it was wrong.
 
-### Phase 0 — Foundation (small, do first)
-- [ ] Shared ingestion writer (`src/lib/pricing/ingest.ts`): validate → `PriceHistory` → `StoreProduct` update, precedence rules from §7.
-- [ ] Staleness display in the price-comparison UI ("as of N days ago").
-- [ ] `pricing/expire-sales` daily job + Inngest wiring (`src/inngest/client.ts`, serve route).
-- **Done when:** a price written through the ingestion module shows up in the UI with its freshness label, and expired sales revert automatically.
+### Phase 0 — Foundation — **done**
+- [x] Shared ingestion writer (`src/lib/pricing/ingest.ts`) with §7 precedence.
+- [x] Staleness display in the price-comparison UI.
+- [x] `expireFinishedSales()` + Inngest wiring.
 
-### Phase 1 — Manual layer
-- [ ] Admin bulk-entry page (stalest-first table, §6.6), gated by `UserRole`.
-- [ ] Weekly manual refresh becomes routine (~30 min) → **the app has fresh data from this point on**, before any scraper exists.
-- **Done when:** all seeded products can be re-priced for one store in ≤ 15 minutes.
+### Phase 1 — Manual layer — **done, and more important than expected**
+- [x] `/api/admin/observations` + `/admin/import`, gated by `UserRole`.
+- [x] Browser capture bookmarklet feeding the same endpoint.
+- Manual entry was planned as a stopgap before scrapers. It is now the **only
+  path for Walmart**, and the only source with no legal asterisk at all.
 
-### Phase 2 — First scraper: Dominion
-- [ ] Verify PC Express endpoints + St. John's store IDs in DevTools; commit sample responses as fixtures.
-- [ ] Map all products (`storeSku`) for Dominion.
-- [ ] `dominion.ts` adapter + weekly Inngest job + `ScrapeRun` logging + failure alert email.
-- **Done when:** two consecutive weekly runs complete with < 10% errors and zero manual touch-ups needed for Dominion.
+### Phase 2 — Dominion (PC Express) — **done**
+- [x] Endpoints and St. John's store id verified; fixtures committed.
+- [x] `pcexpress.ts` adapter, `ScrapeRun` logging, barcode + image backfill.
+- Prices proved to be set at **banner** level in NL (0924 / 0935 / 0906 returned
+  identical values), which settled §12.1 in favour of chain-level granularity.
+- The catalogue is now *built from* this source rather than hand-seeded. All 250
+  products carry real UPCs; the original 80 seeded products were fabricated,
+  including every barcode, and were deleted.
 
-### Phase 3 — Voilà, then Walmart
-- [ ] Same pattern. Voilà first (friendlier), Walmart last (bot protection; budget extra time, expect breakage).
-- **Done when:** 3 of 4 chains refresh automatically weekly; manual layer only covers Costco + breakage gaps.
+### Phase 3 — Voilà, then Walmart — **half done, and the plan was wrong**
+- [x] `voila.ts` adapter. Sobeys: 0 → 49 prices.
+- [ ] ~~Walmart adapter~~ — **not possible as designed.** Walmart's
+  `robots.txt` *permits* crawling product pages, but PerimeterX serves a
+  captcha to any automated request. Defeating it is out of scope on principle
+  (`DATA-SOURCING.md` §1.1), so Walmart goes through the Phase 1 capture tool.
+- Two assumptions here were wrong. Voilà was expected to be "friendlier" — it
+  is reachable, but it publishes **no barcode of any kind**, so it matches on
+  name and size only and is far lossier than Dominion. And it scopes prices to
+  the **session**, so a stale cookie silently returns another province's prices.
 
-### Phase 4 — Flyers (Flipp)
-- [ ] Flipp adapter: postal-code → flyers → items JSON; fuzzy match to catalog (AI-assisted, discard unmatched).
-- [ ] Sale prices flow through ingestion with `source: "flyer"`; `/api/flyers` serves real `Flyer` rows.
-- **Done when:** Thursday's sales appear in Panion by Thursday noon and disappear on expiry.
+### Phase 4 — Flyers (Flipp) — **done, and it is an overlay, not a foundation**
+- [x] Flipp adapter; sale prices flow through ingestion with `source: "flyer"`.
+- Measured ceiling: a full 160-term run matched **9 of 250** products, none of
+  them Sobeys. It is sale-only by construction, it *biases* a store cheap rather
+  than merely leaving gaps, and it decays weekly as sales expire. Useful for
+  breadth; it can never be a store's sole source.
 
-### Phase 5 — Scale & verify
-- [ ] Grow catalog in mapped batches toward 300–500 products (§8), driven by user searches/watchlists.
-- [ ] Costco routine: monthly bulk-entry pass + prioritize user reports.
-- [ ] Revisit parked items: receipt scanning (needs users), store partnerships (needs traction).
+### Phase 5 — Scale & verify — **in progress**
+- [x] Catalogue at 250 products with real barcodes, images and equivalence groups.
+- [x] Cross-brand comparison shipped (equivalence groups + unit price).
+- [ ] Sobeys coverage 27% → higher (name-matching against Loblaw phrasing).
+- [ ] Replace hotlinked retailer imagery — Open Food Facts + own photography.
+- [ ] Production deploy; prod is still on the old schema and old seed data.
+- ~~Costco~~ removed entirely: it sells wholesale, so its prices aren't
+  comparable to a normal grocery basket.
+
+## 12. Open Questions — mostly answered
+
+1. **Store granularity — settled: chain level.** Loblaw returned identical
+   prices for NL store ids 0924 / 0935 / 0906, so one representative store per
+   banner is sufficient. Revisit only if users report divergence.
+2. **History retention — still open.** `PriceHistory` is append-only and small
+   at this scale. Decide later whether rejected crowdsourced rows are ever
+   pruned (`scrapedAt` is indexed for it).
+3. **Walmart fallback threshold — moot.** There is no automated Walmart cycle
+   to fail: PerimeterX blocks it outright and bypassing that is out of scope.
+   Walmart is Flipp (flyer only) plus the browser capture tool.
+4. **Proxy / IP strategy — settled: none, permanently.** A residential proxy
+   exists to evade detection, which is the line this project does not cross
+   (`DATA-SOURCING.md` §1.1). If a source blocks us, that source is done.
+5. **New — barcode-less sources.** Neither Voilà nor Walmart publishes a UPC,
+   so both depend entirely on name-and-size matching. Every gate in `match.ts`
+   therefore carries more weight than originally assumed; see `CLAUDE.md`
+   rule 7 before touching any of them.
 
 ---
 
-## 12. Open Questions (decide before/while building)
-
-1. **Store granularity:** one price per *chain* (e.g. all St. John's Dominions share a price) or per *physical store*? Chain-level is simpler and usually accurate within a city — recommend starting chain-level with one representative store per chain, revisit if users report divergence.
-2. **History retention:** `PriceHistory` grows ~500 products × 4 stores × weekly ≈ 100k rows/year — fine indefinitely, but decide if crowdsourced-rejected rows ever get pruned (`scrapedAt` index exists for cleanup).
-3. **Walmart fallback threshold:** how many consecutive failed cycles before we stop trying for a while and lean on Flipp + manual? (Suggest: 3.)
-4. **Proxy/IP strategy:** start with none (Vercel egress IPs at our volume are probably fine). Only add a residential proxy if consistently blocked — adds cost and complexity.
-
----
-
-*Related docs: [`DISCOVERY.md`](DISCOVERY.md) (product context, risk framing) · [`CODEBASE.md`](CODEBASE.md) (file-by-file) · [`TESTING.md`](TESTING.md) (test strategy — adapter fixtures should join it).*
+*Related docs: [`STATUS.md`](STATUS.md) (current state, next step) · [`CLAUDE.md`](CLAUDE.md) (rules & past incidents) · [`DISCOVERY.md`](DISCOVERY.md) (product context, risk framing) · [`CODEBASE.md`](CODEBASE.md) (file-by-file) · [`TESTING.md`](TESTING.md) (test strategy — adapter fixtures should join it).*

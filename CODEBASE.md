@@ -1,5 +1,11 @@
 # Codebase Map
 
+> **Partially stale.** Sections below predate the pricing pipeline and the
+> capture tooling. The *Pricing pipeline* and *Admin & capture* sections at
+> the end are current; treat anything describing seeded products or the old
+> 80-product catalogue as history. `STATUS.md` is the source of truth for
+> what exists today.
+
 A file-by-file reference for the Sentinel / Panion grocery price comparison app. Start here if you're new to the repo.
 
 ---
@@ -378,6 +384,66 @@ All routes return JSON. All protected routes call `getAuthenticatedUser()` first
 
 ---
 
+## Pricing pipeline — `src/lib/pricing/`
+
+Adapters are dumb, the ingestion writer is smart. An adapter's only job is to
+produce `PriceObservation[]`; all validation, precedence and DB writing lives
+in `ingest.ts`, so adding a store means adding one adapter and nothing else.
+
+| File | What it does |
+|---|---|
+| `types.ts` | `PriceObservation`, `PRICE_SOURCES` (the enforcement point for the String `source` column), validation bounds (`MIN_PRICE`, `MAX_PRICE`, the 5× swing guard). |
+| `ingest.ts` | **The single writer.** Validates, appends to `PriceHistory` (append-only truth), re-derives `StoreProduct.currentPrice` by precedence. `shouldReplaceCurrent()` holds the rule that a live sale is not displaced by a newer regular price. `expireFinishedSales()` reverts expired sales. |
+| `match.ts` | Conservative product matcher. Barcode first, name-and-size fallback. Every gate exists because of a specific real mismatch — coverage thresholds, `EXCLUSIVE_ATTRIBUTES`, `VARIANT_MARKERS`, percentage conflicts, multi-product listings, the size guard. See `CLAUDE.md` rule 7 before touching. |
+| `adapters/pcexpress.ts` | Dominion / No Frills. Regular prices **with UPCs** — the only source that can establish product identity. |
+| `adapters/voila.ts` | Sobeys. Regular prices, unit price, category path. **No barcodes.** Region comes from the session cookie; `looksRegionScoped()` guards against a silently de-scoped session. |
+| `adapters/flipp.ts` | Flyer/sale prices across every chain at once. Sale-only by construction (`isSale: true` is hardcoded). |
+| `run-pcexpress.ts` / `run-voila.ts` / `run-flipp.ts` | Orchestration: fetch → match → ingest, one `ScrapeRun` per store. |
+| `catalogue-terms.ts` | ~160 search terms grouped by category. `ALL_CATALOGUE_TERMS` is what the catalogue was built from — use it, not the shorter 44-term list. |
+| `import-catalogue.ts` | Builds the catalogue *from* store data. Ranks equivalence groups by brand diversity, favouring groups that hold both a national and a store brand. |
+| `classify-groups.ts` | Haiku batch classifier for equivalence groups. Never throws. |
+
+Related: `src/lib/unit-price.ts` — `getUnitPrice()` and `rankByUnitPrice()`,
+which make cross-brand comparison honest across pack sizes. Never interleaves
+weight with volume.
+
+---
+
+## Admin & capture — `src/lib/admin/`, `src/lib/capture/`
+
+The manual path. It exists because every automated source is compromised:
+PC Express and Voilà disallow the endpoints in use, Walmart permits crawling
+but blocks it with PerimeterX, and Flipp is flyer-only. Prices a person read
+themselves carry no such asterisk. See `DATA-SOURCING.md`.
+
+| File | What it does |
+|---|---|
+| `admin/require-role.ts` | `requireElevatedRole()` — reads the role from the **database** per call, never from the session, so a stale token can't retain privileges. `canWriteStore()` scopes a `store_admin` to its own store. |
+| `admin/ingest-items.ts` | `resolveAndIngest()` — the shared core behind both the import UI and `/api/admin/observations`. Resolves, builds the reviewable preview (what each item matched *to*, and the price already held), flags ≥1.8× moves as suspicious, then writes via `ingestObservations()`. |
+| `capture/parse-capture.ts` | Parses a clipboard capture into items. Deliberately tolerant across retailer shapes. `matchNameFor()` folds brand and size into the match string — with no barcode available, that string is the only identity a capture has. |
+| `capture/bookmarklet.ts` | The `javascript:` bookmarklet source. Walks `__NEXT_DATA__` / `__next_f` / `__PRELOADED_STATE__` for the **largest** array of product-like objects (largest, not first — search pages carry sponsored carousels). Copies a diagnostic when it finds nothing. |
+
+| Route / page | What it does |
+|---|---|
+| `/admin/import` | Drag-to-install bookmarklet, paste box, preview table, import. Role-gated. Nothing is written until reviewed; suspicious rows start unticked. |
+| `POST /api/capture/import` | Parses a raw capture, then previews (`dryRun`) or writes. |
+| `POST /api/admin/observations` | Programmatic bulk entry — barcode-or-name, same core. |
+| `GET /api/products/[id]/alternatives` | Cross-brand comparison within an equivalence group, ranked by unit price. |
+| `GET /api/products/[id]/image` | Image proxy. Takes a **product id, never a URL** — no SSRF surface. Its allowlist must move with the adapters (`CLAUDE.md` rule 4). |
+
+---
+
+## Scripts — `scripts/`
+
+| Command | What it does |
+|---|---|
+| `npm run coverage` | Coverage per store plus the ≥1.8× bad-match detector. Run after every scrape. |
+| `npm run role -- list | grant <email> <role> | revoke <email>` | Manage elevated roles. |
+| `npm run scrape:dominion` / `scrape:sobeys` / `scrape:flipp` | One cycle per source. |
+| `npm run catalogue:import` | Rebuild the catalogue from fetched store data. |
+| `npm run snapshot:save` / `snapshot:restore` | Catalogue safety net. Take one before any bulk mutation. |
+
+---
 ## Tests — `tests/`
 
 Vitest + RTL + a dedicated Neon test branch. Real Prisma queries; Anthropic/SendGrid/Redis are mocked. See [`TESTING.md`](TESTING.md) for setup and philosophy.
