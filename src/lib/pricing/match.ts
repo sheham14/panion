@@ -125,6 +125,30 @@ export function parseSize(
 ): { qty: number; unit: "g" | "ml" | "unit" } | null {
   const s = raw.toLowerCase().replace(/,/g, "");
 
+  /*
+   * Multipacks, before any single-measure rule can grab the wrong number.
+   *
+   * Voilà states a pack as "22 x 18.636g" — the per-slice weight times the
+   * count, totalling the 410 g on the label. Reading only the second number
+   * treats a 410 g pack as 18.6 g, and the unit price it produces is wrong by
+   * the size of the pack: that Kraft cheese came out at $37.51/100g, and a
+   * Vachon butter tart at $1090.70/100g.
+   *
+   * `parseQuantity` in `unit-price.ts` has always handled this. The damage
+   * arrived through `unitQuantity`/`unitMeasure`, which are filled from *this*
+   * function and which `getUnitPrice` prefers over re-parsing the string — so
+   * a correct size on the label became a wrong number in the column.
+   */
+  const multi = s.match(/(\d+(?:\.\d+)?)\s*[x×]\s*(\d+(?:\.\d+)?)\s*(kg|g|l|ml)\b/);
+  if (multi) {
+    const count = parseFloat(multi[1]);
+    const each = parseFloat(multi[2]);
+    const measure = multi[3];
+    const factor = measure === "kg" || measure === "l" ? 1000 : 1;
+    const unit = measure === "kg" || measure === "g" ? "g" : "ml";
+    return { qty: count * each * factor, unit };
+  }
+
   const kg = s.match(/(\d+(?:\.\d+)?)\s*kg\b/);
   if (kg) return { qty: parseFloat(kg[1]) * 1000, unit: "g" };
 

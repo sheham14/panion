@@ -123,6 +123,26 @@ describe("size guard", () => {
     expect(parseSize("no size here")).toBeNull();
   });
 
+  it("multiplies multipack sizes out", () => {
+    // Voilà states a pack as count x each-weight. Reading only the second
+    // number treated a 410 g box of cheese slices as 18.6 g, which priced it
+    // at $37.51/100g; a Vachon butter tart came out at $1090.70/100g the same
+    // way. These strings are real, from production.
+    // The stated per-unit weight is itself rounded, so the product lands a
+    // hair off the label figure — well inside the size guard's tolerance.
+    expect(parseSize("22 x 18.636g")?.qty).toBeCloseTo(410, 1);
+    expect(parseSize("22 x 18.636g")?.unit).toBe("g");
+    expect(parseSize("600 x 0.43g")).toEqual({ qty: 258, unit: "g" });
+    expect(parseSize("12x355 ml")).toEqual({ qty: 4260, unit: "ml" });
+    expect(parseSize("4 x 1.5 l")).toEqual({ qty: 6000, unit: "ml" });
+    expect(parseSize("2 x 1kg")).toEqual({ qty: 2000, unit: "g" });
+  });
+
+  it("does not mistake a plain size for a multipack", () => {
+    expect(parseSize("410 g")).toEqual({ qty: 410, unit: "g" });
+    expect(parseSize("1.5 L")).toEqual({ qty: 1500, unit: "ml" });
+  });
+
   it("parses count-sold sizes, which eggs are priced in", () => {
     // PC Express sizes an egg carton "12 ea". That matched nothing, so eggs
     // parsed as sizeless, scored below anything measurable during catalogue
