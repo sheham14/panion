@@ -1,9 +1,12 @@
 # Panion — current state and next steps
 
-**Last updated: 2026-08-25.** Read this first, then `CLAUDE.md` for the rules.
+**Last updated: 2026-08-26.** Read this first, then `CLAUDE.md` for the rules.
 
-Everything below is **local Docker only**. Production (Neon) still has the old
-schema and the old fabricated seed data and has not been touched.
+**Production now runs the real catalogue.** On 2026-08-26 the pending migration
+was applied, the 260-product catalogue was restored to Neon, and the 80
+fabricated seed products were deleted. Local and production hold the same
+catalogue. Reaching production requires the explicit
+`--config prisma.production.config.ts`; the default config still resolves local.
 
 ---
 
@@ -31,7 +34,26 @@ No Frills                    3
 ```
 
 Walmart went 2 → 12 from the first browser capture, and no suspicious
-spreads were reported afterwards.
+spreads were reported afterwards. **Production holds the same 260 products and
+324 store-products**, with Colemans and Costco present but unpriced.
+
+Coverage by category — `needs capture` is the non-Loblaw products priced at
+only one store, i.e. the actual work queue:
+
+```
+category            total   2+ stores   loblaw-only   needs capture
+personal_care          30           4             0              26
+bakery_bread           38           4            10              24
+meat_seafood           25           2             8              15
+pantry_dry_goods       34          13             8              13
+frozen                 17           1             7               9
+dairy                  22          10             3               9
+snacks_candy           25           6            12               7
+produce                19           5             8               6
+```
+
+**Personal care is the highest-value capture target**: 30 products, none
+Loblaw-exclusive, so every one is capturable at Walmart.
 
 Run `npm run coverage` to refresh those numbers and to list any suspicious
 cross-store spreads (the bad-match detector).
@@ -156,9 +178,13 @@ to fix the extractor directly, and that is how Voilà was onboarded.
    (barcode-keyed, openly licensed — every product already has a real UPC) for
    national brands, own photography for private label. Also clears the six
    deferred `next/image` warnings.
-4. **Production deploy.** Prod still has the old schema and the fabricated seed
-   data. Needs a migration plan; `.env` is production, so re-read `CLAUDE.md`
-   rule 2 before touching it.
+4. **Production follow-up.** The catalogue is live; what remains is keeping it
+   fed. The Inngest crons write to whatever `DATABASE_URL` the deployment has,
+   so confirm Vercel carries `PC_EXPRESS_API_KEY` and that `SCRAPERS_ENABLED`
+   is a working kill switch there before relying on scheduled refreshes.
+   Prod currently has no `price_history` at all — it was deleted with the
+   fabricated products — so sparkline/history UI has nothing to draw until a
+   few cycles have run.
 5. **Browse/search by equivalence group.** Groups only surface on the product
    page; the browse page still lists individual SKUs.
 6. **Crowdsourcing / receipt scanning.** The admin import path is deliberately

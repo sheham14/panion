@@ -56,6 +56,19 @@ Before any migration or destructive command, run `npx prisma migrate status` and
 
 `prisma migrate reset` is never run against production.
 
+**To reach production deliberately**, name the production config explicitly:
+
+```
+npx prisma migrate status --config prisma.production.config.ts
+npx prisma migrate deploy --config prisma.production.config.ts
+```
+
+That file loads only `.env` and throws unless the URL is a Neon host, so a
+misconfigured `.env` fails loudly instead of quietly migrating localhost.
+`migrate deploy` is the only migrate command safe to point at it. Ad-hoc
+scripts that touch production should do the same: load only `.env`, assert the
+host, print it on start.
+
 ---
 
 ## 3. Never run `npm run build` while `npm run dev` is live
