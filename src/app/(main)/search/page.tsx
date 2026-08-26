@@ -3,7 +3,16 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Search, X, Clock, Bell, BellOff, Plus, ArrowLeft } from "lucide-react";
+import {
+  Search,
+  X,
+  Clock,
+  Bell,
+  BellOff,
+  Plus,
+  ArrowLeft,
+  ChevronDown,
+} from "lucide-react";
 import AddToListSheet from "@/components/search/AddToListSheet";
 import { getStoreColor } from "@/lib/store-meta";
 import { productImageSrc } from "@/lib/product-image";
@@ -31,6 +40,31 @@ type SearchResult = {
 };
 
 
+type GroupOption = {
+  productId: string;
+  name: string;
+  brand: string | null;
+  unitSize: string | null;
+  imageUrl: string | null;
+  price: number;
+  isSale: boolean;
+  store: { id: string; name: string; chain: string };
+  storeCount: number;
+  unitPrice: { value: number; basis: string; label: string } | null;
+};
+
+type GroupResult = {
+  group: string;
+  label: string;
+  basis: string | null;
+  productCount: number;
+  storeCount: number;
+  cheapest: GroupOption | null;
+  spreadPercent: number | null;
+  options: GroupOption[];
+  incomparable: GroupOption[];
+};
+
 const RECENT_SEARCHES_KEY = "sentinel_recent_searches";
 const MAX_RECENT = 8;
 
@@ -52,6 +86,133 @@ function saveRecentSearch(query: string) {
 function removeRecentSearch(query: string) {
   const updated = getRecentSearches().filter((q) => q !== query);
   localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
+}
+
+// ── Group card ─────────────────────────────────
+
+/**
+ * One equivalence group — the cross-**brand** answer.
+ *
+ * Ranked by unit price rather than sticker price, because a group deliberately
+ * spans pack sizes: a 450g loaf at $3.49 looks cheaper than a 675g one at
+ * $4.29 and is not. Collapsed to the winner, since that is the answer; the
+ * ranking underneath is for anyone who wants to see the working.
+ */
+/**
+ * Brand plus name, without saying the brand twice.
+ *
+ * PC Express splits brand from name but its names often already lead with the
+ * brand, so a naive join reads "No Name No Name Large Size Eggs".
+ */
+function displayName(o: { brand: string | null; name: string }): string {
+  if (!o.brand) return o.name;
+  return o.name.toLowerCase().startsWith(o.brand.toLowerCase())
+    ? o.name
+    : `${o.brand} ${o.name}`;
+}
+
+function GroupCard({ group }: { group: GroupResult }) {
+  const [open, setOpen] = useState(false);
+  const best = group.cheapest;
+  if (!best) return null;
+
+  return (
+    <div className="mx-4 mb-2 rounded-[14px] border border-[#00E5C3]/40 bg-[#00E5C3]/[0.04] overflow-hidden">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="w-full px-3.5 py-3 text-left"
+      >
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[13px] font-semibold capitalize text-[#111] dark:text-[#e0e0e0]">
+              Cheapest {group.label}
+            </p>
+            <p className="text-[11px] text-[#888] mt-0.5">
+              {group.productCount} product{group.productCount === 1 ? "" : "s"}{" "}
+              across {group.storeCount} store
+              {group.storeCount === 1 ? "" : "s"}
+              {group.spreadPercent && group.spreadPercent > 0
+                ? ` · up to ${group.spreadPercent}% cheaper`
+                : ""}
+            </p>
+          </div>
+          <ChevronDown
+            size={16}
+            className={`flex-shrink-0 text-[#888] transition-transform ${open ? "rotate-180" : ""}`}
+          />
+        </div>
+
+        <div className="mt-2.5 flex items-center gap-2.5">
+          {best.imageUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={productImageSrc(best.productId, best.imageUrl)!}
+              alt=""
+              className="w-10 h-10 rounded-[8px] object-contain bg-white flex-shrink-0"
+            />
+          )}
+          <div className="min-w-0 flex-1">
+            <p className="text-[12px] text-[#111] dark:text-[#e0e0e0] truncate">
+              {displayName(best)}
+            </p>
+            <p className="text-[11px] text-[#888]">
+              {best.unitSize ?? ""}
+              {best.unitSize ? " · " : ""}
+              <span style={{ color: getStoreColor(best.store.chain) }}>
+                {best.store.name}
+              </span>
+            </p>
+          </div>
+          <div className="text-right flex-shrink-0">
+            <p className="text-[14px] font-semibold text-[#111] dark:text-[#e0e0e0]">
+              ${best.price.toFixed(2)}
+            </p>
+            {best.unitPrice && (
+              <p className="text-[10px] text-[#0a7a62] dark:text-[#00E5C3]">
+                {best.unitPrice.label}
+              </p>
+            )}
+          </div>
+        </div>
+      </button>
+
+      {open && (
+        <div className="border-t border-[#00E5C3]/20 px-3.5 py-2">
+          {group.options.map((o, i) => (
+            <Link
+              key={o.productId}
+              href={`/product/${o.productId}`}
+              className="flex items-center gap-2 py-1.5 text-[11px]"
+            >
+              <span className="w-4 text-[#aaa] flex-shrink-0">{i + 1}</span>
+              <span className="min-w-0 flex-1 truncate text-[#111] dark:text-[#e0e0e0]">
+                {displayName(o)}
+                {o.unitSize ? ` · ${o.unitSize}` : ""}
+              </span>
+              <span
+                className="flex-shrink-0"
+                style={{ color: getStoreColor(o.store.chain) }}
+              >
+                {o.store.chain}
+              </span>
+              <span className="w-14 text-right flex-shrink-0 text-[#111] dark:text-[#e0e0e0]">
+                ${o.price.toFixed(2)}
+              </span>
+              <span className="w-20 text-right flex-shrink-0 text-[#888]">
+                {o.unitPrice?.label ?? ""}
+              </span>
+            </Link>
+          ))}
+          {group.incomparable.length > 0 && (
+            <p className="text-[10px] text-[#aaa] pt-1.5 mt-1 border-t border-[#ebebeb] dark:border-[#2e3538]">
+              {group.incomparable.length} more with no comparable size —{" "}
+              shown but not ranked.
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
 
 // ── Result card ────────────────────────────────
@@ -168,6 +329,7 @@ export default function SearchPage() {
 
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
+  const [groups, setGroups] = useState<GroupResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [addToListTarget, setAddToListTarget] = useState<{
@@ -185,18 +347,23 @@ export default function SearchPage() {
   const doSearch = useCallback(async (q: string) => {
     if (!q.trim()) {
       setResults([]);
+      setGroups([]);
       setLoading(false);
       return;
     }
     setLoading(true);
     try {
-      const res = await fetch(
-        `/api/products?q=${encodeURIComponent(q)}&limit=20`,
-      );
-      const data = res.ok ? await res.json() : [];
-      setResults(data);
+      // Two answers to two different questions, fetched together: which brand
+      // of this thing is best value, and where is a given product cheapest.
+      const [productRes, groupRes] = await Promise.all([
+        fetch(`/api/products?q=${encodeURIComponent(q)}&limit=20`),
+        fetch(`/api/groups?q=${encodeURIComponent(q)}`),
+      ]);
+      setResults(productRes.ok ? await productRes.json() : []);
+      setGroups(groupRes.ok ? ((await groupRes.json()).groups ?? []) : []);
     } catch {
       setResults([]);
+      setGroups([]);
     } finally {
       setLoading(false);
     }
@@ -207,6 +374,7 @@ export default function SearchPage() {
     clearTimeout(debounceRef.current);
     if (!value.trim()) {
       setResults([]);
+      setGroups([]);
       setLoading(false);
       return;
     }
@@ -377,9 +545,29 @@ export default function SearchPage() {
             </div>
           ) : (
             <>
-              <p className="text-[11px] font-medium text-[#aaa] dark:text-[#555] uppercase tracking-[0.8px] px-4 mb-2">
-                {results.length} result{results.length !== 1 ? "s" : ""}
-              </p>
+              {/*
+                Groups first: "what is the cheapest bread" is the question a
+                budget shopper is actually asking, and it was previously
+                unreachable without already knowing which loaf to open.
+              */}
+              {groups.length > 0 && (
+                <>
+                  <p className="text-[11px] font-medium text-[#aaa] dark:text-[#555] uppercase tracking-[0.8px] px-4 mb-2">
+                    Best value by type
+                  </p>
+                  {groups.map((g) => (
+                    <GroupCard key={g.group} group={g} />
+                  ))}
+                  <p className="text-[11px] font-medium text-[#aaa] dark:text-[#555] uppercase tracking-[0.8px] px-4 mb-2 mt-4">
+                    {results.length} product{results.length !== 1 ? "s" : ""}
+                  </p>
+                </>
+              )}
+              {groups.length === 0 && (
+                <p className="text-[11px] font-medium text-[#aaa] dark:text-[#555] uppercase tracking-[0.8px] px-4 mb-2">
+                  {results.length} result{results.length !== 1 ? "s" : ""}
+                </p>
+              )}
               {results.map((result) => (
                 <ResultCard
                   key={result.id}
