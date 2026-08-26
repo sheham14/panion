@@ -11,6 +11,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { bookmarkletHref as buildBookmarkletHref } from "@/lib/capture/bookmarklet";
+import { requiredChainFor } from "@/lib/capture/source-store";
 
 type Store = { id: string; name: string; chain: string };
 
@@ -170,7 +171,34 @@ export default function ImportClient({
     }
   }
 
-  async function send(dryRun: boolean, batchId?: string | null) {
+  /**
+   * The store a batch must be imported into, when its source pins one.
+   * Returns null when the source is unconstrained or no such store is available
+   * to this user.
+   */
+  function storeForBatch(batch: PendingBatch): string | null {
+    const chain = requiredChainFor(batch.source);
+    if (!chain) return null;
+    return (
+      stores.find((s) => s.chain.toLowerCase() === chain.toLowerCase())?.id ??
+      null
+    );
+  }
+
+  /** Open a queued capture for review, with its store already selected. */
+  function reviewBatch(batch: PendingBatch) {
+    const pinned = storeForBatch(batch);
+    if (pinned) setStoreId(pinned);
+    // Passed explicitly rather than read back from state, which has not
+    // updated yet in this tick.
+    send(true, batch.id, pinned ?? storeId);
+  }
+
+  async function send(
+    dryRun: boolean,
+    batchId?: string | null,
+    storeIdOverride?: string,
+  ) {
     setBusy(true);
     setError(null);
     const useBatch = batchId ?? activeBatch;
@@ -179,7 +207,7 @@ export default function ImportClient({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          storeId,
+          storeId: storeIdOverride ?? storeId,
           dryRun,
           // A queued capture and pasted text are mutually exclusive.
           ...(useBatch ? { batchId: useBatch } : { capture: raw }),
@@ -352,6 +380,16 @@ export default function ImportClient({
                     {b.source} — {b.itemCount} product
                     {b.itemCount === 1 ? "" : "s"}
                     {b.itemCount === 0 ? " (diagnostic)" : ""}
+                    {(() => {
+                      const pinned = storeForBatch(b);
+                      const name = stores.find((s) => s.id === pinned)?.name;
+                      return name ? (
+                        <span className="text-[#0a7a62] dark:text-[#00E5C3]">
+                          {" → "}
+                          {name}
+                        </span>
+                      ) : null;
+                    })()}
                   </p>
                   <p className="text-[11px] text-[#aaa] truncate">
                     {b.url ?? "unknown page"} ·{" "}
@@ -359,7 +397,7 @@ export default function ImportClient({
                   </p>
                 </div>
                 <button
-                  onClick={() => send(true, b.id)}
+                  onClick={() => reviewBatch(b)}
                   disabled={busy || b.itemCount === 0}
                   className="flex-shrink-0 px-3 py-1.5 rounded-[8px] bg-[#00E5C3] text-[#004d40] text-[12px] font-semibold disabled:opacity-40"
                 >

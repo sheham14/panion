@@ -6,6 +6,7 @@ import { badRequest, forbidden, notFound } from "@/lib/api-error";
 import { requireElevatedRole, canWriteStore } from "@/lib/admin/require-role";
 import { resolveAndIngest } from "@/lib/admin/ingest-items";
 import { parseCapture, matchNameFor } from "@/lib/capture/parse-capture";
+import { sourceAllowsChain, requiredChainFor } from "@/lib/capture/source-store";
 
 /**
  * Import a browser capture: parse → resolve → preview or write.
@@ -47,7 +48,7 @@ export async function POST(req: NextRequest) {
 
   const store = await prisma.store.findUnique({
     where: { id: data.storeId },
-    select: { id: true, name: true, isActive: true },
+    select: { id: true, name: true, chain: true, isActive: true },
   });
   if (!store) return notFound("Store not found");
   if (!store.isActive) return badRequest("Store is not active");
@@ -58,9 +59,23 @@ export async function POST(req: NextRequest) {
     // indistinguishable from one that does not exist.
     const batch = await prisma.captureBatch.findFirst({
       where: { id: data.batchId, userId: user.id, status: "pending" },
-      select: { payload: true },
+      select: { payload: true, source: true },
     });
     if (!batch) return notFound("Capture not found");
+
+    // A capture knows which site it came from, and the store dropdown is a
+    // single value applied to whichever batch is open — so reviewing a Walmart
+    // capture with Sobeys selected would write Walmart's prices to Sobeys and
+    // look entirely plausible doing it. Refuse instead.
+    if (!sourceAllowsChain(batch.source, store.chain)) {
+      const required = requiredChainFor(batch.source);
+      return badRequest(
+        `This capture came from ${batch.source}, so it can only be imported ` +
+          `into a ${required} store — not ${store.name}. Pick the right store ` +
+          `and review it again.`,
+      );
+    }
+
     payload = batch.payload;
   } else {
     try {
