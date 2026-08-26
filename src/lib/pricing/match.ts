@@ -137,7 +137,13 @@ export function parseSize(
   const ml = s.match(/(\d+(?:\.\d+)?)\s*ml\b/);
   if (ml) return { qty: parseFloat(ml[1]), unit: "ml" };
 
-  const pk = s.match(/(\d+)\s*(?:pk|pack|count|ct)\b/);
+  // Count-sold goods. "ea"/"each" matter as much as "pk": PC Express sizes an
+  // egg carton "12 ea", which matched nothing here — so eggs parsed as having
+  // no size at all, scored below anything measurable during catalogue
+  // selection, and no egg reached a 357-product catalogue. It also meant the
+  // size guard was skipped outright for count-sold goods, letting a 12-pack
+  // match a 30-pack.
+  const pk = s.match(/(\d+)\s*(?:pk|pack|count|ct|ea|each|dozen)\b/);
   if (pk) return { qty: parseFloat(pk[1]), unit: "unit" };
 
   return null;

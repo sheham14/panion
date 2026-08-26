@@ -123,6 +123,31 @@ describe("size guard", () => {
     expect(parseSize("no size here")).toBeNull();
   });
 
+  it("parses count-sold sizes, which eggs are priced in", () => {
+    // PC Express sizes an egg carton "12 ea". That matched nothing, so eggs
+    // parsed as sizeless, scored below anything measurable during catalogue
+    // selection, and no egg made it into a 357-product catalogue. It also left
+    // the size guard skipped for count-sold goods entirely.
+    expect(parseSize("12 ea")).toEqual({ qty: 12, unit: "unit" });
+    expect(parseSize("30 ea")).toEqual({ qty: 30, unit: "unit" });
+    expect(parseSize("6 each")).toEqual({ qty: 6, unit: "unit" });
+    expect(parseSize("1 dozen")).toEqual({ qty: 1, unit: "unit" });
+  });
+
+  it("does not read 'ea' out of an ordinary word", () => {
+    // A digit must immediately precede it, and the unit must end on a word
+    // boundary, so "Easter" and "Tea" cannot be mistaken for a count.
+    expect(parseSize("12 Easter Treats")).toBeNull();
+    expect(parseSize("Earl Grey Tea")).toBeNull();
+  });
+
+  it("separates carton sizes now that counts parse", () => {
+    // A 12-pack of eggs is not a 30-pack; before this the guard saw no size on
+    // either side and waved both through.
+    expect(sizesCompatible(parseSize("12 ea"), parseSize("30 ea"))).toBe(false);
+    expect(sizesCompatible(parseSize("12 ea"), parseSize("12 pack"))).toBe(true);
+  });
+
   it("never compares weight against volume", () => {
     expect(sizesCompatible({ qty: 500, unit: "g" }, { qty: 500, unit: "ml" })).toBe(
       false,

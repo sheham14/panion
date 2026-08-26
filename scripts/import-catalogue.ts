@@ -1,7 +1,29 @@
 import { config as loadEnv } from "dotenv";
 
+/*
+ * Env precedence, decided before anything imports Prisma.
+ *
+ * Default is local, matching `prisma.config.ts` (CLAUDE.md rule 2).
+ *
+ * `--production` redirects **only** `DATABASE_URL`. Everything else still comes
+ * from `.env.local`, because those are credentials for the world outside this
+ * app — `PC_EXPRESS_API_KEY` above all — and they do not vary by which database
+ * we happen to be writing to. Skipping the whole file instead just loses the
+ * scraper key and fails after the harvest has already been planned.
+ */
+const TARGET_PRODUCTION = process.argv.includes("--production");
+
 loadEnv({ path: ".env" });
+const PRODUCTION_DATABASE_URL = process.env.DATABASE_URL;
 loadEnv({ path: ".env.local", override: true });
+if (TARGET_PRODUCTION) process.env.DATABASE_URL = PRODUCTION_DATABASE_URL;
+
+if (TARGET_PRODUCTION && !/neon\.tech/i.test(process.env.DATABASE_URL ?? "")) {
+  console.error(
+    "\n❌ --production expects the Neon database, but .env does not resolve to one. Refusing to run.\n",
+  );
+  process.exit(1);
+}
 
 /**
  * Build the canonical catalogue from real store data.
@@ -13,13 +35,22 @@ loadEnv({ path: ".env.local", override: true });
  *
  * Targeted expansion — deepen one category without re-harvesting everything:
  *
- *   npm run catalogue:import -- --category bakery_bread --size 40
+ *   npm run catalogue:import -- --category dairy --size 60 --candidates 200
  *   npm run catalogue:import -- --terms "bread,bagels,sourdough" --size 30
  *
  * Both narrow the harvest to those search terms. The import is **purely
  * additive** — it creates and updates, and never deletes or deactivates — so a
  * scoped run cannot disturb products outside its terms. `--size` then bounds
  * how many of the harvested candidates are kept, and applies to that run only.
+ * `--candidates` raises the per-category cap on how many harvested products are
+ * sent to the group classifier; on a scoped run the default of 80 is usually
+ * what limits the result, not `--size`.
+ *
+ * **`--production` writes to Neon.** Run the import there *once* rather than
+ * locally and again on production: products are identified by barcode, but a
+ * genuinely new product gets a fresh cuid on each run, so importing the same
+ * product in both places mints two different ids for it and permanently breaks
+ * the snapshot restore path between the two databases.
  *
  * `--purge-seed` deletes the hand-written products whose ids start with
  * "prod_" (the old seed's convention) along with anything referencing them.
@@ -55,8 +86,12 @@ async function main() {
     }
   }
 
+  const candidates = arg("--candidates") ? Number(arg("--candidates")) : undefined;
+
   const host = (process.env.DATABASE_URL ?? "").match(/@([^/?]+)/)?.[1];
-  console.log(`\n▸ Catalogue import → ${host ?? "(unknown DB)"}  (target ${size})`);
+  console.log(
+    `\n▸ Catalogue import → ${TARGET_PRODUCTION ? "PRODUCTION " : ""}${host ?? "(unknown DB)"}  (target ${size})`,
+  );
   console.log(
     terms
       ? `  scope: ${terms.length} terms — ${terms.join(", ")}\n`
@@ -114,6 +149,7 @@ async function main() {
     verbose: true,
     targetSize: size,
     ...(terms ? { terms } : {}),
+    ...(candidates ? { candidatesPerCategory: candidates } : {}),
     ...(fast ? { delayMs: { min: 0, max: 0 } } : {}),
   });
 
