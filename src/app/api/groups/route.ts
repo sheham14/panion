@@ -116,28 +116,38 @@ export async function GET(request: NextRequest) {
       /*
        * Drop unit prices that cannot be true.
        *
-       * A misparsed size produces an arithmetically valid but absurd figure —
-       * a Sobeys hard-boiled egg pack came out at $565.91/100g because its
-       * size read as a fraction of a gram. One such row makes the whole
-       * ranking untrustworthy to anyone reading it, and it is always a parsing
-       * artefact rather than a real price. Compared against the group's median
-       * rather than a fixed threshold, since a sensible per-100g figure for
-       * butter and for saffron differ by orders of magnitude.
+       * A misparsed size produces an arithmetically valid but absurd figure: a
+       * hard-boiled egg pack came out at $565.91/100g, a sliced cheese at
+       * $37.51/100g, both because the size read far smaller than it is. One
+       * such row discredits every real number beside it, and it is always a
+       * parsing artefact rather than a price anyone charges.
+       *
+       * Measured against the group's **cheapest** member, not its median. A
+       * median works only once a group is large: in a two-member group holding
+       * one outlier the median IS the outlier, and the rule then throws out the
+       * good row and keeps the absurd one — which is what it did to
+       * `sliced-cheddar-process-cheese`, dropping a real $1.09/100g and
+       * enthroning a misparsed $37.51.
+       *
+       * Only the high side is judged. A size parsed too *large* would make
+       * something look impossibly cheap, but that is rare — sizes get read as
+       * smaller than they are, not bigger — and trying to catch it symmetrically
+       * meant deciding which of two rows was wrong with no evidence, which is
+       * how the correct row got discarded. A wrong bargain surviving is a real
+       * cost, but a rule that removes the genuine cheapest is a certain one.
        */
-      const values = ranked
-        .map((o) => o.unitPrice?.value ?? 0)
-        .filter((v) => v > 0)
-        .sort((a, b) => a - b);
-      const median = values.length
-        ? values[Math.floor(values.length / 2)]
-        : null;
-      const plausible = median
-        ? ranked.filter((o) => {
-            const v = o.unitPrice?.value;
-            if (!v) return true;
-            return v <= median * 12 && v >= median / 12;
-          })
-        : ranked;
+      const RATIO = 15;
+      const floor = ranked.reduce<number | null>((min, o) => {
+        const v = o.unitPrice?.value;
+        if (!v || v <= 0) return min;
+        return min === null || v < min ? v : min;
+      }, null);
+
+      const plausible = ranked.filter((o) => {
+        const v = o.unitPrice?.value;
+        if (!v || floor === null) return true;
+        return v <= floor * RATIO;
+      });
       const implausible = ranked.filter((o) => !plausible.includes(o));
 
       const stores = new Set<string>();
