@@ -87,10 +87,18 @@ export default async function AdminImportPage() {
       category: r.category,
       missing: r.missing,
       covered: r.covered,
-      links: r.terms
-        .map((t) => ({ term: t, url: searchUrlFor(worklist.chain, t) }))
-        .filter((l): l is { term: string; url: string } => l.url !== null)
-        .slice(0, 12),
+      links: r.groups
+        .map((g) => ({
+          term: g.term,
+          missing: g.missing,
+          examples: g.examples,
+          url: searchUrlFor(worklist.chain, g.term),
+        }))
+        .filter(
+          (l): l is { term: string; missing: number; examples: string[]; url: string } =>
+            l.url !== null,
+        )
+        .slice(0, 16),
     })) ?? [];
 
   return (

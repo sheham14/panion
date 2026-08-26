@@ -27,7 +27,7 @@ type WorklistRow = {
   category: string;
   missing: number;
   covered: number;
-  links: { term: string; url: string }[];
+  links: { term: string; missing: number; examples: string[]; url: string }[];
 };
 
 type PreviewRow = {
@@ -375,8 +375,9 @@ export default function ImportClient({
             {worklistStoreName ? ` for ${worklistStoreName}` : ""}
           </p>
           <p className="text-[12px] text-[#888] mt-1">
-            Ranked by products Panion holds but this store has no price for.
-            Store-brand products of other chains are excluded — they cannot be
+            Searches are built from the products actually missing a price here,
+            not from generic category terms — so each one has something to match
+            against. Other chains&apos; store brands are excluded; they cannot be
             stocked here.
           </p>
           <div className="mt-3 flex flex-col gap-2">
@@ -389,17 +390,22 @@ export default function ImportClient({
                   {row.category.replace(/_/g, " ")} —{" "}
                   <strong>{row.missing}</strong> missing, {row.covered} covered
                 </summary>
-                <div className="mt-2 flex flex-wrap gap-1.5">
+                <div className="mt-2 flex flex-col gap-1">
                   {row.links.map((l) => (
                     <a
                       key={l.term}
                       href={l.url}
                       target="_blank"
                       rel="noreferrer noopener"
-                      className="inline-flex items-center gap-1 px-2 py-1 rounded-[8px] border border-[#ebebeb] dark:border-[#2e3538] text-[11px] text-[#111] dark:text-[#e0e0e0]"
+                      className="flex items-center gap-2 px-2 py-1.5 rounded-[8px] border border-[#ebebeb] dark:border-[#2e3538] hover:border-[#00E5C3]"
                     >
-                      {l.term}
-                      <ExternalLink size={10} />
+                      <span className="text-[11px] font-medium text-[#111] dark:text-[#e0e0e0] flex-shrink-0">
+                        {l.term}
+                      </span>
+                      <span className="text-[10px] text-[#aaa] truncate flex-1">
+                        {l.missing} missing · e.g. {l.examples.join("; ")}
+                      </span>
+                      <ExternalLink size={10} className="flex-shrink-0 text-[#888]" />
                     </a>
                   ))}
                   {row.links.length === 0 && (
@@ -485,6 +491,36 @@ export default function ImportClient({
             Untick anything that matched the wrong product. Suspicious rows are
             unticked already.
           </p>
+
+          {/*
+            Zero matches reads like a malfunction but almost never is. Import
+            never invents catalogue entries, so a capture of products Panion
+            does not hold correctly resolves nothing — that is the refusal
+            working. Say so, and point at the actual fix.
+          */}
+          {preview.resolved === 0 && (
+            <div className="mt-3 px-3 py-2.5 rounded-[10px] bg-[#fffbeb] dark:bg-[#2e2a1e] border border-[#fde68a] dark:border-[#4a3f1e] text-[12px] text-[#92400e] dark:text-[#fcd34d]">
+              <p className="font-medium">
+                Nothing matched — this is usually right, not a failure.
+              </p>
+              <p className="mt-1">
+                An import never creates catalogue entries, so a page of products
+                Panion doesn&apos;t hold resolves nothing. Either these products
+                aren&apos;t in the catalogue, or they&apos;re variants of ones
+                that are (a different scent, size, or formulation), which the
+                matcher refuses on purpose.
+              </p>
+              <p className="mt-1">
+                Use a search from the worklist above — those are built from
+                products that <em>are</em> missing a price here. To make a new
+                aisle comparable, add it to the catalogue first with{" "}
+                <code className="font-mono">
+                  npm run catalogue:import -- --category &lt;name&gt;
+                </code>
+                .
+              </p>
+            </div>
+          )}
 
           <div className="mt-3 flex flex-col gap-1.5 max-h-[420px] overflow-y-auto">
             {preview.preview.map((r) => {

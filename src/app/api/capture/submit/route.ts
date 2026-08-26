@@ -45,8 +45,27 @@ const CORS = {
 const json = (body: unknown, status: number) =>
   NextResponse.json(body, { status, headers: CORS });
 
-export async function OPTIONS() {
-  return new NextResponse(null, { status: 204, headers: CORS });
+export async function OPTIONS(req: NextRequest) {
+  const headers: Record<string, string> = { ...CORS };
+
+  /*
+   * Private Network Access.
+   *
+   * walmart.ca is a public origin and `localhost` is a private one, so Chrome
+   * treats the capture POST as a private-network request: the preflight
+   * carries `Access-Control-Request-Private-Network: true` and the response
+   * must opt in explicitly, on top of ordinary CORS. Without this the fetch
+   * fails before it is sent and the bookmarklet silently falls back to the
+   * clipboard — which is exactly how this was found.
+   *
+   * Echoed only when asked for, so a deployment reached over the public
+   * internet never advertises it.
+   */
+  if (req.headers.get("access-control-request-private-network") === "true") {
+    headers["Access-Control-Allow-Private-Network"] = "true";
+  }
+
+  return new NextResponse(null, { status: 204, headers });
 }
 
 export async function POST(req: NextRequest) {
