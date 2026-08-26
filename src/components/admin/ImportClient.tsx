@@ -41,6 +41,19 @@ type PreviewRow = {
   existingPrice: number | null;
   via: string;
   suspicious: boolean;
+  verdict?: "same" | "different" | "unsure";
+  verdictReason?: string;
+};
+
+type CreationRow = {
+  index: number;
+  name: string;
+  brand: string | null;
+  size: string | null;
+  group: string | null;
+  category: string | null;
+  price: number;
+  imageUrl: string | null;
 };
 
 type Unresolved = {
@@ -58,6 +71,8 @@ type PreviewResponse = {
   resolved: number;
   preview: PreviewRow[];
   unresolved: Unresolved[];
+  creations: CreationRow[];
+  created?: number;
   accepted?: number;
   updated?: number;
 };
@@ -95,6 +110,9 @@ export default function ImportClient({
   const [batches, setBatches] = useState<PendingBatch[]>(pendingBatches);
   const [activeBatch, setActiveBatch] = useState<string | null>(null);
   const [freshToken, setFreshToken] = useState<string | null>(null);
+  // On by default: a capture that can only price what the catalogue already
+  // holds is capped at one chain's assortment.
+  const [addNew, setAddNew] = useState(true);
 
   // Only the hash is stored server-side, so an armed href can only be built
   // here, in the moment a token is minted.
@@ -213,6 +231,7 @@ export default function ImportClient({
           ...(useBatch ? { batchId: useBatch } : { capture: raw }),
           // Rows the reviewer unticked never reach the writer.
           skipIndexes: dryRun ? [] : skipped,
+          createUnmatched: addNew,
         }),
       });
       const body = await res.json();
@@ -225,9 +244,11 @@ export default function ImportClient({
         setImported(null);
         if (useBatch) setActiveBatch(useBatch);
         // Suspicious rows start unticked — opt in to writing them, not out.
+        // That now includes anything the verifier called different or unsure,
+        // which is where a plausible-looking wrong match shows up.
         setSkipped(
           (body.preview as PreviewRow[])
-            .filter((r) => r.suspicious)
+            .filter((r) => r.suspicious || (r.verdict && r.verdict !== "same"))
             .map((r) => r.index),
         );
       } else {
@@ -527,7 +548,8 @@ export default function ImportClient({
         <div className="mt-4 px-3 py-2.5 rounded-[10px] bg-[#f0fdf9] dark:bg-[#1a2e2a] border border-[#c9f2e6] dark:border-[#1e4a3a] text-[13px] text-[#0a7a62] dark:text-[#6ee7c7] flex items-center gap-2">
           <Check size={15} />
           Imported {imported.accepted} prices to {imported.store.name}
-          {imported.updated !== undefined && ` (${imported.updated} changed)`}.
+          {imported.updated !== undefined && ` (${imported.updated} changed)`}
+          {imported.created ? `, added ${imported.created} new products` : ""}.
         </div>
       )}
 
@@ -538,37 +560,47 @@ export default function ImportClient({
             3. Review — {preview.resolved} of {preview.submitted} matched
           </p>
           <p className="text-[12px] text-[#888] mt-1">
-            Untick anything that matched the wrong product. Suspicious rows are
-            unticked already.
+            Every match was read back and checked. Anything questioned is
+            unticked already — you only need to judge those.
           </p>
 
           {/*
-            Zero matches reads like a malfunction but almost never is. Import
-            never invents catalogue entries, so a capture of products Panion
-            does not hold correctly resolves nothing — that is the refusal
-            working. Say so, and point at the actual fix.
+            Only rows the checker could not settle need a person. Pulling them
+            out means the reviewer reads three explanations instead of scanning
+            forty raw pairs, which is where attention actually runs out.
           */}
-          {preview.resolved === 0 && (
-            <div className="mt-3 px-3 py-2.5 rounded-[10px] bg-[#fffbeb] dark:bg-[#2e2a1e] border border-[#fde68a] dark:border-[#4a3f1e] text-[12px] text-[#92400e] dark:text-[#fcd34d]">
-              <p className="font-medium">
-                Nothing matched — this is usually right, not a failure.
+          {preview.preview.some((r) => r.verdict && r.verdict !== "same") && (
+            <div className="mt-3 px-3 py-2.5 rounded-[10px] bg-[#fffbeb] dark:bg-[#2e2a1e] border border-[#fde68a] dark:border-[#4a3f1e]">
+              <p className="text-[12px] font-medium text-[#92400e] dark:text-[#fcd34d]">
+                {preview.preview.filter((r) => r.verdict && r.verdict !== "same").length}{" "}
+                match
+                {preview.preview.filter((r) => r.verdict && r.verdict !== "same")
+                  .length === 1
+                  ? ""
+                  : "es"}{" "}
+                need your judgement
               </p>
-              <p className="mt-1">
-                An import never creates catalogue entries, so a page of products
-                Panion doesn&apos;t hold resolves nothing. Either these products
-                aren&apos;t in the catalogue, or they&apos;re variants of ones
-                that are (a different scent, size, or formulation), which the
-                matcher refuses on purpose.
-              </p>
-              <p className="mt-1">
-                Use a search from the worklist above — those are built from
-                products that <em>are</em> missing a price here. To make a new
-                aisle comparable, add it to the catalogue first with{" "}
-                <code className="font-mono">
-                  npm run catalogue:import -- --category &lt;name&gt;
-                </code>
-                .
-              </p>
+              <div className="mt-2 flex flex-col gap-1.5">
+                {preview.preview
+                  .filter((r) => r.verdict && r.verdict !== "same")
+                  .slice(0, 12)
+                  .map((r) => (
+                    <p
+                      key={r.index}
+                      className="text-[11px] text-[#92400e] dark:text-[#fcd34d]"
+                    >
+                      <span className="font-medium">{r.capturedName}</span>
+                      {" → "}
+                      {r.matchedName}
+                      {r.verdictReason ? (
+                        <span className="text-[#a16207] dark:text-[#d4a72c]">
+                          {" — "}
+                          {r.verdictReason}
+                        </span>
+                      ) : null}
+                    </p>
+                  ))}
+              </div>
             </div>
           )}
 
@@ -660,13 +692,61 @@ export default function ImportClient({
             </details>
           )}
 
+          {/*
+            New catalogue entries. Shown grouped, because the group is what
+            makes them useful: a Walmart egg added to `large-white-eggs` is
+            immediately comparable against the Dominion one already there.
+          */}
+          {preview.creations.length > 0 && (
+            <details open className="mt-3">
+              <summary className="text-[12px] text-[#0a7a62] dark:text-[#00E5C3] cursor-pointer">
+                {preview.creations.length} new product
+                {preview.creations.length === 1 ? "" : "s"} to add to the
+                catalogue
+              </summary>
+              <div className="mt-2 flex flex-col gap-1">
+                {preview.creations.slice(0, 40).map((c) => (
+                  <p
+                    key={c.index}
+                    className="text-[11px] text-[#aaa] flex items-baseline gap-2"
+                  >
+                    <span className="text-[#111] dark:text-[#e0e0e0] truncate">
+                      {c.name}
+                    </span>
+                    <span className="flex-shrink-0">
+                      ${c.price.toFixed(2)}
+                    </span>
+                    <span className="flex-shrink-0 text-[#0a7a62] dark:text-[#00E5C3]">
+                      {c.group ?? "ungrouped"}
+                    </span>
+                  </p>
+                ))}
+              </div>
+            </details>
+          )}
+
+          <label className="flex items-center gap-2 mt-4 text-[12px] text-[#888] cursor-pointer">
+            <input
+              type="checkbox"
+              checked={addNew}
+              onChange={(e) => {
+                setAddNew(e.target.checked);
+                setPreview(null);
+              }}
+            />
+            Add products the catalogue doesn&apos;t have (re-preview to apply)
+          </label>
+
           <button
             onClick={() => send(false)}
-            disabled={busy || willWrite === 0}
-            className="inline-flex items-center gap-2 mt-4 px-4 py-2 rounded-[10px] bg-[#00E5C3] text-[#004d40] text-[13px] font-semibold disabled:opacity-40"
+            disabled={busy || (willWrite === 0 && preview.creations.length === 0)}
+            className="inline-flex items-center gap-2 mt-3 px-4 py-2 rounded-[10px] bg-[#00E5C3] text-[#004d40] text-[13px] font-semibold disabled:opacity-40"
           >
             {busy && <Loader2 size={14} className="animate-spin" />}
             Import {willWrite} price{willWrite === 1 ? "" : "s"}
+            {preview.creations.length > 0
+              ? ` + ${preview.creations.length} new`
+              : ""}
           </button>
         </section>
       )}

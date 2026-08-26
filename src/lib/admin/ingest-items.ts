@@ -1,10 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import {
   matchProductByBarcodeOrName,
+  parseSize,
   type CanonicalProduct,
 } from "@/lib/pricing/match";
 import { ingestObservations } from "@/lib/pricing/ingest";
 import type { PriceObservation } from "@/lib/pricing/types";
+import { verifyMatches, type Verdict } from "@/lib/capture/verify-matches";
+import { classifyGroups } from "@/lib/pricing/classify-groups";
 
 /**
  * Shared core for manual price entry.
@@ -24,6 +27,16 @@ export type IngestItemInput = {
   regularPrice?: number | null;
   saleEndDate?: Date | null;
   storeSku?: string | null;
+  /**
+   * The pieces a catalogue entry needs, kept separate from the match string.
+   * Only read when a row matches nothing and creation is enabled.
+   */
+  create?: {
+    displayName: string;
+    brand: string | null;
+    size: string | null;
+    imageUrl: string | null;
+  };
 };
 
 export type PreviewRow = {
@@ -36,6 +49,27 @@ export type PreviewRow = {
   existingPrice: number | null;
   via: string;
   suspicious: boolean;
+  /**
+   * Second opinion on whether the two names describe the same product. The
+   * matcher decides on tokens and sizes; this reads the pair the way a person
+   * would. Absent when verification was not run.
+   */
+  verdict?: Verdict;
+  verdictReason?: string;
+};
+
+/** A product the capture would add to the catalogue, with its assigned group. */
+export type CreationRow = {
+  index: number;
+  name: string;
+  brand: string | null;
+  size: string | null;
+  /** Equivalence group — what cross-brand comparison joins on. */
+  group: string | null;
+  /** Inherited from products already in that group, so siblings agree. */
+  category: string | null;
+  price: number;
+  imageUrl: string | null;
 };
 
 export type UnresolvedRow = {
@@ -60,6 +94,9 @@ export type IngestItemsResult = {
   resolved: number;
   preview: PreviewRow[];
   unresolved: UnresolvedRow[];
+  /** Proposed on a dry run; written on a real one. */
+  creations: CreationRow[];
+  created: number;
   accepted: number;
   updated: number;
   rejected: { productId: string; reason: string; detail: string }[];
@@ -83,6 +120,22 @@ export async function resolveAndIngest(opts: {
   dryRun: boolean;
   /** Indexes the reviewer unticked; never written. */
   skipIndexes?: number[];
+  /**
+   * Read every proposed match back with a model before accepting it. Off by
+   * default so the programmatic endpoint keeps its old behaviour.
+   */
+  verify?: boolean;
+  /**
+   * Add products the catalogue does not have, rather than discarding them.
+   *
+   * Without this a capture can only ever price products the catalogue already
+   * holds, which quietly caps coverage at one chain's assortment: a Walmart
+   * egg capture matched 0 of 13 because Walmart sells Newfoundland Eggs and
+   * GoldEgg while the catalogue, harvested from Dominion, holds No Name and
+   * Rowe Farms. No amount of capturing closes that — the products have to be
+   * allowed in.
+   */
+  createUnmatched?: boolean;
 }): Promise<IngestItemsResult> {
   const { storeId, items, submittedBy, observedAt, now, dryRun } = opts;
   const skip = new Set(opts.skipIndexes ?? []);
@@ -105,7 +158,9 @@ export async function resolveAndIngest(opts: {
     unitQuantity: p.unitQuantity === null ? null : Number(p.unitQuantity),
   }));
 
-  const observations: PriceObservation[] = [];
+  // The row index travels with each observation so a verdict arriving later
+  // can withdraw it; stripped again before the writer sees them.
+  const observations: (PriceObservation & { index: number })[] = [];
   const unresolved: UnresolvedRow[] = [];
   const resolved: { index: number; productId: string; via: string }[] = [];
 
@@ -145,6 +200,7 @@ export async function resolveAndIngest(opts: {
     if (skip.has(index)) continue;
 
     observations.push({
+      index,
       storeId,
       productId: match.productId,
       price: item.price,
@@ -182,11 +238,29 @@ export async function resolveAndIngest(opts: {
     u.collidedWith = p ? [p.brand, p.name].filter(Boolean).join(" ") : null;
   }
 
+  // Second opinion on every proposed match, read the way a person would rather
+  // than by token overlap. Only ever narrows: `different` is dropped, `unsure`
+  // is surfaced, and a pair the matcher never proposed is never considered.
+  const verdicts = opts.verify
+    ? await verifyMatches(
+        resolved.map((r) => {
+          const p = byId.get(r.productId);
+          return {
+            index: r.index,
+            capturedName: items[r.index].name ?? "",
+            catalogueName: p ? [p.brand, p.name].filter(Boolean).join(" ") : "",
+            catalogueSize: p?.unitSize ?? null,
+          };
+        }),
+      )
+    : new Map<number, { verdict: Verdict; reason: string }>();
+
   const preview: PreviewRow[] = resolved.map((r) => {
     const p = byId.get(r.productId);
     const existing = p?.storeProducts[0]?.currentPrice;
     const existingPrice = existing == null ? null : Number(existing);
     const price = items[r.index].price;
+    const v = verdicts.get(r.index);
     return {
       index: r.index,
       productId: r.productId,
@@ -196,12 +270,95 @@ export async function resolveAndIngest(opts: {
       price,
       existingPrice,
       via: r.via,
+      ...(v ? { verdict: v.verdict, verdictReason: v.reason } : {}),
       suspicious:
-        existingPrice !== null &&
-        (price / existingPrice >= SUSPICIOUS_RATIO ||
-          existingPrice / price >= SUSPICIOUS_RATIO),
+        // A rejected or questioned match is suspicious regardless of price —
+        // the nuggets and the Dempster's loaves were all priced plausibly.
+        (v !== undefined && v.verdict !== "same") ||
+        (existingPrice !== null &&
+          (price / existingPrice >= SUSPICIOUS_RATIO ||
+            existingPrice / price >= SUSPICIOUS_RATIO)),
     };
   });
+
+  // A match the verifier rejected is dropped here, not merely flagged. The
+  // reviewer's ticks are advisory; this is the floor beneath them.
+  const rejectedByVerifier = new Set(
+    [...verdicts.entries()]
+      .filter(([, v]) => v.verdict === "different")
+      .map(([index]) => index),
+  );
+  const writable = observations.filter((o) => !rejectedByVerifier.has(o.index));
+
+  // ── Products the catalogue does not have ─────────────────────────────────
+  //
+  // Grouped by the same classifier that assigned every existing group, so a
+  // newly added Walmart egg lands beside the Dominion one it competes with.
+  const creatable = opts.createUnmatched
+    ? unresolved
+        .filter((u) => u.reason === "no_match" && items[u.index]?.create)
+        .map((u) => ({ index: u.index, spec: items[u.index].create! }))
+    : [];
+
+  // Offer the groups the catalogue already uses, so an incoming Walmart egg
+  // joins `large-eggs` beside the Dominion one rather than founding
+  // `large-white-eggs` next to it and splitting the comparison in two.
+  const knownGroups = creatable.length
+    ? (
+        await prisma.product.findMany({
+          where: { isActive: true, subcategory: { not: null } },
+          select: { subcategory: true },
+          distinct: ["subcategory"],
+          orderBy: { subcategory: "asc" },
+        })
+      )
+        .map((r) => r.subcategory)
+        .filter((s): s is string => Boolean(s))
+    : [];
+
+  const groupById = creatable.length
+    ? await classifyGroups(
+        creatable.map((c) => ({
+          id: String(c.index),
+          name: c.spec.displayName,
+          brand: c.spec.brand,
+          packageSize: c.spec.size,
+        })),
+        { knownGroups },
+      )
+    : new Map<string, string>();
+
+  // Inherit the category from products already in the group, so siblings agree
+  // without a second model call. A brand-new group simply has none yet.
+  const groupNames = [...new Set([...groupById.values()])];
+  const categoryByGroup = new Map<string, string>();
+  if (groupNames.length) {
+    for (const row of await prisma.product.findMany({
+      where: { subcategory: { in: groupNames }, category: { not: null } },
+      select: { subcategory: true, category: true },
+      distinct: ["subcategory"],
+    })) {
+      if (row.subcategory && row.category) {
+        categoryByGroup.set(row.subcategory, row.category);
+      }
+    }
+  }
+
+  const creations: CreationRow[] = creatable
+    .filter((c) => !skip.has(c.index))
+    .map((c) => {
+      const group = groupById.get(String(c.index)) ?? null;
+      return {
+        index: c.index,
+        name: c.spec.displayName,
+        brand: c.spec.brand,
+        size: c.spec.size,
+        group,
+        category: group ? (categoryByGroup.get(group) ?? null) : null,
+        price: items[c.index].price,
+        imageUrl: c.spec.imageUrl,
+      };
+    });
 
   if (dryRun) {
     return {
@@ -209,16 +366,56 @@ export async function resolveAndIngest(opts: {
       resolved: resolved.length,
       preview,
       unresolved,
+      creations,
+      created: 0,
       accepted: 0,
       updated: 0,
       rejected: [],
     };
   }
 
+  // Create the new catalogue entries, then price them alongside the matches.
+  let created = 0;
+  for (const c of creations) {
+    const parsed = parseSize(c.size ?? c.name);
+    const product = await prisma.product.create({
+      data: {
+        name: c.name,
+        brand: c.brand,
+        // Captures carry no barcode, so identity here is the name and group.
+        category: c.category as never,
+        subcategory: c.group,
+        unitSize: c.size,
+        unitQuantity: parsed ? parsed.qty : null,
+        unitMeasure: parsed ? parsed.unit : null,
+        imageUrl: c.imageUrl,
+        isActive: true,
+      },
+      select: { id: true },
+    });
+    created += 1;
+
+    const item = items[c.index];
+    writable.push({
+      index: c.index,
+      storeId,
+      productId: product.id,
+      price: item.price,
+      isSale: item.isSale ?? false,
+      regularPrice: item.regularPrice ?? null,
+      saleEndDate: item.saleEndDate ?? null,
+      source: "manual",
+      observedAt,
+      submittedBy,
+      storeProductName: item.name ?? null,
+      storeSku: item.storeSku ?? null,
+    });
+  }
+
   // `ingestObservations()` rejects an observation whose StoreProduct row is
   // missing — and for a store being seeded for the first time, none exist.
   await Promise.all(
-    observations.map((o) =>
+    writable.map((o) =>
       prisma.storeProduct.upsert({
         where: { storeId_productId: { storeId, productId: o.productId } },
         create: { storeId, productId: o.productId, isActive: true },
@@ -227,13 +424,21 @@ export async function resolveAndIngest(opts: {
     ),
   );
 
-  const result = await ingestObservations(observations, { now });
+  const result = await ingestObservations(
+    writable.map(({ index, ...o }) => {
+      void index;
+      return o;
+    }),
+    { now },
+  );
 
   return {
     submitted: items.length,
     resolved: resolved.length,
     preview,
     unresolved,
+    creations,
+    created,
     accepted: result.accepted,
     updated: result.updated,
     rejected: result.rejected.map((r) => ({

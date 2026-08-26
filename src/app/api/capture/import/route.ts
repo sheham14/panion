@@ -29,6 +29,8 @@ const BodySchema = z
     batchId: idSchema.optional(),
     dryRun: z.boolean().optional().default(true),
     skipIndexes: z.array(z.number().int().min(0)).max(2000).optional(),
+    /** Add products the catalogue lacks, rather than discarding them. */
+    createUnmatched: z.boolean().optional().default(false),
   })
   .refine((b) => Boolean(b.capture) !== Boolean(b.batchId), {
     message: "Provide exactly one of capture or batchId",
@@ -118,12 +120,26 @@ export async function POST(req: NextRequest) {
       isSale: i.isSale,
       regularPrice: i.regularPrice,
       storeSku: i.storeSku,
+      // Kept apart from the match string: a catalogue entry wants the brand,
+      // size and image as fields, not folded into one line.
+      create: {
+        displayName: [i.brand, i.name].filter(Boolean).join(" ").trim() || i.name,
+        brand: i.brand,
+        size: i.size,
+        imageUrl: i.imageUrl,
+      },
     })),
     submittedBy: user.id,
     observedAt: now,
     now,
     dryRun: data.dryRun,
     skipIndexes: data.skipIndexes,
+    // Captures are name-and-size matches with no barcode, so every proposal
+    // gets read back before it is accepted.
+    verify: true,
+    // A capture that can only price products the catalogue already holds is
+    // capped at one chain's assortment — see resolveAndIngest.
+    createUnmatched: data.createUnmatched ?? false,
   });
 
   // A real import drains the batch; a dry run leaves it queued so the reviewer

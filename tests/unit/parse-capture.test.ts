@@ -281,6 +281,7 @@ describe("matchNameFor", () => {
         isSale: false,
         regularPrice: null,
         storeSku: null,
+        imageUrl: null,
       }),
     ).toBe("Central Dairies 2% Milk 2 L");
   });
@@ -295,6 +296,7 @@ describe("matchNameFor", () => {
         isSale: false,
         regularPrice: null,
         storeSku: null,
+        imageUrl: null,
       }),
     ).toBe("Bananas");
   });

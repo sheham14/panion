@@ -51,10 +51,25 @@ Rules:
 Respond with a JSON array only, one object per input product, in the same order:
 [{"id": "...", "group": "..."}]`;
 
+/**
+ * Groups already in use, offered so the model reuses them.
+ *
+ * Without this, classifying a new batch invents near-duplicate slugs for
+ * things the catalogue already has a name for: a Walmart egg capture produced
+ * `large-white-eggs` while the Dominion eggs beside it sat in `large-eggs`.
+ * Two slugs for one product type means the cross-brand comparison silently
+ * splits in half — which is the entire value of grouping.
+ */
+function knownGroupsBlock(known: string[]): string {
+  if (!known.length) return "";
+  return `\n\nGroups already in use:\n${known.join(", ")}\n\nIf a product belongs to one of those groups, reply with that exact slug. Only invent a new slug when none of them fits.`;
+}
+
 /** One batch. Returns id → group slug; unparseable entries are simply absent. */
 async function classifyBatch(
   client: Anthropic,
   products: ClassifyInput[],
+  known: string[],
 ): Promise<ClassifyResult> {
   const list = products
     .map(
@@ -66,7 +81,7 @@ async function classifyBatch(
   const res = await client.messages.create({
     model: MODEL,
     max_tokens: 4096,
-    system: SYSTEM_PROMPT,
+    system: SYSTEM_PROMPT + knownGroupsBlock(known),
     messages: [{ role: "user", content: list }],
   });
 
@@ -105,6 +120,11 @@ export type ClassifyOptions = {
   client?: Anthropic;
   batchSize?: number;
   onProgress?: (done: number, total: number) => void;
+  /**
+   * Slugs the catalogue already uses. Offered to the model so an incoming
+   * product joins an existing group instead of founding a near-duplicate one.
+   */
+  knownGroups?: string[];
 };
 
 /** Classify every product, batched. Never throws — ungrouped is a valid outcome. */
@@ -117,11 +137,12 @@ export async function classifyGroups(
   const client = opts.client ?? new Anthropic();
   const batchSize = opts.batchSize ?? BATCH_SIZE;
   const result: ClassifyResult = new Map();
+  const known = opts.knownGroups ?? [];
 
   for (let i = 0; i < products.length; i += batchSize) {
     const batch = products.slice(i, i + batchSize);
     try {
-      for (const [id, group] of await classifyBatch(client, batch)) {
+      for (const [id, group] of await classifyBatch(client, batch, known)) {
         result.set(id, group);
       }
     } catch (err) {

@@ -35,6 +35,8 @@ export type CapturedItem = {
   isSale: boolean;
   regularPrice: number | null;
   storeSku: string | null;
+  /** Only used when the row becomes a new catalogue product. */
+  imageUrl: string | null;
 };
 
 export type ParseResult = {
@@ -178,6 +180,7 @@ const PRICE_KEYS = [
 const WAS_PRICE_KEYS = [
   "wasPrice", "listPrice", "originalPrice", "regularPrice", "strikethroughPrice",
 ];
+const IMAGE_KEYS = ["image", "imageUrl", "thumbnailUrl", "imageSrc"];
 
 /**
  * Normalize one raw product object.
@@ -229,6 +232,10 @@ export function normalizeCaptured(raw: unknown): CapturedItem | null {
     size = deriveSizeFromUnitPrice(price, priceText);
   }
 
+  // Only https is kept: the image proxy refuses anything else, so storing an
+  // http or data URL would just produce a broken image later.
+  const image = pickString(raw, IMAGE_KEYS);
+
   return {
     name,
     brand: pickString(raw, BRAND_KEYS),
@@ -237,6 +244,7 @@ export function normalizeCaptured(raw: unknown): CapturedItem | null {
     isSale,
     regularPrice: isSale ? regularPrice : null,
     storeSku: pickString(raw, SKU_KEYS),
+    imageUrl: image && image.startsWith("https://") ? image : null,
   };
 }
 
