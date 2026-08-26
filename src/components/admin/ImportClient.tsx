@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   Check,
@@ -107,6 +107,34 @@ export default function ImportClient({
   worklistStoreName: string | null;
 }) {
   const [storeId, setStoreId] = useState(stores[0]?.id ?? "");
+  const [rows, setRows] = useState<WorklistRow[]>(worklist);
+  const [rowsStoreName, setRowsStoreName] = useState<string | null>(
+    worklistStoreName,
+  );
+
+  /*
+   * The worklist belongs to the store being captured, and only the dropdown
+   * knows which that is. Rendering it once on the server used whichever store
+   * sorted first — which is Colemans, a store with no prices and no search
+   * path, so the panel was empty of meaning on every visit.
+   */
+  useEffect(() => {
+    if (!storeId) return;
+    let cancelled = false;
+    fetch(`/api/capture/worklist?storeId=${encodeURIComponent(storeId)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (cancelled || !d) return;
+        setRows(d.rows ?? []);
+        setRowsStoreName(d.storeName ?? null);
+      })
+      .catch(() => {
+        /* leave the last good worklist in place */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [storeId]);
   const [batches, setBatches] = useState<PendingBatch[]>(pendingBatches);
   const [activeBatch, setActiveBatch] = useState<string | null>(null);
   const [freshToken, setFreshToken] = useState<string | null>(null);
@@ -439,11 +467,11 @@ export default function ImportClient({
       )}
 
       {/* ── What to capture next ────────────────────────────────── */}
-      {worklist.length > 0 && (
+      {rows.length > 0 && (
         <section className="mt-4 p-4 rounded-[12px] border border-[#ebebeb] dark:border-[#2e3538]">
           <p className="text-[13px] font-medium text-[#111] dark:text-[#e0e0e0]">
             What to capture next
-            {worklistStoreName ? ` for ${worklistStoreName}` : ""}
+            {rowsStoreName ? ` for ${rowsStoreName}` : ""}
           </p>
           <p className="text-[12px] text-[#888] mt-1">
             Searches are built from the products actually missing a price here,
@@ -452,7 +480,7 @@ export default function ImportClient({
             stocked here.
           </p>
           <div className="mt-3 flex flex-col gap-2">
-            {worklist.map((row) => (
+            {rows.map((row) => (
               <details
                 key={row.category}
                 className="rounded-[10px] border border-[#ebebeb] dark:border-[#2e3538] px-3 py-2"

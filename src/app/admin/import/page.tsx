@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
 import { bookmarkletHref } from "@/lib/capture/bookmarklet";
 import { buildWorklist, searchUrlFor } from "@/lib/capture/worklist";
+import { requiredChainFor } from "@/lib/capture/source-store";
 import ImportClient from "@/components/admin/ImportClient";
 
 /**
@@ -35,7 +36,7 @@ export default async function AdminImportPage() {
 
   if (!elevated) redirect("/");
 
-  const stores = await prisma.store.findMany({
+  const allStores = await prisma.store.findMany({
     where: {
       isActive: true,
       // A store admin may only write to the store they manage.
@@ -45,6 +46,18 @@ export default async function AdminImportPage() {
     },
     select: { id: true, name: true, chain: true },
     orderBy: { name: "asc" },
+  });
+
+  // Stores a capture can actually come from lead the list, so the default
+  // selection is a usable one. Alphabetical order put Colemans first — a store
+  // with no prices and no search path — which made the default worklist empty.
+  const stores = [...allStores].sort((a, b) => {
+    const rank = (chain: string) =>
+      requiredChainFor("walmart") === chain.toLowerCase() ||
+      requiredChainFor("voila") === chain.toLowerCase()
+        ? 0
+        : 1;
+    return rank(a.chain) - rank(b.chain) || a.name.localeCompare(b.name);
   });
 
   // The bookmarklet posts to this deployment's own origin. Read it from the
