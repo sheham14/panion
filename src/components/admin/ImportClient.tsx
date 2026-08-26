@@ -305,6 +305,21 @@ export default function ImportClient({
     ? preview.preview.filter((r) => !skipped.includes(r.index)).length
     : 0;
 
+  /*
+   * Unticking a match now says "different product" rather than "discard", so
+   * each unticked row becomes a new catalogue entry on top of the ones the
+   * preview already listed. Counted here so the button tells the truth before
+   * it is pressed.
+   */
+  const willCreate = preview
+    ? preview.creations.length +
+      preview.preview.filter(
+        (r) =>
+          skipped.includes(r.index) &&
+          !preview.creations.some((c) => c.index === r.index),
+      ).length
+    : 0;
+
   // Rows that found nothing are routine; rows that collided with an already
   // claimed product are a warning about the match that won.
   const unresolved = preview?.unresolved ?? [];
@@ -591,6 +606,14 @@ export default function ImportClient({
             Every match was read back and checked. Anything questioned is
             unticked already — you only need to judge those.
           </p>
+          <p className="text-[12px] text-[#888] mt-1">
+            <strong className="text-[#111] dark:text-[#e0e0e0]">
+              Tick only if it is the same product
+            </strong>{" "}
+            — same brand, same variety, same size. A different brand of the same
+            thing is <em>not</em> a match: untick it and it becomes its own
+            product, which is what puts the two side by side as alternatives.
+          </p>
 
           {/*
             Only rows the checker could not settle need a person. Pulling them
@@ -767,14 +790,12 @@ export default function ImportClient({
 
           <button
             onClick={() => send(false)}
-            disabled={busy || (willWrite === 0 && preview.creations.length === 0)}
+            disabled={busy || (willWrite === 0 && willCreate === 0)}
             className="inline-flex items-center gap-2 mt-3 px-4 py-2 rounded-[10px] bg-[#00E5C3] text-[#004d40] text-[13px] font-semibold disabled:opacity-40"
           >
             {busy && <Loader2 size={14} className="animate-spin" />}
             Import {willWrite} price{willWrite === 1 ? "" : "s"}
-            {preview.creations.length > 0
-              ? ` + ${preview.creations.length} new`
-              : ""}
+            {willCreate > 0 ? ` + ${willCreate} new product${willCreate === 1 ? "" : "s"}` : ""}
           </button>
         </section>
       )}

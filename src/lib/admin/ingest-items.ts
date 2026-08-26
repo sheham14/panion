@@ -292,12 +292,36 @@ export async function resolveAndIngest(opts: {
 
   // ── Products the catalogue does not have ─────────────────────────────────
   //
-  // Grouped by the same classifier that assigned every existing group, so a
-  // newly added Walmart egg lands beside the Dominion one it competes with.
+  // Three ways a row gets here, and they are one idea: **this is not that
+  // product, so it is a product of its own.**
+  //
+  //   1. Nothing matched it at all.
+  //   2. The verifier rejected the match outright.
+  //   3. The reviewer unticked it — which is what they do when the matcher
+  //      proposed a different brand of the same thing.
+  //
+  // Rejecting a match used to discard the row, so unticking "Compliments eggs
+  // → Newfoundland eggs" lost the Compliments eggs entirely. That is backwards:
+  // a rejected match is the strongest evidence the catalogue lacks the product.
+  //
+  // Grouped by the same classifier that assigned every existing group, so the
+  // new Compliments carton lands in `large-eggs` beside the Newfoundland one —
+  // which is what makes them comparable as alternatives. Cross-brand comparison
+  // comes from the group, never from matching two brands to each other.
+  const notThisProduct = new Set<number>([
+    ...unresolved.filter((u) => u.reason === "no_match").map((u) => u.index),
+    ...[...verdicts.entries()]
+      .filter(([, v]) => v.verdict === "different")
+      .map(([index]) => index),
+    // Only meaningful on the real run; `skip` is empty during a dry run.
+    ...resolved.filter((r) => skip.has(r.index)).map((r) => r.index),
+  ]);
+
   const creatable = opts.createUnmatched
-    ? unresolved
-        .filter((u) => u.reason === "no_match" && items[u.index]?.create)
-        .map((u) => ({ index: u.index, spec: items[u.index].create! }))
+    ? [...notThisProduct]
+        .filter((index) => items[index]?.create)
+        .sort((a, b) => a - b)
+        .map((index) => ({ index, spec: items[index].create! }))
     : [];
 
   // Offer the groups the catalogue already uses, so an incoming Walmart egg
@@ -344,8 +368,11 @@ export async function resolveAndIngest(opts: {
     }
   }
 
+  // No filter on `skip` here: an unticked row is precisely one the reviewer
+  // said was a different product, so it belongs in this list rather than being
+  // excluded from it. Such rows never became observations either, so nothing
+  // is both priced and created.
   const creations: CreationRow[] = creatable
-    .filter((c) => !skip.has(c.index))
     .map((c) => {
       const group = groupById.get(String(c.index)) ?? null;
       return {
