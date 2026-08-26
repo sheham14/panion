@@ -25,6 +25,8 @@
  * and no template literals that would complicate escaping.
  */
 const BOOKMARKLET_SOURCE = `(function(){
+  var TOKEN = __TOKEN__;
+  var ENDPOINT = __ENDPOINT__;
   var MIN_GROUP = 4;
   var PRICE_KEYS = ['price','currentPrice','priceInfo','linePrice','offerPrice','amount'];
   var NAME_KEYS = ['name','title','productName','displayName'];
@@ -252,23 +254,75 @@ const BOOKMARKLET_SOURCE = `(function(){
     setTimeout(function(){ d.remove(); }, 4000);
   }
 
-  function done(){
-    if (payload.items) toast('Captured ' + payload.items.length + ' products - paste into Panion', true);
-    else toast('No products found - diagnostic copied instead', false);
+  /* Clipboard is the fallback path, used when no token was baked in or the
+     POST could not be delivered (Panion not running, laptop offline). */
+  function copyInstead(reason){
+    function done(){
+      if (payload.items) toast((reason ? reason + ' - ' : '') + 'Copied ' + payload.items.length + ' products, paste into Panion', !reason);
+      else toast('No products found - diagnostic copied instead', false);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, function(){
+        window.prompt('Copy this into Panion:', text);
+      });
+    } else {
+      window.prompt('Copy this into Panion:', text);
+    }
   }
 
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text).then(done, function(){
-      window.prompt('Copy this into Panion:', text);
+  /*
+   * With a token, post straight into the review queue — no copying, no tab
+   * switching. This never writes a price: the queue is drained by a signed-in
+   * human on /admin/import, because with no barcode every match is
+   * name-and-size and that decision belongs to a person.
+   */
+  if (TOKEN && ENDPOINT && window.fetch) {
+    fetch(ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: TOKEN, capture: payload }),
+      mode: 'cors',
+      credentials: 'omit',
+      keepalive: true
+    }).then(function(r){
+      return r.json().then(function(b){ return { ok: r.ok, body: b }; },
+                           function(){ return { ok: r.ok, body: {} }; });
+    }).then(function(res){
+      if (!res.ok) { copyInstead((res.body && res.body.error) || 'Panion rejected it'); return; }
+      if (res.body.diagnostic) { toast('No products found - diagnostic queued for review', false); return; }
+      toast('Queued ' + res.body.items + ' products (' + res.body.pending + ' waiting review)', true);
+    }, function(){
+      copyInstead('Could not reach Panion');
     });
   } else {
-    window.prompt('Copy this into Panion:', text);
+    copyInstead(null);
   }
 })();`;
 
-/** The `javascript:` URL to hang off a draggable link. */
-export function bookmarkletHref(): string {
-  const collapsed = BOOKMARKLET_SOURCE.replace(/\n\s*/g, " ").trim();
+/**
+ * The `javascript:` URL to hang off a draggable link.
+ *
+ * With a token and an origin the bookmarklet posts captures straight into the
+ * review queue; without them it falls back to the clipboard, which is also what
+ * happens at runtime if Panion cannot be reached.
+ *
+ * The token is embedded in the bookmark's URL. That is a real secret sitting in
+ * the user's bookmarks bar, which is why it is narrowly scoped: it can only
+ * enqueue a capture for review, never read data and never write a price. It is
+ * revoked by generating another.
+ */
+export function bookmarkletHref(opts?: {
+  token?: string | null;
+  origin?: string | null;
+}): string {
+  const token = opts?.token ?? null;
+  const endpoint = opts?.origin ? `${opts.origin}/api/capture/submit` : null;
+
+  const collapsed = BOOKMARKLET_SOURCE.replace(/\n\s*/g, " ")
+    .replace("__TOKEN__", JSON.stringify(token))
+    .replace("__ENDPOINT__", JSON.stringify(endpoint))
+    .trim();
+
   return `javascript:${encodeURIComponent(collapsed)}`;
 }
 

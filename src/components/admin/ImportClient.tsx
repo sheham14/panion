@@ -1,9 +1,34 @@
 "use client";
 
-import { useCallback, useState } from "react";
-import { AlertTriangle, Check, Download, Loader2 } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
+import {
+  AlertTriangle,
+  Check,
+  Download,
+  ExternalLink,
+  Inbox,
+  Loader2,
+  Trash2,
+} from "lucide-react";
+import { bookmarkletHref as buildBookmarkletHref } from "@/lib/capture/bookmarklet";
 
 type Store = { id: string; name: string; chain: string };
+
+type PendingBatch = {
+  id: string;
+  source: string;
+  url: string | null;
+  itemCount: number;
+  capturedAt: string | null;
+  createdAt: string;
+};
+
+type WorklistRow = {
+  category: string;
+  missing: number;
+  covered: number;
+  links: { term: string; url: string }[];
+};
 
 type PreviewRow = {
   index: number;
@@ -47,11 +72,38 @@ type PreviewResponse = {
 export default function ImportClient({
   stores,
   bookmarkletHref,
+  origin,
+  hasToken,
+  tokenHint,
+  tokenLastUsedAt,
+  pendingBatches,
+  worklist,
+  worklistStoreName,
 }: {
   stores: Store[];
   bookmarkletHref: string;
+  origin: string | null;
+  hasToken: boolean;
+  tokenHint: string | null;
+  tokenLastUsedAt: string | null;
+  pendingBatches: PendingBatch[];
+  worklist: WorklistRow[];
+  worklistStoreName: string | null;
 }) {
   const [storeId, setStoreId] = useState(stores[0]?.id ?? "");
+  const [batches, setBatches] = useState<PendingBatch[]>(pendingBatches);
+  const [activeBatch, setActiveBatch] = useState<string | null>(null);
+  const [freshToken, setFreshToken] = useState<string | null>(null);
+
+  // Only the hash is stored server-side, so an armed href can only be built
+  // here, in the moment a token is minted.
+  const armedHref = useMemo(
+    () =>
+      freshToken && origin
+        ? buildBookmarkletHref({ token: freshToken, origin })
+        : bookmarkletHref,
+    [freshToken, origin, bookmarkletHref],
+  );
 
   /*
    * React DOM sanitizes any `javascript:` href it renders, replacing it with a
@@ -62,9 +114,9 @@ export default function ImportClient({
    */
   const bookmarkletRef = useCallback(
     (el: HTMLAnchorElement | null) => {
-      el?.setAttribute("href", bookmarkletHref);
+      el?.setAttribute("href", armedHref);
     },
-    [bookmarkletHref],
+    [armedHref],
   );
   const [raw, setRaw] = useState("");
   const [busy, setBusy] = useState(false);
@@ -73,9 +125,55 @@ export default function ImportClient({
   const [imported, setImported] = useState<PreviewResponse | null>(null);
   const [skipped, setSkipped] = useState<number[]>([]);
 
-  async function send(dryRun: boolean) {
+  async function generateToken() {
     setBusy(true);
     setError(null);
+    try {
+      const res = await fetch("/api/capture/token", { method: "POST" });
+      const body = await res.json();
+      if (!res.ok) {
+        setError(body?.error ?? `Request failed (${res.status})`);
+        return;
+      }
+      setFreshToken(body.token);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Something went wrong");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function refreshBatches() {
+    const res = await fetch("/api/capture/batches");
+    if (!res.ok) return;
+    const body = await res.json();
+    setBatches(body.batches ?? []);
+  }
+
+  async function discardBatch(batchId: string) {
+    setBusy(true);
+    try {
+      const res = await fetch("/api/capture/batches", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ batchId }),
+      });
+      if (res.ok) {
+        setBatches((b) => b.filter((x) => x.id !== batchId));
+        if (activeBatch === batchId) {
+          setActiveBatch(null);
+          setPreview(null);
+        }
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function send(dryRun: boolean, batchId?: string | null) {
+    setBusy(true);
+    setError(null);
+    const useBatch = batchId ?? activeBatch;
     try {
       const res = await fetch("/api/capture/import", {
         method: "POST",
@@ -83,7 +181,8 @@ export default function ImportClient({
         body: JSON.stringify({
           storeId,
           dryRun,
-          capture: raw,
+          // A queued capture and pasted text are mutually exclusive.
+          ...(useBatch ? { batchId: useBatch } : { capture: raw }),
           // Rows the reviewer unticked never reach the writer.
           skipIndexes: dryRun ? [] : skipped,
         }),
@@ -96,6 +195,7 @@ export default function ImportClient({
       if (dryRun) {
         setPreview(body);
         setImported(null);
+        if (useBatch) setActiveBatch(useBatch);
         // Suspicious rows start unticked — opt in to writing them, not out.
         setSkipped(
           (body.preview as PreviewRow[])
@@ -106,6 +206,11 @@ export default function ImportClient({
         setImported(body);
         setPreview(null);
         setRaw("");
+        // An imported batch has left the queue.
+        if (useBatch) {
+          setBatches((b) => b.filter((x) => x.id !== useBatch));
+          setActiveBatch(null);
+        }
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong");
@@ -135,8 +240,8 @@ export default function ImportClient({
         Import prices
       </h1>
       <p className="text-[13px] text-[#888] mt-1">
-        Capture a store&apos;s search results in your browser, paste here, review,
-        import.
+        Capture a store&apos;s search results in your browser, review what each row
+        matched to, import.
       </p>
 
       {/* ── Step 1: the bookmarklet ─────────────────────────────── */}
@@ -145,7 +250,9 @@ export default function ImportClient({
           1. Install the capture button
         </p>
         <p className="text-[12px] text-[#888] mt-1">
-          Drag this to your bookmarks bar. You only do this once.
+          {freshToken
+            ? "Drag this to your bookmarks bar now — it carries the key generated below."
+            : "Drag this to your bookmarks bar. Generate a key first if you want captures to arrive here automatically."}
         </p>
         <a
           ref={bookmarkletRef}
@@ -156,16 +263,165 @@ export default function ImportClient({
           <Download size={14} />
           Capture → Panion
         </a>
+
+        {/*
+          Auto-submit removes the copy/paste round trip, not the review step.
+          Captures land in the queue below and still need a human to confirm
+          what each row matched to.
+        */}
+        <div className="mt-4 pt-3 border-t border-[#ebebeb] dark:border-[#2e3538]">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[12px] font-medium text-[#111] dark:text-[#e0e0e0]">
+                Auto-submit key
+              </p>
+              <p className="text-[11px] text-[#aaa] mt-0.5">
+                {hasToken && !freshToken
+                  ? `A key ending ${tokenHint} is active${
+                      tokenLastUsedAt
+                        ? `, last used ${new Date(tokenLastUsedAt).toLocaleString()}`
+                        : " and has never been used"
+                    }. Generating a new one revokes it.`
+                  : "Lets the button send captures straight here. It can only queue captures for review — never write a price."}
+              </p>
+            </div>
+            <button
+              onClick={generateToken}
+              disabled={busy}
+              className="flex-shrink-0 px-3 py-1.5 rounded-[8px] border border-[#ebebeb] dark:border-[#2e3538] text-[12px] text-[#111] dark:text-[#e0e0e0] disabled:opacity-40"
+            >
+              {hasToken ? "Regenerate" : "Generate"}
+            </button>
+          </div>
+
+          {freshToken && (
+            <p className="mt-2 text-[11px] text-[#0a7a62] dark:text-[#00E5C3]">
+              New key generated and baked into the button above.{" "}
+              <strong>Re-drag it to your bookmarks bar now</strong> — the old
+              bookmark no longer works, and the key is not shown again.
+            </p>
+          )}
+        </div>
+
         <p className="text-[11px] text-[#aaa] mt-3">
-          Then: search on walmart.ca or voila.ca, click the button, come back and
-          paste.
+          Then: search on walmart.ca or voila.ca and click the button. With a key
+          it queues below; without one it copies to your clipboard to paste.
         </p>
       </section>
+
+      {/* ── The review queue ────────────────────────────────────── */}
+      {batches.length > 0 && (
+        <section className="mt-4 p-4 rounded-[12px] border border-[#00E5C3] dark:border-[#00E5C3]/40">
+          <div className="flex items-center justify-between">
+            <p className="text-[13px] font-medium text-[#111] dark:text-[#e0e0e0] flex items-center gap-2">
+              <Inbox size={14} />
+              {batches.length} capture{batches.length === 1 ? "" : "s"} waiting
+              for review
+            </p>
+            <button
+              onClick={refreshBatches}
+              className="text-[11px] text-[#888] underline"
+            >
+              Refresh
+            </button>
+          </div>
+          <div className="mt-3 flex flex-col gap-1.5">
+            {batches.map((b) => (
+              <div
+                key={b.id}
+                className={`flex items-center gap-3 px-3 py-2 rounded-[10px] border ${
+                  activeBatch === b.id
+                    ? "border-[#00E5C3] bg-[#00E5C3]/5"
+                    : "border-[#ebebeb] dark:border-[#2e3538]"
+                }`}
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="text-[12px] text-[#111] dark:text-[#e0e0e0] truncate">
+                    {b.source} — {b.itemCount} product
+                    {b.itemCount === 1 ? "" : "s"}
+                    {b.itemCount === 0 ? " (diagnostic)" : ""}
+                  </p>
+                  <p className="text-[11px] text-[#aaa] truncate">
+                    {b.url ?? "unknown page"} ·{" "}
+                    {new Date(b.capturedAt ?? b.createdAt).toLocaleString()}
+                  </p>
+                </div>
+                <button
+                  onClick={() => send(true, b.id)}
+                  disabled={busy || b.itemCount === 0}
+                  className="flex-shrink-0 px-3 py-1.5 rounded-[8px] bg-[#00E5C3] text-[#004d40] text-[12px] font-semibold disabled:opacity-40"
+                >
+                  Review
+                </button>
+                <button
+                  onClick={() => discardBatch(b.id)}
+                  disabled={busy}
+                  title="Discard"
+                  className="flex-shrink-0 p-1.5 rounded-[8px] text-[#888] hover:text-[#b91c1c] disabled:opacity-40"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ── What to capture next ────────────────────────────────── */}
+      {worklist.length > 0 && (
+        <section className="mt-4 p-4 rounded-[12px] border border-[#ebebeb] dark:border-[#2e3538]">
+          <p className="text-[13px] font-medium text-[#111] dark:text-[#e0e0e0]">
+            What to capture next
+            {worklistStoreName ? ` for ${worklistStoreName}` : ""}
+          </p>
+          <p className="text-[12px] text-[#888] mt-1">
+            Ranked by products Panion holds but this store has no price for.
+            Store-brand products of other chains are excluded — they cannot be
+            stocked here.
+          </p>
+          <div className="mt-3 flex flex-col gap-2">
+            {worklist.map((row) => (
+              <details
+                key={row.category}
+                className="rounded-[10px] border border-[#ebebeb] dark:border-[#2e3538] px-3 py-2"
+              >
+                <summary className="text-[12px] text-[#111] dark:text-[#e0e0e0] cursor-pointer">
+                  {row.category.replace(/_/g, " ")} —{" "}
+                  <strong>{row.missing}</strong> missing, {row.covered} covered
+                </summary>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {row.links.map((l) => (
+                    <a
+                      key={l.term}
+                      href={l.url}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-[8px] border border-[#ebebeb] dark:border-[#2e3538] text-[11px] text-[#111] dark:text-[#e0e0e0]"
+                    >
+                      {l.term}
+                      <ExternalLink size={10} />
+                    </a>
+                  ))}
+                  {row.links.length === 0 && (
+                    <span className="text-[11px] text-[#aaa]">
+                      No search link for this chain — search manually.
+                    </span>
+                  )}
+                </div>
+              </details>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* ── Step 2: paste ───────────────────────────────────────── */}
       <section className="mt-4 p-4 rounded-[12px] border border-[#ebebeb] dark:border-[#2e3538]">
         <p className="text-[13px] font-medium text-[#111] dark:text-[#e0e0e0]">
-          2. Paste the capture
+          2. Choose the store{batches.length > 0 ? "" : ", or paste a capture"}
+        </p>
+        <p className="text-[12px] text-[#888] mt-1">
+          The store applies to whichever capture you review — a page cannot know
+          which shop you were browsing.
         </p>
 
         <label className="block mt-3 text-[12px] text-[#888]">
@@ -185,14 +441,18 @@ export default function ImportClient({
 
         <textarea
           value={raw}
-          onChange={(e) => setRaw(e.target.value)}
-          placeholder="Paste here (Ctrl+V)"
+          onChange={(e) => {
+            setRaw(e.target.value);
+            // Pasting means reviewing the pasted text, not a queued batch.
+            if (e.target.value.trim()) setActiveBatch(null);
+          }}
+          placeholder="Paste here (Ctrl+V) — only needed without an auto-submit key"
           rows={5}
           className="w-full mt-3 px-3 py-2 rounded-[10px] border border-[#ebebeb] dark:border-[#2e3538] bg-white dark:bg-[#1e2528] text-[12px] font-mono text-[#111] dark:text-[#e0e0e0]"
         />
 
         <button
-          onClick={() => send(true)}
+          onClick={() => send(true, null)}
           disabled={busy || !raw.trim() || !storeId}
           className="inline-flex items-center gap-2 mt-3 px-4 py-2 rounded-[10px] bg-[#111] dark:bg-[#e0e0e0] text-white dark:text-[#111] text-[13px] font-semibold disabled:opacity-40"
         >

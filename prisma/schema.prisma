@@ -183,12 +183,82 @@ model User {
     preferredStores  UserPreferredStore[]
     aiChatSessions   AiChatSession[]
     pushSubscriptions PushSubscription[]
+    captureTokens    CaptureToken[]
+    captureBatches   CaptureBatch[]
 
     @@index([email])
     @@index([role])
     @@index([deletedAt])
     @@index([stripeCustomerId])
     @@map("users")
+}
+
+/**
+ * Bearer secret that lets the capture bookmarklet post from a retailer's
+ * origin.
+ *
+ * Session cookies cannot do this job: the bookmarklet runs on walmart.ca, and
+ * NextAuth's SameSite cookie is deliberately not sent on a cross-site POST. A
+ * token carried in the request *body* also means the endpoint needs no
+ * credentials at all, so opening it to other origins introduces no CSRF
+ * surface — a forged cross-site request cannot obtain the secret.
+ *
+ * Stored as a SHA-256 hash. The plaintext is shown once, when generated, and
+ * lives thereafter only inside the bookmark on the user's bookmarks bar.
+ */
+model CaptureToken {
+    id         String    @id @default(cuid())
+    userId     String    @map("user_id")
+    tokenHash  String    @unique @map("token_hash")
+    /** Last 4 plaintext characters, so a user can tell two bookmarks apart. */
+    hint       String
+    label      String?
+    lastUsedAt DateTime? @map("last_used_at")
+    revokedAt  DateTime? @map("revoked_at")
+    createdAt  DateTime  @default(now()) @map("created_at")
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@index([userId])
+    @@map("capture_tokens")
+}
+
+/**
+ * A capture waiting to be reviewed.
+ *
+ * Auto-submit deliberately does NOT write prices. Captures carry no barcode, so
+ * every match is name-and-size — the path that matched a bag of chicken nuggets
+ * to a pack of breasts, and that collapsed four Dempster's loaves onto one
+ * catalogue row. Removing the paste step is an ergonomic win; removing the
+ * human from the match decision would not be. The bookmarklet therefore queues
+ * the raw payload here and the review page drains the queue.
+ */
+model CaptureBatch {
+    id         String              @id @default(cuid())
+    userId     String              @map("user_id")
+    /** Chosen by the reviewer, not the bookmarklet — the page cannot know it. */
+    storeId    String?             @map("store_id")
+    source     String
+    url        String?
+    /** Verbatim bookmarklet payload; interpretation stays server-side. */
+    payload    Json
+    itemCount  Int                 @default(0) @map("item_count")
+    status     CaptureBatchStatus  @default(pending)
+    reviewedAt DateTime?           @map("reviewed_at")
+    capturedAt DateTime?           @map("captured_at")
+    createdAt  DateTime            @default(now()) @map("created_at")
+
+    user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+    store Store? @relation(fields: [storeId], references: [id])
+
+    @@index([userId, status, createdAt])
+    @@map("capture_batches")
+}
+
+enum CaptureBatchStatus {
+    pending
+    imported
+    discarded
 }
 
 model UserPreferredStore {
@@ -314,6 +384,7 @@ model Store {
     scrapeRuns       ScrapeRun[]
     admins           User[]               @relation("StoreAdmin")
     preferredByUsers UserPreferredStore[]
+    captureBatches   CaptureBatch[]
 
     @@index([chain])
     @@index([city, province])

@@ -19,13 +19,20 @@ import { parseCapture, matchNameFor } from "@/lib/capture/parse-capture";
  * fetcher is not (DATA-SOURCING.md §1.1).
  */
 
-const BodySchema = z.object({
-  storeId: idSchema,
-  /** Raw clipboard text. Parsed leniently — it is pasted by hand. */
-  capture: z.string().min(2).max(8_000_000),
-  dryRun: z.boolean().optional().default(true),
-  skipIndexes: z.array(z.number().int().min(0)).max(2000).optional(),
-});
+const BodySchema = z
+  .object({
+    storeId: idSchema,
+    /** Raw clipboard text. Parsed leniently — it is pasted by hand. */
+    capture: z.string().min(2).max(8_000_000).optional(),
+    /** A queued capture from the bookmarklet, instead of pasted text. */
+    batchId: idSchema.optional(),
+    dryRun: z.boolean().optional().default(true),
+    skipIndexes: z.array(z.number().int().min(0)).max(2000).optional(),
+  })
+  .refine((b) => Boolean(b.capture) !== Boolean(b.batchId), {
+    message: "Provide exactly one of capture or batchId",
+    path: ["capture"],
+  });
 
 export async function POST(req: NextRequest) {
   const { user, role, managedStoreId, error } = await requireElevatedRole();
@@ -46,13 +53,24 @@ export async function POST(req: NextRequest) {
   if (!store.isActive) return badRequest("Store is not active");
 
   let payload: unknown;
-  try {
-    payload = JSON.parse(data.capture);
-  } catch {
-    return badRequest(
-      "That doesn't look like a capture. Click the bookmarklet on a store " +
-        "search page, then paste the whole clipboard here.",
-    );
+  if (data.batchId) {
+    // Scoped to the caller's own pending batches: an id from anywhere else is
+    // indistinguishable from one that does not exist.
+    const batch = await prisma.captureBatch.findFirst({
+      where: { id: data.batchId, userId: user.id, status: "pending" },
+      select: { payload: true },
+    });
+    if (!batch) return notFound("Capture not found");
+    payload = batch.payload;
+  } else {
+    try {
+      payload = JSON.parse(data.capture as string);
+    } catch {
+      return badRequest(
+        "That doesn't look like a capture. Click the bookmarklet on a store " +
+          "search page, then paste the whole clipboard here.",
+      );
+    }
   }
 
   const parsed = parseCapture(payload);
@@ -93,12 +111,22 @@ export async function POST(req: NextRequest) {
     skipIndexes: data.skipIndexes,
   });
 
+  // A real import drains the batch; a dry run leaves it queued so the reviewer
+  // can change the store or come back to it.
+  if (data.batchId && !data.dryRun) {
+    await prisma.captureBatch.updateMany({
+      where: { id: data.batchId, userId: user.id, status: "pending" },
+      data: { status: "imported", storeId: store.id, reviewedAt: new Date() },
+    });
+  }
+
   return NextResponse.json({
     dryRun: data.dryRun,
     store: { id: store.id, name: store.name },
     source: parsed.source,
     capturedFrom: parsed.url,
     skippedUnusable: parsed.skipped,
+    batchId: data.batchId ?? null,
     ...result,
   });
 }

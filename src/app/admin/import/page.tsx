@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
 import { bookmarkletHref } from "@/lib/capture/bookmarklet";
+import { buildWorklist, searchUrlFor } from "@/lib/capture/worklist";
 import ImportClient from "@/components/admin/ImportClient";
 
 /**
@@ -45,7 +47,71 @@ export default async function AdminImportPage() {
     orderBy: { name: "asc" },
   });
 
+  // The bookmarklet posts to this deployment's own origin. Read it from the
+  // request so a local checkout and production each get a working bookmark
+  // without configuration.
+  const h = await headers();
+  const host = h.get("host");
+  const proto =
+    h.get("x-forwarded-proto") ??
+    (host?.startsWith("localhost") || host?.startsWith("127.") ? "http" : "https");
+  const origin = host ? `${proto}://${host}` : null;
+
+  const [tokenRow, pendingBatches] = await Promise.all([
+    prisma.captureToken.findFirst({
+      where: { userId: user.id, revokedAt: null },
+      select: { hint: true, lastUsedAt: true, createdAt: true },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.captureBatch.findMany({
+      where: { userId: user.id, status: "pending" },
+      select: {
+        id: true,
+        source: true,
+        url: true,
+        itemCount: true,
+        capturedAt: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: "desc" },
+      take: 100,
+    }),
+  ]);
+
+  // The worklist is per-store; default to the first store the user may write.
+  const firstStore = stores[0];
+  const worklist = firstStore ? await buildWorklist(firstStore.id) : null;
+
+  const worklistRows =
+    worklist?.rows.slice(0, 8).map((r) => ({
+      category: r.category,
+      missing: r.missing,
+      covered: r.covered,
+      links: r.terms
+        .map((t) => ({ term: t, url: searchUrlFor(worklist.chain, t) }))
+        .filter((l): l is { term: string; url: string } => l.url !== null)
+        .slice(0, 12),
+    })) ?? [];
+
   return (
-    <ImportClient stores={stores} bookmarkletHref={bookmarkletHref()} />
+    <ImportClient
+      stores={stores}
+      // Only the token's hash is stored, so the server cannot embed one it did
+      // not just mint. This href is the no-token fallback — it copies to the
+      // clipboard, the original behaviour. The client rebuilds it with the
+      // plaintext at the moment a token is generated.
+      bookmarkletHref={bookmarkletHref({ origin })}
+      origin={origin}
+      hasToken={tokenRow !== null}
+      tokenHint={tokenRow?.hint ?? null}
+      tokenLastUsedAt={tokenRow?.lastUsedAt?.toISOString() ?? null}
+      pendingBatches={pendingBatches.map((b) => ({
+        ...b,
+        capturedAt: b.capturedAt?.toISOString() ?? null,
+        createdAt: b.createdAt.toISOString(),
+      }))}
+      worklist={worklistRows}
+      worklistStoreName={worklist?.storeName ?? null}
+    />
   );
 }
