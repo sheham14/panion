@@ -244,14 +244,32 @@ const BOOKMARKLET_SOURCE = `(function(){
   }
 
   var text = JSON.stringify(payload);
+  /*
+   * Styles are assigned through the CSSOM, one property at a time, rather than
+   * as a style attribute. A retailer serving style-src without 'unsafe-inline'
+   * has the attribute stripped, which leaves the toast in the DOM but
+   * unstyled - static, unpositioned, and far below the fold, so it reads as
+   * "the bookmarklet did nothing". CSSOM assignment is not subject to that
+   * restriction. An alert is the last resort so a capture can never complete
+   * with no feedback at all.
+   */
   function toast(msg, ok){
-    var d = document.createElement('div');
-    d.textContent = msg;
-    d.setAttribute('style','position:fixed;z-index:2147483647;top:16px;right:16px;padding:12px 18px;'
-      + 'border-radius:10px;font:600 14px system-ui,sans-serif;color:#fff;box-shadow:0 4px 16px rgba(0,0,0,.3);'
-      + 'background:' + (ok ? '#0a7a62' : '#b91c1c'));
-    document.body.appendChild(d);
-    setTimeout(function(){ d.remove(); }, 4000);
+    try {
+      var d = document.createElement('div');
+      d.textContent = msg;
+      var s = d.style;
+      s.setProperty('position','fixed'); s.setProperty('z-index','2147483647');
+      s.setProperty('top','16px'); s.setProperty('right','16px');
+      s.setProperty('padding','14px 20px'); s.setProperty('border-radius','10px');
+      s.setProperty('font','600 15px system-ui,-apple-system,sans-serif');
+      s.setProperty('color','#ffffff'); s.setProperty('max-width','420px');
+      s.setProperty('box-shadow','0 4px 20px rgba(0,0,0,.35)');
+      s.setProperty('background', ok ? '#0a7a62' : '#b91c1c');
+      (document.body || document.documentElement).appendChild(d);
+      setTimeout(function(){ try { d.remove(); } catch(e){} }, 6000);
+    } catch(e) {
+      alert(msg);
+    }
   }
 
   /* Clipboard is the fallback path, used when no token was baked in or the
@@ -277,9 +295,19 @@ const BOOKMARKLET_SOURCE = `(function(){
    * name-and-size and that decision belongs to a person.
    */
   if (TOKEN && ENDPOINT && window.fetch) {
+    /*
+     * Content-Type is text/plain deliberately, to keep this a CORS **simple
+     * request** and avoid a preflight. The body is still JSON and the endpoint
+     * reads it with req.text() + JSON.parse, so the header is decorative — but
+     * a preflight is not: panion.dev 307-redirects to www.panion.dev, and a
+     * preflight that meets a redirect is a hard error by spec, with no way for
+     * the page to follow it. That is what made auto-submit fail silently on
+     * production while working locally. A simple POST follows the redirect
+     * normally.
+     */
     fetch(ENDPOINT, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
       body: JSON.stringify({ token: TOKEN, capture: payload }),
       mode: 'cors',
       credentials: 'omit',

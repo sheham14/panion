@@ -68,6 +68,19 @@ describe("bookmarkletHref", () => {
 });
 
 describe("bookmarklet source", () => {
+  it("is syntactically valid JavaScript", () => {
+    // The source lives inside a template literal, so a stray backtick in a
+    // comment silently terminates the string and mangles everything after it.
+    // `new Function` compiles without executing, so undefined browser globals
+    // are irrelevant — this only asks whether it parses.
+    expect(() => new Function(BOOKMARKLET_SOURCE)).not.toThrow();
+    // Same check on what actually ships, after collapsing and substitution.
+    const armed = decodeURIComponent(
+      bookmarkletHref({ token: "t", origin: "https://example.test" }),
+    ).replace(/^javascript:/, "");
+    expect(() => new Function(armed)).not.toThrow();
+  });
+
   it("never writes prices — it only posts to the review queue", () => {
     // Auto-submit is an ergonomic change. If this ever points at the import
     // endpoint it would bypass the human match review, which is the one thing
@@ -79,5 +92,22 @@ describe("bookmarklet source", () => {
   it("falls back to the clipboard when it cannot reach Panion", () => {
     expect(BOOKMARKLET_SOURCE).toContain("copyInstead");
     expect(BOOKMARKLET_SOURCE).toContain("Could not reach Panion");
+  });
+
+  it("posts as a CORS simple request, so no preflight can meet a redirect", () => {
+    // panion.dev 307-redirects to www.panion.dev. A preflight that meets a
+    // redirect is a hard error by spec, which is what made auto-submit fail
+    // silently in production while working locally. text/plain keeps the POST
+    // preflight-free; the endpoint reads the body with req.text() anyway.
+    expect(BOOKMARKLET_SOURCE).toContain("'Content-Type': 'text/plain;charset=UTF-8'");
+    expect(BOOKMARKLET_SOURCE).not.toContain("'Content-Type': 'application/json'");
+  });
+
+  it("styles the toast through the CSSOM, not a style attribute", () => {
+    // A retailer serving style-src without 'unsafe-inline' strips a style
+    // attribute, leaving the toast unstyled and below the fold — which reads
+    // as the bookmarklet having done nothing at all.
+    expect(BOOKMARKLET_SOURCE).not.toContain("setAttribute('style'");
+    expect(BOOKMARKLET_SOURCE).toContain("s.setProperty('position','fixed')");
   });
 });

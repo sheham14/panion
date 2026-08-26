@@ -301,6 +301,18 @@ export default function ImportClient({
               bookmark no longer works, and the key is not shown again.
             </p>
           )}
+
+          {/*
+            The endpoint is worth showing: it comes from the host you loaded
+            this page on, and a capture posted at the wrong one fails in a way
+            the retailer's page cannot report back.
+          */}
+          <p className="mt-2 text-[11px] text-[#aaa]">
+            Captures post to{" "}
+            <code className="font-mono">{origin ?? "(unknown)"}</code>. Load this
+            page on the address you actually use, so the bookmark is armed with
+            it.
+          </p>
         </div>
 
         <p className="text-[11px] text-[#aaa] mt-3">
