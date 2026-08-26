@@ -1,12 +1,14 @@
-# Panion — current state and next steps
-
 **Last updated: 2026-08-26.** Read this first, then `CLAUDE.md` for the rules.
 
-**Production now runs the real catalogue.** On 2026-08-26 the pending migration
-was applied, the 260-product catalogue was restored to Neon, and the 80
-fabricated seed products were deleted. Local and production hold the same
-catalogue. Reaching production requires the explicit
-`--config prisma.production.config.ts`; the default config still resolves local.
+**DEMO: 2026-08-28**, a casual tech-community demo night — an audience of other
+builders, driven live, on **production (panion.dev)**. Optimise for "works live,
+looks real", not for breadth.
+
+**Production is the source of truth.** Both the catalogue and every captured
+price live on Neon. Do NOT restore a local snapshot over it — that would
+overwrite captured prices with stale local ones. Reaching production is always
+explicit: `--config prisma.production.config.ts` for Prisma, `--production` for
+`catalogue:import` and `role`. The default for everything is local.
 
 ---
 
@@ -19,41 +21,36 @@ Panion compares grocery prices in St. John's, NL. Two comparison axes:
   ranked by **unit price** (a group deliberately spans pack sizes, so sticker
   price would mislead).
 
-### Data, as of the last run
+### Data — production, 2026-08-26
 
 ```
-catalogue                : 260 products
-Loblaw-exclusive brands  :  69  (No Name / PC — cannot exist off-Loblaw)
-addressable elsewhere    : 191
-comparable at 2+ stores  :  56
+products                              701
+equivalence groups                    231
+groups comparable across 2+ stores     75   <- the demo metric
 
-Dominion - Stavanger Dr    260  (100% of catalogue)
-Sobeys - Mount Pearl        49  ( 26% of addressable)
-Walmart Supercentre         12  (  6% of addressable)
-No Frills                    3
+Dominion - Stavanger Dr               371   (PC Express API, automatic)
+Walmart Supercentre - St. John's      227   (browser capture)
+Sobeys - Mount Pearl                  187   (browser capture)
+No Frills                               3   (Flipp only; never scraped)
+Colemans / Costco                       0   (no capture path)
 ```
 
-Walmart went 2 → 12 from the first browser capture, and no suspicious
-spreads were reported afterwards. **Production holds the same 260 products and
-324 store-products**, with Colemans and Costco present but unpriced.
+Strongest groups: `multigrain-bread` (15 products, 4 stores), `salted-butter`
+(16, 3), `large-eggs` (15, 3), `whole-wheat-bread` (14, 3), `2-percent-milk`,
+`1-percent-milk`, `skim-milk`, `unsalted-butter`, `everything-bagel`.
 
-Coverage by category — `needs capture` is the non-Loblaw products priced at
-only one store, i.e. the actual work queue:
+**Weak aisle: cheese.** 64 products but only ONE comparable group
+(`cream-cheese`) — the rest fragmented into 30 groups (aged vs mild, block vs
+shredded), each with one or two members. Either capture `cheddar cheese` /
+`mozzarella` / `shredded cheese` at both stores, or steer the live demo away
+from cheese.
 
-```
-category            total   2+ stores   loblaw-only   needs capture
-personal_care          30           4             0              26
-bakery_bread           38           4            10              24
-meat_seafood           25           2             8              15
-pantry_dry_goods       34          13             8              13
-frozen                 17           1             7               9
-dairy                  22          10             3               9
-snacks_candy           25           6            12               7
-produce                19           5             8               6
-```
-
-**Personal care is the highest-value capture target**: 30 products, none
-Loblaw-exclusive, so every one is capturable at Walmart.
+**Only three stores matter, and that is deliberate.** Dominion is fed
+automatically by the API. No Frills is a Loblaw banner that *could* be scraped —
+but `PC_EXPRESS_BANNERS` in `adapters/pcexpress.ts` only has Dominion's store
+id, so adding it means discovering No Frills' id against a live API. Colemans
+has no online storefront; Costco is membership-gated with bulk sizes and no
+capture path. Neither is worth chasing before the demo.
 
 Run `npm run coverage` to refresh those numbers and to list any suspicious
 cross-store spreads (the bad-match detector).
@@ -94,6 +91,33 @@ Three operational facts that will bite anyone who forgets them:
 
 ---
 ## 3. What was built (most recent work first)
+
+- **Cross-brand search (`/api/groups` + search page).** "What is the cheapest
+  bread" now has a front door. Groups rank by unit price and appear above the
+  flat product list as "Best value by type" cards. Unit prices more than 12×
+  from their group's median are shown but not ranked — a misparsed size once
+  produced $565.91/100g, and one absurd figure discredits every number beside
+  it.
+- **Capture creates catalogue products** (`resolveAndIngest`, `createUnmatched`).
+  A row becomes a new product three ways, which are one idea — *this is not that
+  product, so it is a product of its own*: nothing matched, the verifier
+  rejected it, or the reviewer unticked it. The classifier is given the groups
+  already in use, so a Walmart egg joins `large-eggs` rather than founding
+  `large-white-eggs` beside it and splitting the comparison in half.
+- **Model verification of every match** (`verify-matches.ts`). Replaces per-row
+  human review with same/different/unsure plus a reason. Failure is never
+  approval.
+- **Capture auto-submit** — a `CaptureToken` bearer secret in the request body,
+  not a cookie, because NextAuth withholds cookies cross-site from walmart.ca.
+  The token grants **enqueue only**; queued captures still need a signed-in
+  human to import them. Posts as a CORS *simple request* (`text/plain`) so no
+  preflight is issued — panion.dev 307-redirects to www, and a preflight meeting
+  a redirect is a hard error, which is what made auto-submit fail silently in
+  production while working locally.
+- **Per-store worklist** on `/admin/import`, built from products that store is
+  actually missing and following the store dropdown.
+- **Store pinning** — a `walmart` capture can only be imported into Walmart, a
+  `voila` one into Sobeys. Enforced server-side, not just auto-selected.
 
 - **Capture auto-submit + worklist.** The bookmarklet posts captures straight
   into a review queue (`CaptureBatch`), and `/admin/import` shows a per-store
@@ -140,72 +164,80 @@ Three operational facts that will bite anyone who forgets them:
 
 ## 4. Next step — start here
 
-**Run capture sessions across categories to build coverage**, and expand the
-catalogue where captures keep failing to resolve.
+**Everything for the demo is built. What remains is rehearsal and polish.**
 
-Capture works and needs no further engineering to use:
+1. **Rehearse the live searches on panion.dev.** Type `bread`, `butter`, `eggs`,
+   `milk` into search. Each should show **"Best value by type"** group cards
+   above the product list — "Cheapest salted butter · 16 products across 3
+   stores · up to 29% cheaper", expandable into the unit-price ranking. If a
+   search looks thin or wrong, that is the bug to fix; nothing else matters more.
+2. **Avoid `cheese` live** unless its groups get filled first (see §1).
+3. Optional: a capture pass on `cheddar cheese` / `mozzarella` / `shredded
+   cheese` at Walmart and Voilà to make cheese demoable.
 
-1. Sign in at `localhost:3000` **with Google, as yourself** — there is no
-   password login, and `admin@sentinel.ca` is a seeded row nobody can
-   authenticate as. Signing in creates your `User` row.
-2. `npm run role -- grant <your-email> moderator`
-3. Go to `/admin/import`, click **Generate** under "Auto-submit key", then drag
-   **Capture → Panion** to the bookmarks bar. The key is baked into the button
-   at that moment and is never shown again.
-   **Re-drag after any change to `bookmarklet.ts` or any new key** — the old
-   bookmark keeps the old code and the old key.
-4. Open the worklist on that page, click a search term, click the bookmarklet.
-   The capture posts straight into the review queue; no copying, no pasting.
-   Without a key — or if Panion is unreachable — it falls back to the clipboard
-   and the paste box still works.
+### The capture loop, when more coverage is wanted
 
-**Auto-submit deliberately does not write prices.** A queued capture still has
-to be reviewed by a signed-in moderator, because with no barcode every match is
-name-and-size — the path that priced nuggets as breasts and collapsed four
-Dempster's loaves onto one row. Rows whose price moves ≥1.8× against the price
-already held are flagged and **start unticked**; rows that collide with a
-product another row already claimed are shown expanded in warning colour,
-because that is evidence the surviving match is wrong.
+1. Sign in on **panion.dev** with Google. Moderator role is already granted to
+   `sheham.shahid@gmail.com` on production.
+2. `/admin/import` → **Generate** under "Auto-submit key" → **drag Capture →
+   Panion to the bookmarks bar in that same visit.** The key is embedded at
+   generation time and never shown again, so re-dragging later without
+   generating produces an unarmed, clipboard-only bookmark.
+3. Use the worklist on that page — it is built from products this store is
+   actually missing, and follows the store dropdown.
+4. Search, click the bookmarklet, come back and review the queue.
 
-**A capture that resolves few rows is usually correct, not broken.** The first
-Walmart run resolved 10 of 41: the rest were oat/soy/coconut milk and lactose-free
-variants that **have no catalogue entry at all**, plus near-misses the matcher
-rightly refused (catalogue has Silk Almond *Original*; the capture had Silk Almond
-*Vanilla* and Silk *Soy*). Import never invents products — a name-only capture is
-too thin to found a catalogue row on. To make a category comparable, add it to the
-catalogue from PC Express first, then re-capture elsewhere.
+**What ticking means, because it is the one thing that is easy to get wrong:**
 
-If a capture ever finds nothing, it copies a **diagnostic** instead. Paste that
-into the session: the array survey and the price-leaf ancestor chains are enough
-to fix the extractor directly, and that is how Voilà was onboarded.
+- **Tick** = "this is the same product" → writes the price onto that catalogue
+  row. Only tick same brand, same variety, same size.
+- **Untick** = "this is a different product" → **creates** it in the catalogue.
+  A different brand of the same thing is NOT a match. Untick it, and the
+  classifier drops it into the same equivalence group, which is exactly what
+  makes the two comparable as alternatives.
+
+Cross-brand comparison comes from the group, never from matching two brands to
+each other.
+
+Every match is read back by a model (`verify-matches.ts`) before acceptance:
+`different` is dropped server-side, `unsure` is surfaced with its reason, and
+only those need a human. Its safety property is that **failure is never
+approval** — an API error, an unparseable reply or a skipped row all resolve to
+`unsure`.
+
+If a capture finds nothing it copies a **diagnostic** instead. Paste that into
+the session: the array survey and price-leaf ancestor chains are enough to fix
+the extractor directly, and that is how Voilà was onboarded.
 
 ---
 
-## 5. What is left, in rough priority order
+## 5. What is left, after the demo
 
-1. **Capture coverage, category by category.** Both sites work; this is now
-   operator time rather than engineering. Walmart is the bigger prize (12 of
-   179 addressable).
-2. **Sobeys coverage: 27% → higher.** The gap is name-matching against Loblaw's
-   phrasing (`2% Milk` vs `2% Milk Partly Skim`). Tune with a fixture per
-   change; never loosen a gate without one. See `CLAUDE.md` rule 8. Voilà
-   captures carry clean sizes, which helps.
-3. **Images.** Still hotlinked from retailer CDNs through the proxy, which is
-   the sharpest legal exposure in the product. Plan: **Open Food Facts**
-   (barcode-keyed, openly licensed — every product already has a real UPC) for
-   national brands, own photography for private label. Also clears the six
-   deferred `next/image` warnings.
-4. **Production follow-up.** The catalogue is live; what remains is keeping it
-   fed. The Inngest crons write to whatever `DATABASE_URL` the deployment has,
-   so confirm Vercel carries `PC_EXPRESS_API_KEY` and that `SCRAPERS_ENABLED`
-   is a working kill switch there before relying on scheduled refreshes.
-   Prod currently has no `price_history` at all — it was deleted with the
-   fabricated products — so sparkline/history UI has nothing to draw until a
-   few cycles have run.
-5. **Browse/search by equivalence group.** Groups only surface on the product
-   page; the browse page still lists individual SKUs.
-6. **Crowdsourcing / receipt scanning.** The admin import path is deliberately
-   the same code a contributor flow would use. Needs moderation first.
+1. **The sorting agent, properly.** Capture-creates-products is built and
+   human-gated. The owner's larger idea — search something broad, let an agent
+   sort everything into sections unattended — is the right direction and is now
+   most of the way there. What is missing is confidence in dedup: creation is
+   safe because a bad creation is untidy, whereas a bad *match* writes a wrong
+   price.
+2. **Cheese, and group granularity generally.** 30 groups for 64 cheeses is too
+   fine to compare. A pass that merges over-specific groups would help several
+   aisles.
+3. **Matcher: brand mismatch.** The matcher proposes cross-brand pairs because
+   coverage counts a brand as one token among four, so "Newfoundland Eggs Large
+   White" scores exactly at threshold against a Compliments carton. Tightening
+   on brand would cut review noise — but a false reject now mints a duplicate
+   product, so it needs a fixture and care. The verifier catches these today.
+4. **Images.** Retailer photography, now including Walmart's and Sobeys', on a
+   public site. `DATA-SOURCING.md` §3.1 records this as a knowing decision with
+   a stated expiry. Replace with Open Food Facts by barcode (every product has a
+   real UPC) plus own photography for private label.
+5. **No Frills** via PC Express — needs its store id discovering.
+6. **`price_history` is empty on production.** It was deleted with the
+   fabricated seed products, so any sparkline or trend UI has nothing to draw
+   until several scrape cycles have run.
+7. **Scheduled scrapes.** Inngest crons write to whatever `DATABASE_URL` the
+   deployment has. Confirm Vercel carries `PC_EXPRESS_API_KEY` and that
+   `SCRAPERS_ENABLED` works as a kill switch there.
 
 ---
 
