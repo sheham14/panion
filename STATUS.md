@@ -22,14 +22,14 @@ Panion compares grocery prices in St. John's, NL. Two comparison axes:
 ### Data, as of the last run
 
 ```
-catalogue                : 250 products
-Loblaw-exclusive brands  :  71  (No Name / PC — cannot exist off-Loblaw)
-addressable elsewhere    : 179
+catalogue                : 260 products
+Loblaw-exclusive brands  :  69  (No Name / PC — cannot exist off-Loblaw)
+addressable elsewhere    : 191
 comparable at 2+ stores  :  56
 
-Dominion - Stavanger Dr    250  (100% of catalogue)
-Sobeys - Mount Pearl        49  ( 27% of addressable)
-Walmart Supercentre         12  (  7% of addressable)
+Dominion - Stavanger Dr    260  (100% of catalogue)
+Sobeys - Mount Pearl        49  ( 26% of addressable)
+Walmart Supercentre         12  (  6% of addressable)
 No Frills                    3
 ```
 
@@ -60,7 +60,7 @@ cross-store spreads (the bad-match detector).
 
 ### Verification state
 
-**127 tests passing, 0 lint errors, `tsc` clean.**
+**140 tests passing, 0 lint errors, `tsc` clean, `npm run build` clean.**
 Everything pushed to `master`.
 
 ---
@@ -95,6 +95,15 @@ Three operational facts that will bite anyone who forgets them:
 ---
 ## 3. What was built (most recent work first)
 
+- **Capture auto-submit + worklist.** The bookmarklet posts captures straight
+  into a review queue (`CaptureBatch`), and `/admin/import` shows a per-store
+  worklist ranked by products the store has no price for, with one-click search
+  links. Authentication is a `CaptureToken` bearer secret in the request body,
+  not a cookie: NextAuth's SameSite cookie is withheld on a cross-site POST
+  from walmart.ca, and carrying the secret in the body means
+  `/api/capture/submit` takes no credentials at all — so answering other origins
+  adds no CSRF surface. The token grants **enqueue only**, never read or write,
+  and is revoked by generating another.
 - **Browser capture, verified live against both Walmart and Voilà.** What the
   first real runs taught, all of it now pinned by fixtures in
   `tests/unit/parse-capture.test.ts`:
@@ -140,15 +149,23 @@ Capture works and needs no further engineering to use:
    password login, and `admin@sentinel.ca` is a seeded row nobody can
    authenticate as. Signing in creates your `User` row.
 2. `npm run role -- grant <your-email> moderator`
-3. Go to `/admin/import`, drag **Capture → Panion** to the bookmarks bar.
-   **Re-drag it after any change to `bookmarklet.ts`** — the old bookmark keeps
-   the old code.
-4. Search a category on walmart.ca or voila.ca, click the bookmarklet, return
-   and paste.
+3. Go to `/admin/import`, click **Generate** under "Auto-submit key", then drag
+   **Capture → Panion** to the bookmarks bar. The key is baked into the button
+   at that moment and is never shown again.
+   **Re-drag after any change to `bookmarklet.ts` or any new key** — the old
+   bookmark keeps the old code and the old key.
+4. Open the worklist on that page, click a search term, click the bookmarklet.
+   The capture posts straight into the review queue; no copying, no pasting.
+   Without a key — or if Panion is unreachable — it falls back to the clipboard
+   and the paste box still works.
 
-The preview writes nothing until confirmed. Rows whose price moves ≥1.8× against
-the price already held are flagged and **start unticked** — a nuggets-class
-mismatch has to be opted into.
+**Auto-submit deliberately does not write prices.** A queued capture still has
+to be reviewed by a signed-in moderator, because with no barcode every match is
+name-and-size — the path that priced nuggets as breasts and collapsed four
+Dempster's loaves onto one row. Rows whose price moves ≥1.8× against the price
+already held are flagged and **start unticked**; rows that collide with a
+product another row already claimed are shown expanded in warning colour,
+because that is evidence the surviving match is wrong.
 
 **A capture that resolves few rows is usually correct, not broken.** The first
 Walmart run resolved 10 of 41: the rest were oat/soy/coconut milk and lactose-free
@@ -171,7 +188,7 @@ to fix the extractor directly, and that is how Voilà was onboarded.
    179 addressable).
 2. **Sobeys coverage: 27% → higher.** The gap is name-matching against Loblaw's
    phrasing (`2% Milk` vs `2% Milk Partly Skim`). Tune with a fixture per
-   change; never loosen a gate without one. See `CLAUDE.md` rule 7. Voilà
+   change; never loosen a gate without one. See `CLAUDE.md` rule 8. Voilà
    captures carry clean sizes, which helps.
 3. **Images.** Still hotlinked from retailer CDNs through the proxy, which is
    the sharpest legal exposure in the product. Plan: **Open Food Facts**

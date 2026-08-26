@@ -80,7 +80,24 @@ allowlist problem. Restart the dev server after any build.
 
 ---
 
-## 4. The image proxy allowlist must move with the adapters
+## 4. A new Prisma model needs a dev server restart, not a hot reload
+
+**Symptom.** `Cannot read properties of undefined (reading 'findFirst')` on
+`prisma.newModel`, while `tsc` and `npm run build` are both clean.
+
+`src/lib/prisma` caches the client on `globalThis` in development, so hot
+reloads don't open a new connection pool per edit. Next re-evaluates the
+module on reload but **does not clear that global**, so the process keeps the
+client instance it built before `prisma generate` ran — one with no delegate
+for the new model. The generated files on disk are already correct, which is
+exactly why the type-checker and the build see nothing wrong.
+
+Stop the dev server and start it again. Hot reload cannot fix this; the Node
+process has to exit.
+
+---
+
+## 5. The image proxy allowlist must move with the adapters
 
 `src/app/api/products/[id]/image/route.ts` holds `ALLOWED_IMAGE_HOSTS`. Adding
 an adapter without adding its CDN silently 404s **every** image it imports.
@@ -91,7 +108,7 @@ it — `assets.shop.loblaws.ca` was guessed when PC Express actually serves
 
 ---
 
-## 5. A 200 for the wrong region is worse than an error
+## 6. A 200 for the wrong region is worse than an error
 
 Voilà scopes prices to the **session**, not to a query parameter — `regionId` is
 silently ignored. An expired `VOILA_SESSION_COOKIE` does not fail; it returns a
@@ -104,7 +121,7 @@ assertion. Silent success is the failure mode to design against.
 
 ---
 
-## 6. Check `robots.txt` before building an adapter, and record it
+## 7. Check `robots.txt` before building an adapter, and record it
 
 See `DATA-SOURCING.md` (gitignored) for the full source table and the standing
 decision. Short version: PC Express and Voilà disallow the paths in use, Walmart
@@ -116,7 +133,7 @@ active bot wall; that is a categorically worse act than ignoring `robots.txt`.
 
 ---
 
-## 7. Matcher rules are tightened, never loosened, and always with a fixture
+## 8. Matcher rules are tightened, never loosened, and always with a fixture
 
 Every gate in `src/lib/pricing/match.ts` exists because of a specific real
 mismatch, and each has a test naming it. When adding an exclusive-attribute
@@ -129,7 +146,7 @@ see rule 1 for how to do it without destroying the catalogue.
 
 ---
 
-## 8. Read a retailer's page, don't assume its shape
+## 9. Read a retailer's page, don't assume its shape
 
 Everything about browser capture was wrong on the first guess, and each
 correction came from a live diagnostic rather than from reasoning:
@@ -156,7 +173,7 @@ link's href is set imperatively via a ref — do not "simplify" it back.
 
 ---
 
-## 9. Windows Vitest flake
+## 10. Windows Vitest flake
 
 Runs intermittently fail with `Timeout waiting for worker to respond` under
 load. It is not a test failure. Rerun with:
@@ -167,7 +184,7 @@ npx vitest run --pool=threads --no-file-parallelism
 
 ---
 
-## 10. There is no password login
+## 11. There is no password login
 
 Auth is **Google OAuth** plus an email magic link. `admin@sentinel.ca` and
 `test@sentinel.ca` are seeded rows that **nobody can authenticate as** — no

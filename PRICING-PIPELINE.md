@@ -324,7 +324,7 @@ Production scraping runs via Inngest/Vercel and is unaffected.
 5. **New — barcode-less sources.** Neither Voilà nor Walmart publishes a UPC,
    so both depend entirely on name-and-size matching. Every gate in `match.ts`
    therefore carries more weight than originally assumed; see `CLAUDE.md`
-   rule 7 before touching any of them.
+   rule 8 before touching any of them.
 
 ---
 

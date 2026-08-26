@@ -394,7 +394,7 @@ in `ingest.ts`, so adding a store means adding one adapter and nothing else.
 |---|---|
 | `types.ts` | `PriceObservation`, `PRICE_SOURCES` (the enforcement point for the String `source` column), validation bounds (`MIN_PRICE`, `MAX_PRICE`, the 5× swing guard). |
 | `ingest.ts` | **The single writer.** Validates, appends to `PriceHistory` (append-only truth), re-derives `StoreProduct.currentPrice` by precedence. `shouldReplaceCurrent()` holds the rule that a live sale is not displaced by a newer regular price. `expireFinishedSales()` reverts expired sales. |
-| `match.ts` | Conservative product matcher. Barcode first, name-and-size fallback. Every gate exists because of a specific real mismatch — coverage thresholds, `EXCLUSIVE_ATTRIBUTES`, `VARIANT_MARKERS`, percentage conflicts, multi-product listings, the size guard. See `CLAUDE.md` rule 7 before touching. |
+| `match.ts` | Conservative product matcher. Barcode first, name-and-size fallback. Every gate exists because of a specific real mismatch — coverage thresholds, `EXCLUSIVE_ATTRIBUTES`, `VARIANT_MARKERS`, percentage conflicts, multi-product listings, the size guard. See `CLAUDE.md` rule 8 before touching. |
 | `adapters/pcexpress.ts` | Dominion / No Frills. Regular prices **with UPCs** — the only source that can establish product identity. |
 | `adapters/voila.ts` | Sobeys. Regular prices, unit price, category path. **No barcodes.** Region comes from the session cookie; `looksRegionScoped()` guards against a silently de-scoped session. |
 | `adapters/flipp.ts` | Flyer/sale prices across every chain at once. Sale-only by construction (`isSale: true` is hardcoded). |
@@ -429,7 +429,7 @@ themselves carry no such asterisk. See `DATA-SOURCING.md`.
 | `POST /api/capture/import` | Parses a raw capture, then previews (`dryRun`) or writes. |
 | `POST /api/admin/observations` | Programmatic bulk entry — barcode-or-name, same core. |
 | `GET /api/products/[id]/alternatives` | Cross-brand comparison within an equivalence group, ranked by unit price. |
-| `GET /api/products/[id]/image` | Image proxy. Takes a **product id, never a URL** — no SSRF surface. Its allowlist must move with the adapters (`CLAUDE.md` rule 4). |
+| `GET /api/products/[id]/image` | Image proxy. Takes a **product id, never a URL** — no SSRF surface. Its allowlist must move with the adapters (`CLAUDE.md` rule 5). |
 
 ---
 
