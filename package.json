@@ -20,6 +20,7 @@
     "snapshot:save": "tsx scripts/snapshot.ts save",
     "snapshot:restore": "tsx scripts/snapshot.ts restore",
     "coverage": "tsx scripts/coverage.ts",
+    "images": "tsx scripts/image-coverage.ts",
     "prices:clean": "tsx scripts/clear-bad-prices.ts",
     "role": "tsx scripts/grant-role.ts"
   },

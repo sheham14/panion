@@ -12,6 +12,7 @@ import {
 import PantryEditSheet from "@/components/pantry/PantryEditSheet";
 import AddToListSheet from "@/components/search/AddToListSheet";
 import type { SerializedPantryItem } from "@/app/(main)/pantry/page";
+import { productImageSrc } from "@/lib/product-image";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -152,9 +153,20 @@ function GridItem({
         </button>
       )}
 
-      {/* Emoji area */}
-      <div className="h-[80px] bg-[#f7f7f7] dark:bg-[#242b2e] flex items-center justify-center text-[32px]">
-        {categoryEmoji(item.category)}
+      {/* Product photo, or the category emoji when there is no product behind
+          the row — most typed-in pantry items have none. */}
+      <div className="h-[80px] bg-[#f7f7f7] dark:bg-[#242b2e] flex items-center justify-center text-[32px] overflow-hidden">
+        {productImageSrc(item.productId ?? "", item.imageUrl) ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={productImageSrc(item.productId!, item.imageUrl)!}
+            alt=""
+            loading="lazy"
+            className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal"
+          />
+        ) : (
+          categoryEmoji(item.category)
+        )}
       </div>
 
       {/* Info */}
@@ -234,8 +246,18 @@ function ListItem({
         </div>
       )}
 
-      <div className="text-[22px] flex-shrink-0">
-        {categoryEmoji(item.category)}
+      <div className="w-8 h-8 flex items-center justify-center text-[22px] flex-shrink-0 overflow-hidden rounded-[6px]">
+        {productImageSrc(item.productId ?? "", item.imageUrl) ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={productImageSrc(item.productId!, item.imageUrl)!}
+            alt=""
+            loading="lazy"
+            className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal"
+          />
+        ) : (
+          categoryEmoji(item.category)
+        )}
       </div>
 
       <div className="flex-1 min-w-0">

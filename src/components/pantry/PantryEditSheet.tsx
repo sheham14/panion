@@ -189,6 +189,10 @@ export default function PantryEditSheet({ item, onClose, onSaved }: Props) {
         quantity: payload.quantity,
         unit: payload.unit,
         productId: payload.productId,
+        // The edit sheet never changes which product a row points at, so the
+        // photo the tile was already showing is still the right one. Re-reading
+        // it from the server would cost a round-trip to learn nothing.
+        imageUrl: item?.imageUrl ?? null,
         expiresAt: payload.expiresAt,
         updatedAt: new Date().toISOString(),
         addedFrom: item?.addedFrom ?? "manual",

@@ -14,6 +14,13 @@ export type SerializedPantryItem = {
   quantity: number | null;
   unit: string | null;
   productId: string | null;
+  /**
+   * Whether the linked product has photography. The tile renders it through
+   * `/api/products/[id]/image`, so only the flag travels, not the retailer URL
+   * — see `productImageSrc`. Null for a typed-in item with no product, which
+   * is most of the pantry today; those keep the category emoji.
+   */
+  imageUrl: string | null;
   expiresAt: string | null;
   updatedAt: string;
   addedFrom: string;
@@ -23,6 +30,7 @@ async function PantryData({ userId }: { userId: string }) {
   const items = await prisma.pantryItem.findMany({
     where: { userId },
     orderBy: { updatedAt: "desc" },
+    include: { product: { select: { imageUrl: true } } },
   });
 
   const serialized: SerializedPantryItem[] = items.map((item) => ({
@@ -33,6 +41,7 @@ async function PantryData({ userId }: { userId: string }) {
     quantity: item.quantity ? Number(item.quantity) : null,
     unit: item.unit ?? null,
     productId: item.productId ?? null,
+    imageUrl: item.product?.imageUrl ?? null,
     expiresAt: item.expiresAt ? item.expiresAt.toISOString() : null,
     updatedAt: item.updatedAt.toISOString(),
     addedFrom: item.addedFrom,

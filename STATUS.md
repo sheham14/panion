@@ -57,7 +57,7 @@ cross-store spreads (the bad-match detector).
 
 ### Verification state
 
-**195 tests passing, 0 lint errors, `tsc` clean, `npm run build` clean.**
+**199 tests passing, 0 lint errors, `tsc` clean, `npm run build` clean.**
 Everything pushed to `master`.
 
 ---
@@ -92,6 +92,20 @@ Three operational facts that will bite anyone who forgets them:
 ---
 ## 3. What was built (most recent work first)
 
+- **The home summary ranks on coverage too.** `getWatchlistSummary()` was the
+  last place summing into a bare `Record<chain, number>` and picking the
+  smallest, so the store missing the most watched products won. It now goes
+  through `computeListPricing()`, and each store carries `covered`/`missing`
+  beside its total. It was the quiet one: `bestStore` is returned by
+  `/api/watchlist/summary` but never rendered, so nothing on screen looked
+  wrong — the savings banner in `PLAN.md` would have shipped on top of it.
+- **Real product photography on home and pantry tiles.** Both now render the
+  linked product's image through `/api/products/[id]/image` and fall back to
+  the category emoji only when there is no product behind the row. The pantry
+  page was not fetching the product at all, so it could never have shown one.
+  `npm run images` reports how much of the catalogue has photography and which
+  hosts it points at (787 of 791 on production, across the three allowlisted
+  CDNs).
 - **The list total says what it leaves out** (`src/lib/list-pricing.ts`).
   Pricing a list across stores used to return `Record<chain, number>`, and a
   bare number has nowhere to record an exclusion, so anything a store could not
@@ -242,45 +256,51 @@ the extractor directly, and that is how Voilà was onboarded.
 
 ## 5. What is left, after the demo
 
-1. **The home page still ranks stores the way the list page used to.**
-   `getWatchlistSummary()` in `src/lib/watchlist-summary.ts` sums
-   `storeTotals[chain] += price` and then picks `bestStore` as the lowest of
-   them (`storesWithPrices.reduce(...)`, ~line 84) with no coverage check. It
-   is the same defect §3 fixed on lists: the store missing the most watched
-   products wins the banner. It already tracks `prices[chain] = null` for a
-   carried-but-unpriced row, so it is part-way there — what it lacks is a count
-   of what each store could not price, and a refusal to rank on unequal
-   baskets. `list-pricing.ts` is the shape to copy.
+1. **Guest mode is the only surface still showing an emoji instead of a photo.**
+   Signed-in home and pantry tiles render real retailer photography through
+   `/api/products/[id]/image` (verified end to end — the proxy returns an
+   800×800 JPEG). Guest mode cannot: its fixture products
+   (`prod_milk_natrel`, …) were deleted from production with the rest of the
+   fabricated seed, so the proxy has no row to serve, and `img-src` in
+   `next.config.mjs` is `'self'`, so a retailer URL cannot be used directly.
+   The two ways out are to point guest mode at real catalogue rows at render
+   time (one query, but guest mode is deliberately DB-free today and the
+   products would no longer be curated), or to leave the emoji. **Decide
+   before demoing guest mode.**
 2. **Linking a typed-in list item to a catalogue product.** The list's
    "not counted" bucket can offer *Add a price* but not *link a product*:
    `patchSchema` in `src/app/api/lists/[id]/items/route.ts` takes no
    `productId`. Adding it needs the route to verify the product exists and to
    return the item with `product.storeProducts` included, plus a search field
    in `EditItemSheet`. That is the real fix for an unlinked item; a custom
-   price is the workaround.
-3. **The sorting agent, properly.** Capture-creates-products is built and
+   price is the workaround. **The pantry already has this** — `PantryEditSheet`
+   searches `/api/products` and links, which is what makes its photos appear.
+3. **`/api/lists/[id]/recommend` still has its own coverage logic.** It ranks
+   on coverage first (audit M3) rather than on a shared basket, so it and
+   `computeListPricing()` can disagree about which store is best. Converge it.
+4. **The sorting agent, properly.** Capture-creates-products is built and
    human-gated. The owner's larger idea — search something broad, let an agent
    sort everything into sections unattended — is the right direction and is now
    most of the way there. What is missing is confidence in dedup: creation is
    safe because a bad creation is untidy, whereas a bad *match* writes a wrong
    price.
-4. **Cheese, and group granularity generally.** 30 groups for 64 cheeses is too
+5. **Cheese, and group granularity generally.** 30 groups for 64 cheeses is too
    fine to compare. A pass that merges over-specific groups would help several
    aisles.
-5. **Matcher: brand mismatch.** The matcher proposes cross-brand pairs because
+6. **Matcher: brand mismatch.** The matcher proposes cross-brand pairs because
    coverage counts a brand as one token among four, so "Newfoundland Eggs Large
    White" scores exactly at threshold against a Compliments carton. Tightening
    on brand would cut review noise — but a false reject now mints a duplicate
    product, so it needs a fixture and care. The verifier catches these today.
-6. **Images.** Retailer photography, now including Walmart's and Sobeys', on a
+7. **Images.** Retailer photography, now including Walmart's and Sobeys', on a
    public site. `DATA-SOURCING.md` §3.1 records this as a knowing decision with
    a stated expiry. Replace with Open Food Facts by barcode (every product has a
    real UPC) plus own photography for private label.
-7. **No Frills** via PC Express — needs its store id discovering.
-8. **`price_history` is empty on production.** It was deleted with the
+8. **No Frills** via PC Express — needs its store id discovering.
+9. **`price_history` is empty on production.** It was deleted with the
    fabricated seed products, so any sparkline or trend UI has nothing to draw
    until several scrape cycles have run.
-9. **Scheduled scrapes.** Inngest crons write to whatever `DATABASE_URL` the
+10. **Scheduled scrapes.** Inngest crons write to whatever `DATABASE_URL` the
    deployment has. Confirm Vercel carries `PC_EXPRESS_API_KEY` and that
    `SCRAPERS_ENABLED` works as a kill switch there.
 
@@ -291,6 +311,7 @@ the extractor directly, and that is how Voilà was onboarded.
 ```
 npm run dev                 # never run `npm run build` while this is live
 npm run coverage            # coverage + bad-match detector
+npm run images              # product-photo coverage; add -- --production
 npm run role -- list        # who has which role
 npm run scrape:dominion     # PC Express  (needs PC_EXPRESS_API_KEY)
 npm run scrape:sobeys       # Voilà       (needs VOILA_SESSION_COOKIE)

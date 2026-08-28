@@ -241,9 +241,17 @@ looked like it worked, and looked best exactly where the data was thinnest.
   testable because it is not inside a `"use client"` file; the version that
   shipped the bug was not.
 
-**Still outstanding.** `getWatchlistSummary()` in `src/lib/watchlist-summary.ts`
-has the same defect on the home page — `bestStore` is the lowest raw total with
-no coverage check. Copy the shape of `list-pricing.ts` when fixing it.
+**Where it had already been solved, and where it had not.**
+`/api/lists/[id]/recommend` ranks on coverage first and collects `unmatchedItems`
+at the top level — that was audit M3, for exactly this reason. The list page and
+`getWatchlistSummary()` both missed it. Both now go through
+`computeListPricing()`; the recommend route still has its own copy, which is the
+next thing to converge.
+
+`getWatchlistSummary()` was the quiet one: its `bestStore` was returned by
+`/api/watchlist/summary` but never rendered, so nothing on screen ever looked
+wrong. A bad number that no one is currently reading is still a bad number —
+the savings banner in `PLAN.md` would have shipped straight on top of it.
 
 Related: rule 6. Silent success is the failure mode to design against, whether
 it arrives as a 200 for the wrong region or a subtotal for the wrong basket.
