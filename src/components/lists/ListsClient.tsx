@@ -1,26 +1,21 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
-import { Plus, Check, Trash2, Pencil } from "lucide-react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { Plus, Check, Trash2, Pencil, ChevronDown } from "lucide-react";
 import EditItemSheet from "@/components/lists/EditItemSheet";
 import ListDropdown from "@/components/lists/ListDropdown";
 import ListOptionsMenu from "@/components/lists/ListOptionsMenu";
 import PantryFromListSheet from "@/components/pantry/PantryFromListSheet";
 import { calculateEffectivePrice } from "@/lib/unit-convert";
 import { getStoreMeta } from "@/lib/store-meta";
+import {
+  computeListPricing,
+  priceItemAt,
+  cheapestElsewhere,
+  type StoreBasket,
+} from "@/lib/list-pricing";
 
 // ── Types ──────────────────────────────────────
-
-const STORE_META: Record<
-  string,
-  { color: string; bg: string; letter: string }
-> = {
-  walmart: { color: "#0071ce", bg: "#0071ce18", letter: "W" },
-  loblaws: { color: "#c8102e", bg: "#c8102e18", letter: "L" },
-  metro: { color: "#e30000", bg: "#e3000018", letter: "M" },
-  sobeys: { color: "#d62b2b", bg: "#d62b2b18", letter: "S" },
-  dollarama: { color: "#00853e", bg: "#00853e18", letter: "D" },
-};
 
 type StoreProduct = {
   id: string;
@@ -121,44 +116,13 @@ function getEffectivePriceRange(
   return { min: Math.min(...prices), max: Math.max(...prices) };
 }
 
-function getStoreTotals(
-  items: ListItem[],
-  preferredChains: string[],
-): Record<string, number> {
-  const totals: Record<string, number> = {};
-  for (const item of items) {
-    if (item.isChecked) continue;
-    const qty = Number(item.quantity ?? 1);
-    const unit = item.unit ?? "each";
-
-    // Plain text item with custom price — add to all preferred stores equally
-    if (!item.product && item.customPrice !== null) {
-      for (const chain of preferredChains) {
-        totals[chain] = (totals[chain] ?? 0) + item.customPrice * qty;
-      }
-      continue;
-    }
-
-    if (!item.product) continue;
-
-    for (const sp of item.product.storeProducts) {
-      const chain = sp.store?.chain?.toLowerCase();
-      if (!chain || !preferredChains.includes(chain)) continue;
-      if (sp.currentPrice === null) continue;
-      const effective = calculateEffectivePrice(
-        Number(sp.currentPrice),
-        item.product.unitQuantity,
-        item.product.unitMeasure,
-        item.product.unitSize,
-        qty,
-        unit,
-      );
-      if (effective !== null) {
-        totals[chain] = (totals[chain] ?? 0) + effective;
-      }
-    }
-  }
-  return totals;
+/**
+ * Chain keys are lowercase; the UI wants them capitalised. Per word, to match
+ * the `capitalize` class used on the cards — otherwise "no frills" renders as
+ * "No Frills" in one place and "No frills" in another.
+ */
+function chainLabel(chain: string): string {
+  return chain.replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 const LAST_LIST_KEY = "sentinel_last_list_id";
@@ -191,24 +155,20 @@ function ListItemRow({
     item.customPrice,
   );
 
-  const filteredSp =
-    activeChain && item.product
-      ? item.product.storeProducts.find(
-          (sp) => sp.store.chain.toLowerCase() === activeChain.toLowerCase(),
-        )
-      : null;
-
-  const filteredPrice =
-    filteredSp?.currentPrice !== null && filteredSp?.currentPrice !== undefined
-      ? calculateEffectivePrice(
-          Number(filteredSp.currentPrice),
-          item.product!.unitQuantity,
-          item.product!.unitMeasure,
-          item.product!.unitSize,
-          qty,
-          unit,
-        )
-      : null;
+  // With a store selected, the row answers for THAT store. It used to fall
+  // back to the all-store range whenever the selected store had no price,
+  // which is the row-level version of the lie the subtotal told: a number on
+  // screen that belongs to a shop you are not looking at.
+  const priceHere = activeChain ? priceItemAt(item, activeChain) : null;
+  const unpricedHere =
+    !item.isChecked &&
+    activeChain !== null &&
+    item.product !== null &&
+    priceHere === null;
+  const elsewhere =
+    unpricedHere && activeChain ? cheapestElsewhere(item, activeChain) : null;
+  const isUnlinked =
+    !item.isChecked && item.product === null && item.customPrice === null;
 
   function onTouchStart(e: React.TouchEvent) {
     startX.current = e.touches[0].clientX;
@@ -294,21 +254,43 @@ function ListItemRow({
 
           {/* Price */}
           <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-            {activeChain && filteredPrice !== null ? (
+            {priceHere !== null ? (
               <span className="text-[12px] font-medium text-[#00b89e]">
-                ${filteredPrice.toFixed(2)}
+                ${priceHere.toFixed(2)}
               </span>
+            ) : unpricedHere ? (
+              <>
+                <span className="text-[11px] font-medium text-[#b45309] dark:text-[#d9a441]">
+                  No price at {chainLabel(activeChain!)}
+                </span>
+                {elsewhere && (
+                  <span className="text-[11px] text-[#aaa]">
+                    ${elsewhere.price.toFixed(2)} at{" "}
+                    {chainLabel(elsewhere.chain)}
+                  </span>
+                )}
+              </>
             ) : priceRange ? (
               <span className="text-[12px] font-medium text-[#00b89e]">
                 ${priceRange.min.toFixed(2)}
                 {priceRange.min !== priceRange.max &&
                   ` – $${priceRange.max.toFixed(2)}`}
                 {!item.product && (
-                  <span className="text-[10px] text-[#bbb] ml-1">custom</span>
+                  <span className="text-[10px] text-[#bbb] ml-1">your price</span>
                 )}
               </span>
+            ) : isUnlinked ? (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(item);
+                }}
+                className="text-[11px] font-medium text-[#b45309] dark:text-[#d9a441] underline decoration-dotted underline-offset-2"
+              >
+                Not counted · add a price
+              </button>
             ) : (
-              <span className="text-[11px] text-[#ccc]">Price unavailable</span>
+              <span className="text-[11px] text-[#ccc]">No price yet</span>
             )}
           </div>
         </div>
@@ -382,7 +364,11 @@ export default function ListsClient({
   const [showPantrySheet, setShowPantrySheet] = useState(false);
   const [items, setItems] = useState<ListItem[]>(initialList?.items ?? []);
   const filteredPreferredStores = preferredStores;
+  // Always lowercase. The filter pills used to set the raw `Store.chain` while
+  // the total cards set a lowercased one, so picking a store at the top failed
+  // to highlight its card at the bottom.
   const [activeChain, setActiveChain] = useState<string | null>(null);
+  const [showExclusions, setShowExclusions] = useState(false);
   const [editingItem, setEditingItem] = useState<ListItem | null>(null);
   const [addingItem, setAddingItem] = useState(false);
   const [newItemName, setNewItemName] = useState("");
@@ -411,13 +397,50 @@ export default function ListsClient({
 
   const unchecked = items.filter((i) => !i.isChecked);
   const checked = items.filter((i) => i.isChecked);
-  const preferredChains = preferredStores.map((s) => s.chain.toLowerCase());
-  const storeTotals = getStoreTotals(items, preferredChains);
+  const preferredChains = useMemo(
+    () => preferredStores.map((s) => s.chain.toLowerCase()),
+    [preferredStores],
+  );
+  const pricing = useMemo(
+    () => computeListPricing(items, preferredChains),
+    [items, preferredChains],
+  );
+  const itemsById = useMemo(
+    () => new Map(items.map((i) => [i.id, i])),
+    [items],
+  );
 
-  const sortedTotals = Object.entries(storeTotals)
-    .filter(([, t]) => t > 0)
-    .sort((a, b) => a[1] - b[1]);
-  const activeTotal = activeChain ? storeTotals[activeChain] : null;
+  // The panel reports one store. An explicit pick wins; otherwise it is the
+  // top-ranked store — and either way the subtotal names it, because a total
+  // with no store attached is a number the user has no way to check.
+  const shownBasket: StoreBasket | null =
+    (activeChain
+      ? (pricing.baskets.find((b) => b.chain === activeChain) ?? null)
+      : null) ??
+    pricing.ranked[0] ??
+    null;
+
+  const shownMissing = shownBasket?.missing ?? [];
+  const excludedCount = shownMissing.length + pricing.unlinkedItemIds.length;
+
+  // The panel grows when a store is missing items and again when the
+  // breakdown is open, so the scroll padding and the FAB offset are measured
+  // rather than guessed. The guess used to be a hardcoded 220px.
+  const hasPanel = unchecked.length > 0;
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [panelHeight, setPanelHeight] = useState(160);
+  useEffect(() => {
+    const el = panelRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const update = () => {
+      const next = Math.round(el.getBoundingClientRect().height);
+      setPanelHeight((prev) => (next !== prev ? next : prev));
+    };
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasPanel]);
 
   // Save last viewed list. The id is hoisted so the dependency array can name
   // exactly what the effect reads — depending on `activeList?.id` while the
@@ -683,11 +706,12 @@ export default function ListsClient({
         <div className="flex gap-2 px-4 py-2.5 overflow-x-auto scrollbar-none flex-shrink-0">
           {filteredPreferredStores.map((store) => {
             const meta = getStoreMeta(store.chain);
-            const isActive = activeChain === store.chain;
+            const chain = store.chain.toLowerCase();
+            const isActive = activeChain === chain;
             return (
               <button
                 key={store.chain}
-                onClick={() => setActiveChain(isActive ? null : store.chain)}
+                onClick={() => setActiveChain(isActive ? null : chain)}
                 className={[
                   "flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-medium flex-shrink-0 transition-all",
                   isActive
@@ -709,7 +733,10 @@ export default function ListsClient({
       )}
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto pb-[220px]">
+      <div
+        className="flex-1 overflow-y-auto"
+        style={{ paddingBottom: hasPanel ? panelHeight + 24 : 96 }}
+      >
         {/* Active items */}
         {unchecked.map((item) => (
           <ListItemRow
@@ -925,64 +952,206 @@ export default function ListsClient({
         onClick={() => { setNewItemName(""); setAddingItem(true); }}
         className={[
           "fixed right-4 z-10 w-12 h-12 bg-[#00E5C3] rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-all",
-          unchecked.length > 0
-            ? "bottom-[calc(220px+env(safe-area-inset-bottom,0px))]"
-            : "bottom-above-nav",
+          hasPanel ? "" : "bottom-above-nav",
         ].join(" ")}
+        style={
+          hasPanel
+            ? {
+                bottom: `calc(${panelHeight + 59}px + env(safe-area-inset-bottom, 0px))`,
+              }
+            : undefined
+        }
         aria-label="Add item"
       >
         <Plus size={22} className="text-[#004d40]" strokeWidth={2.5} />
       </button>
 
       {/* Bottom panel — store totals */}
-      {unchecked.length > 0 && (
-        <div className="fixed bottom-[calc(47px+env(safe-area-inset-bottom,0px))] left-1/2 -translate-x-1/2 w-full max-w-md bg-white dark:bg-[#161b1e] border-t border-[#ebebeb] dark:border-[#2e3538] px-4 pt-3 pb-3 z-10">
-          {/* Store total cards */}
+      {hasPanel && (
+        <div
+          ref={panelRef}
+          className="fixed bottom-[calc(47px+env(safe-area-inset-bottom,0px))] left-1/2 -translate-x-1/2 w-full max-w-md bg-white dark:bg-[#161b1e] border-t border-[#ebebeb] dark:border-[#2e3538] px-4 pt-3 pb-3 z-10"
+        >
+          {/* With no stores picked there is nothing to total, and a $0.00 with
+              no explanation is the same failure as a total that hides its
+              exclusions. Say why instead. */}
+          {pricing.baskets.length === 0 && (
+            <p className="text-[12px] text-[#aaa] text-center py-1">
+              <a href="/profile-settings" className="text-[#00b89e] font-medium">
+                Choose your stores
+              </a>{" "}
+              to price this list.
+            </p>
+          )}
+
+          {/* Store total cards. Ranked on the shared basket, and every card
+              states its own coverage — a store is only cheaper than another if
+              it is pricing the same things. */}
           <div className="flex gap-2 overflow-x-auto scrollbar-none mb-3">
-            {Object.entries(storeTotals)
-              .filter(([, t]) => t > 0)
-              .sort((a, b) => a[1] - b[1])
-              .map(([chain, total], i) => {
-                const isBest = i === 0;
-                const isActive = chain === activeChain;
-                return (
-                  <button
-                    key={chain}
-                    onClick={() => setActiveChain(isActive ? null : chain)}
-                    className={[
-                      "flex-shrink-0 rounded-[10px] px-3 py-2 text-center border min-w-[70px] transition-all",
-                      isActive
+            {pricing.baskets.map((basket, i) => {
+              const isBest = i === 0 && pricing.ranked.length > 1;
+              const isActive = basket.chain === activeChain;
+              const empty = basket.covered.length === 0;
+              return (
+                <button
+                  key={basket.chain}
+                  onClick={() =>
+                    setActiveChain(isActive ? null : basket.chain)
+                  }
+                  className={[
+                    "flex-shrink-0 rounded-[10px] px-3 py-2 text-center border min-w-[78px] transition-all",
+                    empty
+                      ? "border-[#ebebeb] dark:border-[#2e3538] bg-transparent opacity-60"
+                      : isActive
                         ? "bg-[#f0fdf9] dark:bg-[#1a2e2a] border-[#b2f0e4] dark:border-[#1e4a3a]"
                         : isBest
                           ? "border-[#00E5C3] bg-[#f7f7f7] dark:bg-[#1e2528]"
                           : "border-[#ebebeb] dark:border-[#2e3538] bg-[#f7f7f7] dark:bg-[#1e2528]",
+                  ].join(" ")}
+                >
+                  <p className="text-[10px] text-[#888] dark:text-[#555] mb-0.5 capitalize">
+                    {basket.chain}
+                  </p>
+                  <p className="text-[13px] font-semibold text-[#111] dark:text-[#e0e0e0]">
+                    {empty ? "—" : `$${basket.total.toFixed(2)}`}
+                  </p>
+                  <p
+                    className={[
+                      "text-[9px] mt-0.5",
+                      basket.covered.length < pricing.itemCount
+                        ? "text-[#b45309] dark:text-[#d9a441]"
+                        : "text-[#aaa] dark:text-[#666]",
                     ].join(" ")}
                   >
-                    <p className="text-[10px] text-[#888] dark:text-[#555] mb-0.5 capitalize">
-                      {chain}
-                    </p>
-                    <p className="text-[13px] font-semibold text-[#111] dark:text-[#e0e0e0]">
-                      ${total.toFixed(2)}
-                    </p>
-                    {isBest && (
-                      <span className="text-[9px] bg-[#00E5C3] text-[#004d40] rounded px-1 py-px">
-                        Best
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
+                    {basket.covered.length} of {pricing.itemCount}
+                  </p>
+                  {isBest && (
+                    <span className="inline-block text-[9px] bg-[#00E5C3] text-[#004d40] rounded px-1 py-px mt-0.5">
+                      Best
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
 
-          {/* Subtotal */}
-          <div className="flex items-baseline justify-between mb-0">
+          {/* The breakdown of what the shown total leaves out. Rendered only
+              when something is actually excluded, so the caveat still means
+              something on the lists where it appears. */}
+          {showExclusions && excludedCount > 0 && (
+            <div className="max-h-[38vh] overflow-y-auto mb-3 rounded-[10px] bg-[#fffbf2] dark:bg-[#241f14] border border-[#f3e2c0] dark:border-[#3d3322] p-2.5">
+              {shownMissing.length > 0 && shownBasket && (
+                <>
+                  <p className="text-[9px] font-semibold uppercase tracking-wider text-[#b45309] dark:text-[#d9a441] mb-1.5">
+                    No price at {chainLabel(shownBasket.chain)}
+                  </p>
+                  {shownMissing.map((m) => {
+                    const listItem = itemsById.get(m.itemId);
+                    if (!listItem) return null;
+                    return (
+                      <div
+                        key={m.itemId}
+                        className="flex items-baseline justify-between gap-2 py-1"
+                      >
+                        <span className="text-[12px] text-[#333] dark:text-[#ccc] truncate">
+                          {listItem.name}
+                        </span>
+                        <span className="text-[11px] text-[#888] dark:text-[#777] flex-shrink-0">
+                          {m.elsewhere
+                            ? `$${m.elsewhere.price.toFixed(2)} at ${chainLabel(m.elsewhere.chain)}`
+                            : "No price yet"}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </>
+              )}
+
+              {pricing.unlinkedItemIds.length > 0 && (
+                <>
+                  <p
+                    className={[
+                      "text-[9px] font-semibold uppercase tracking-wider text-[#b45309] dark:text-[#d9a441] mb-1.5",
+                      shownMissing.length > 0 ? "mt-3" : "",
+                    ].join(" ")}
+                  >
+                    Not linked to a product
+                  </p>
+                  {pricing.unlinkedItemIds.map((id) => {
+                    const listItem = itemsById.get(id);
+                    if (!listItem) return null;
+                    return (
+                      <div
+                        key={id}
+                        className="flex items-baseline justify-between gap-2 py-1"
+                      >
+                        <span className="text-[12px] text-[#333] dark:text-[#ccc] truncate">
+                          {listItem.name}
+                        </span>
+                        <button
+                          onClick={() => setEditingItem(listItem)}
+                          className="text-[11px] font-medium text-[#00b89e] flex-shrink-0"
+                        >
+                          Add a price
+                        </button>
+                      </div>
+                    );
+                  })}
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Subtotal — names its store and counts only what it covers */}
+          <div className="flex items-baseline justify-between">
             <span className="text-[12px] text-[#aaa]">
-              Subtotal · {unchecked.length} items
+              {shownBasket ? (
+                <>
+                  <span className="capitalize">{shownBasket.chain}</span> ·{" "}
+                  {shownBasket.covered.length} of {pricing.itemCount} items
+                </>
+              ) : (
+                `Subtotal · ${pricing.itemCount} items`
+              )}
             </span>
             <span className="text-[20px] font-bold text-[#111] dark:text-[#e0e0e0]">
-              ${(activeTotal ?? sortedTotals[0]?.[1] ?? 0).toFixed(2)}
+              {shownBasket ? `$${shownBasket.total.toFixed(2)}` : "—"}
             </span>
           </div>
+
+          {excludedCount > 0 && (
+            <button
+              onClick={() => setShowExclusions((v) => !v)}
+              className="flex items-center gap-1 mt-1 text-[11px] font-medium text-[#b45309] dark:text-[#d9a441]"
+            >
+              <span>
+                {excludedCount} {excludedCount === 1 ? "item" : "items"} not in
+                this total
+              </span>
+              <ChevronDown
+                size={12}
+                className={showExclusions ? "rotate-180" : ""}
+                strokeWidth={2}
+              />
+            </button>
+          )}
+
+          {/* Laid out like the subtotal above it, because the two are meant to
+              be read against each other. The split covers more items than any
+              single store, so its total can be the larger number while still
+              being the better shop — which only reads correctly if both lines
+              state their own item count. */}
+          {pricing.cheapestSplit && (
+            <div className="flex items-baseline justify-between mt-1.5 pt-1.5 border-t border-[#f5f5f5] dark:border-[#232a2d]">
+              <span className="text-[11px] text-[#aaa]">
+                {pricing.cheapestSplit.chains.map(chainLabel).join(" + ")} ·{" "}
+                {pricing.cheapestSplit.itemCount} of {pricing.itemCount} items
+              </span>
+              <span className="text-[13px] font-semibold text-[#111] dark:text-[#e0e0e0]">
+                ${pricing.cheapestSplit.total.toFixed(2)}
+              </span>
+            </div>
+          )}
         </div>
       )}
 

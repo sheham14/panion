@@ -260,7 +260,7 @@ const LIST_ITEMS = [
     unitSize: "3lb bag",
     unitMeasure: "g",
     unitQuantity: 1360,
-    prices: [4.97, 5.79, 5.49, null] as [number | null, number | null, number | null, number | null],
+    prices: [4.97, null, 5.49, null] as [number | null, number | null, number | null, number | null],
   },
   {
     productId: "prod_pasta_barilla",
@@ -278,7 +278,7 @@ const LIST_ITEMS = [
     unitSize: "680ml",
     unitMeasure: "ml",
     unitQuantity: 680,
-    prices: [2.47, 2.99, 2.79, null] as [number | null, number | null, number | null, number | null],
+    prices: [2.47, 2.99, null, null] as [number | null, number | null, number | null, number | null],
   },
   {
     productId: "prod_chips_lays",
@@ -296,11 +296,35 @@ const LIST_ITEMS = [
     unitSize: "1.54L",
     unitMeasure: "L",
     unitQuantity: 1.54,
-    prices: [5.97, 6.99, 6.49, null] as [number | null, number | null, number | null, number | null],
+    prices: [5.97, 6.99, null, null] as [number | null, number | null, number | null, number | null],
   },
 ];
 
-export const GUEST_LIST = {
+/**
+ * A typed-in item with no product behind it. Every real list grows a few, and
+ * they are the reason the list total has a "not counted" bucket — so the guest
+ * preview carries one rather than showing a list where everything prices
+ * cleanly. Same reason a couple of the products above are unpriced at a store:
+ * Sobeys holds prices for 187 of 701 products, and a preview where all three
+ * stores stock everything sets an expectation the real data cannot meet.
+ */
+const UNLINKED_ITEM = {
+  id: "guest-item-unlinked",
+  listId: "guest-list-1",
+  productId: null,
+  name: "Birthday candles",
+  quantity: 1,
+  unit: null,
+  notes: null,
+  customPrice: null,
+  isChecked: false,
+  sortOrder: LIST_ITEMS.length,
+  createdAt: daysFromNow(-3),
+  updatedAt: daysFromNow(-1),
+  product: null,
+};
+
+const GUEST_LIST_BASE = {
   id: "guest-list-1",
   name: "Weekly Shop",
   userId: "guest",
@@ -335,8 +359,17 @@ export const GUEST_LIST = {
   })),
 };
 
+export const GUEST_LIST = {
+  ...GUEST_LIST_BASE,
+  items: [...GUEST_LIST_BASE.items, UNLINKED_ITEM],
+};
+
 export const GUEST_ALL_LISTS = [
-  { id: "guest-list-1", name: "Weekly Shop", itemCount: LIST_ITEMS.length },
+  {
+    id: "guest-list-1",
+    name: "Weekly Shop",
+    itemCount: GUEST_LIST.items.length,
+  },
 ];
 
 // ─── PANTRY (pantry page) ─────────────────────────────────────────────────────
