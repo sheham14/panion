@@ -14,9 +14,24 @@ This codebase doesn't chase coverage. The test suite is small and deliberate, fo
 | [tests/api/watchlist.test.ts](tests/api/watchlist.test.ts) | Watchlist upsert dedupes; DELETE only affects the caller's row |
 | [tests/api/pantry.test.ts](tests/api/pantry.test.ts) | Pantry mutations are scoped to the owner |
 | [tests/unit/unit-convert.test.ts](tests/unit/unit-convert.test.ts) | Pure unit-conversion logic (no DB) |
+| [tests/unit/unit-price.test.ts](tests/unit/unit-price.test.ts) | Unit pricing, multipack quantities, ranking, comparable basis |
+| [tests/unit/list-pricing.test.ts](tests/unit/list-pricing.test.ts) | A list total never ranks a store cheapest on a smaller basket, and every excluded item lands in a named bucket |
+| [tests/unit/pricing-match.test.ts](tests/unit/pricing-match.test.ts) | One case per real mismatch the matcher had to be tightened against (rule 8) |
+| [tests/unit/pricing-adapters.test.ts](tests/unit/pricing-adapters.test.ts) | PC Express response parsing and normalisation |
+| [tests/unit/parse-capture.test.ts](tests/unit/parse-capture.test.ts) | Browser-capture parsing, pinned to real Walmart and Voilà markup |
+| [tests/unit/verify-matches.test.ts](tests/unit/verify-matches.test.ts) | The model verifier — failure is never approval |
+| [tests/unit/capture-token.test.ts](tests/unit/capture-token.test.ts) | The bearer secret that lets the bookmarklet post cross-site |
+| [tests/unit/capture-source-store.test.ts](tests/unit/capture-source-store.test.ts) | A queued batch is pinned to the store its source implies |
+| [tests/unit/capture-worklist.test.ts](tests/unit/capture-worklist.test.ts) | The worklist is built from products the selected store is missing |
 | [tests/components/GuestBanner.test.tsx](tests/components/GuestBanner.test.tsx) | GuestBanner renders conditionally based on session state |
 
 S1–S4 reference the findings in [OPUS_AUDIT.md](OPUS_AUDIT.md). Each test corresponds to a real security concern that was identified and fixed.
+
+The security boundary is not the only thing worth a test. The pricing tests
+exist for a different reason: a wrong number is quiet. Nothing throws when a
+subtotal omits half a list or a misparsed size prices butter at $1090/100g, so
+those faults are only ever caught by an assertion that says what the number was
+supposed to mean.
 
 ## Stack
 

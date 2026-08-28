@@ -360,7 +360,8 @@ All routes return JSON. All protected routes call `getAuthenticatedUser()` first
 | `prisma/index.ts` | Exports the Prisma client singleton. Reuses the same instance across hot reloads in dev to avoid exhausting DB connections. |
 | `auth-utils.ts` | `getAuthenticatedUser()` — calls `auth()`, validates the session, and returns `{ user }` or a pre-built 401 `NextResponse`. Used at the top of every protected API route. |
 | `unit-convert.ts` | Unit conversion for list cost estimation. `TO_BASE` maps units to grams/ml. `calculateEffectivePrice()` normalizes prices to the same unit so you can compare "per 100g" across products. `getAllowedUnits()` returns compatible units based on product type (packaged vs bulk). |
-| `watchlist-summary.ts` | `getWatchlistSummary(userId)` — aggregates the user's watchlist across their preferred stores. Returns best price per item, total per store, and overall cheapest-store breakdown. Used by the home dashboard and the watchlist summary API. |
+| `list-pricing.ts` | `computeListPricing(items, preferredChains)` — prices a grocery list at each preferred store **and records what each one could not price**. Returns per-store `covered`/`missing` (each missing item carrying the cheapest price held elsewhere), `commonItemIds` (the basket every contributing store can price, which is what ranking runs on), `unlinkedItemIds` (typed-in items with no product and no custom price), and `cheapestSplit`. Also exports `priceItemAt()` and `cheapestElsewhere()`. Lifted out of `ListsClient` so it could be tested — see `tests/unit/list-pricing.test.ts`. |
+| `watchlist-summary.ts` | `getWatchlistSummary(userId)` — aggregates the user's watchlist across their preferred stores. Returns best price per item, total per store, and overall cheapest-store breakdown. Used by the home dashboard and the watchlist summary API. **Known defect:** `bestStore` is the lowest raw total with no coverage check, so the store missing the most watched products wins — the same fault `list-pricing.ts` exists to fix. See `STATUS.md` §5. |
 | `redis/index.ts` | Redis client setup (Upstash). Used for caching and rate limiting. |
 | `push.ts` | `sendPush(subscription, payload)` — server-side helper that signs and delivers a Web Push notification using `web-push` and VAPID keys. |
 | `guest-data.ts` | Mock data served to guest-mode users (watchlist, lists, pantry, recipes). Dates rebase on module load so the demo always looks current. |
@@ -459,4 +460,13 @@ Vitest + RTL + a dedicated Neon test branch. Real Prisma queries; Anthropic/Send
 | `api/watchlist.test.ts` | Upsert dedup; DELETE only removes the caller's row. |
 | `api/pantry.test.ts` | Pantry mutations are scoped to the owner. |
 | `unit/unit-convert.test.ts` | Pure unit-conversion logic (no DB). |
+| `unit/unit-price.test.ts` | `getUnitPrice()`, `parseQuantity()`, `rankByUnitPrice()`, `comparableBasis()`. |
+| `unit/list-pricing.test.ts` | A store is never ranked cheapest on a smaller basket; exclusions land in the right bucket; the guest preview keeps demonstrating both. |
+| `unit/pricing-match.test.ts` | `matchProduct()`, `parseSize()`, `sizesCompatible()`, `isMultiProductListing()` — one case per real mismatch (rule 8). |
+| `unit/pricing-adapters.test.ts` | PC Express response parsing and normalisation. |
+| `unit/parse-capture.test.ts` | Browser-capture parsing, pinned to real Walmart and Voilà fixtures. |
+| `unit/verify-matches.test.ts` | The model verifier: failure is never approval. |
+| `unit/capture-token.test.ts` | The bearer secret that lets the bookmarklet post from walmart.ca. |
+| `unit/capture-source-store.test.ts` | A queued batch is pinned to the store its source implies. |
+| `unit/capture-worklist.test.ts` | The per-store worklist is built from products that store is missing. |
 | `components/GuestBanner.test.tsx` | Conditional render based on session state (RTL example). |

@@ -202,3 +202,48 @@ npm run role -- grant <your-email> moderator
 No re-login is needed. `/admin/import` and `requireElevatedRole()` read the role
 from the database on every request rather than from the JWT, precisely so a
 stale token cannot retain privileges after a demotion.
+
+---
+
+## 12. An aggregate carries what it left out
+
+**Incident.** `getStoreTotals()` in `ListsClient` priced a grocery list at each
+store and returned `Record<chain, number>`. A bare number per chain has nowhere
+to record an exclusion, so every item a store could not price was skipped in
+silence — four `continue`s and an `if`, none of them observable by the caller.
+
+Three lies came out of that one missing field:
+
+- The cards sorted on the raw total and the badge went to index 0, so **the
+  store missing the most items was labelled "Best."** The ranking was inverted
+  by absence.
+- The subtotal was captioned `{unchecked.length} items` — the count of *every*
+  unchecked item — over a total that may have covered a third of them.
+- With a store selected, a row that store could not price fell back to the
+  all-store range, quoting a price from a shop the user was not looking at.
+
+None of it threw. A wrong number is quiet, which is why this survived: the page
+looked like it worked, and looked best exactly where the data was thinnest.
+
+**The rule.**
+
+- A function that sums over a filtered set returns the filtered-out items too,
+  not just the sum. If the return type has no room for them, that is the bug —
+  fix the type first, and the UI follows.
+- A total shown beside a count uses the count of what it **actually covered**.
+  Never the length of the input.
+- **Two aggregates are only comparable over the same set.** Rank on the
+  intersection, or do not rank. Where there is no shared set, say so rather
+  than sorting anyway.
+- A number on screen names the thing it belongs to. A total with no store
+  attached cannot be checked by the person reading it.
+- Put this logic in `src/lib/`, not in the component. `list-pricing.ts` is
+  testable because it is not inside a `"use client"` file; the version that
+  shipped the bug was not.
+
+**Still outstanding.** `getWatchlistSummary()` in `src/lib/watchlist-summary.ts`
+has the same defect on the home page — `bestStore` is the lowest raw total with
+no coverage check. Copy the shape of `list-pricing.ts` when fixing it.
+
+Related: rule 6. Silent success is the failure mode to design against, whether
+it arrives as a 200 for the wrong region or a subtotal for the wrong basket.

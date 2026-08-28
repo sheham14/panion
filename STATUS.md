@@ -1,6 +1,6 @@
-**Last updated: 2026-08-26.** Read this first, then `CLAUDE.md` for the rules.
+**Last updated: 2026-08-28.** Read this first, then `CLAUDE.md` for the rules.
 
-**DEMO: 2026-08-28**, a casual tech-community demo night — an audience of other
+**DEMO: Saturday 2026-08-29**, a casual tech-community demo night — an audience of other
 builders, driven live, on **production (panion.dev)**. Optimise for "works live,
 looks real", not for breadth.
 
@@ -57,7 +57,7 @@ cross-store spreads (the bad-match detector).
 
 ### Verification state
 
-**140 tests passing, 0 lint errors, `tsc` clean, `npm run build` clean.**
+**195 tests passing, 0 lint errors, `tsc` clean, `npm run build` clean.**
 Everything pushed to `master`.
 
 ---
@@ -92,6 +92,30 @@ Three operational facts that will bite anyone who forgets them:
 ---
 ## 3. What was built (most recent work first)
 
+- **The list total says what it leaves out** (`src/lib/list-pricing.ts`).
+  Pricing a list across stores used to return `Record<chain, number>`, and a
+  bare number has nowhere to record an exclusion, so anything a store could not
+  price was dropped in silence. The ranking was therefore **inverted by
+  absence** — the store missing the most items showed the smallest total and
+  was labelled "Best" — and the subtotal was captioned with the count of every
+  unchecked item regardless of how many it covered. Now each store carries its
+  `missing` items (with the cheapest price held elsewhere), ranking runs on the
+  basket every store can price, cards state their own coverage, the subtotal
+  names its store, and a breakdown groups what is excluded by reason. Wording
+  is deliberately weak: **"No price at Sobeys", never "Sobeys doesn't carry
+  it"** — Sobeys holds 187 of 701, so most absences are our gaps, not the
+  shelf's.
+- **Matcher: multipack sizes multiply out; `npm run prices:clean`.**
+  `parseSize()` had no multipack rule, so Voilà's correct `"22 x 18.636g"` for
+  a 410 g box read as 18.6 g. The unit price built on it was wrong by the size
+  of the pack — $37.51/100g for that cheese, $1090.70/100g for a butter tart.
+  `parseQuantity()` in `unit-price.ts` always handled multipacks; the damage
+  arrived through `unitQuantity`/`unitMeasure`, which `getUnitPrice` prefers
+  over re-reading the string.
+- **Search: the impossible-unit-price rule judges only the high side.** On a
+  two-member group the median *is* the outlier, so a real $1.09/100g was
+  dropped and a misparsed $37.51 kept. Sizes misread small, never large, so an
+  absurd figure is always on the high side.
 - **Cross-brand search (`/api/groups` + search page).** "What is the cheapest
   bread" now has a front door. Groups rank by unit price and appear above the
   flat product list as "Best value by type" cards. Unit prices more than 12×
@@ -172,7 +196,12 @@ Three operational facts that will bite anyone who forgets them:
    stores · up to 29% cheaper", expandable into the unit-price ranking. If a
    search looks thin or wrong, that is the bug to fix; nothing else matters more.
 2. **Avoid `cheese` live** unless its groups get filled first (see §1).
-3. Optional: a capture pass on `cheddar cheese` / `mozzarella` / `shredded
+3. **Open a real list on panion.dev before demoing it.** The store-coverage
+   work in §3 was verified against unit tests and the guest fixture, not
+   against a signed-in account on production. Real lists will have far more
+   gaps than the fixture's two, and the panel is the one screen whose whole
+   job is to show them honestly.
+4. Optional: a capture pass on `cheddar cheese` / `mozzarella` / `shredded
    cheese` at Walmart and Voilà to make cheese demoable.
 
 ### The capture loop, when more coverage is wanted
@@ -213,29 +242,45 @@ the extractor directly, and that is how Voilà was onboarded.
 
 ## 5. What is left, after the demo
 
-1. **The sorting agent, properly.** Capture-creates-products is built and
+1. **The home page still ranks stores the way the list page used to.**
+   `getWatchlistSummary()` in `src/lib/watchlist-summary.ts` sums
+   `storeTotals[chain] += price` and then picks `bestStore` as the lowest of
+   them (`storesWithPrices.reduce(...)`, ~line 84) with no coverage check. It
+   is the same defect §3 fixed on lists: the store missing the most watched
+   products wins the banner. It already tracks `prices[chain] = null` for a
+   carried-but-unpriced row, so it is part-way there — what it lacks is a count
+   of what each store could not price, and a refusal to rank on unequal
+   baskets. `list-pricing.ts` is the shape to copy.
+2. **Linking a typed-in list item to a catalogue product.** The list's
+   "not counted" bucket can offer *Add a price* but not *link a product*:
+   `patchSchema` in `src/app/api/lists/[id]/items/route.ts` takes no
+   `productId`. Adding it needs the route to verify the product exists and to
+   return the item with `product.storeProducts` included, plus a search field
+   in `EditItemSheet`. That is the real fix for an unlinked item; a custom
+   price is the workaround.
+3. **The sorting agent, properly.** Capture-creates-products is built and
    human-gated. The owner's larger idea — search something broad, let an agent
    sort everything into sections unattended — is the right direction and is now
    most of the way there. What is missing is confidence in dedup: creation is
    safe because a bad creation is untidy, whereas a bad *match* writes a wrong
    price.
-2. **Cheese, and group granularity generally.** 30 groups for 64 cheeses is too
+4. **Cheese, and group granularity generally.** 30 groups for 64 cheeses is too
    fine to compare. A pass that merges over-specific groups would help several
    aisles.
-3. **Matcher: brand mismatch.** The matcher proposes cross-brand pairs because
+5. **Matcher: brand mismatch.** The matcher proposes cross-brand pairs because
    coverage counts a brand as one token among four, so "Newfoundland Eggs Large
    White" scores exactly at threshold against a Compliments carton. Tightening
    on brand would cut review noise — but a false reject now mints a duplicate
    product, so it needs a fixture and care. The verifier catches these today.
-4. **Images.** Retailer photography, now including Walmart's and Sobeys', on a
+6. **Images.** Retailer photography, now including Walmart's and Sobeys', on a
    public site. `DATA-SOURCING.md` §3.1 records this as a knowing decision with
    a stated expiry. Replace with Open Food Facts by barcode (every product has a
    real UPC) plus own photography for private label.
-5. **No Frills** via PC Express — needs its store id discovering.
-6. **`price_history` is empty on production.** It was deleted with the
+7. **No Frills** via PC Express — needs its store id discovering.
+8. **`price_history` is empty on production.** It was deleted with the
    fabricated seed products, so any sparkline or trend UI has nothing to draw
    until several scrape cycles have run.
-7. **Scheduled scrapes.** Inngest crons write to whatever `DATABASE_URL` the
+9. **Scheduled scrapes.** Inngest crons write to whatever `DATABASE_URL` the
    deployment has. Confirm Vercel carries `PC_EXPRESS_API_KEY` and that
    `SCRAPERS_ENABLED` works as a kill switch there.
 
