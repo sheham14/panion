@@ -463,6 +463,8 @@ Vitest + RTL + a dedicated Neon test branch. Real Prisma queries; Anthropic/Send
 | `unit/unit-convert.test.ts` | Pure unit-conversion logic (no DB). |
 | `unit/unit-price.test.ts` | `getUnitPrice()`, `parseQuantity()`, `rankByUnitPrice()`, `comparableBasis()`. |
 | `unit/list-pricing.test.ts` | A store is never ranked cheapest on a smaller basket; exclusions land in the right bucket; the guest preview keeps demonstrating both. |
+| `api/watchlist-summary.test.ts` | The home summary ranks on the shared basket, so the store missing the most watched products never wins. |
+| `api/groups-watch.test.ts` | `/api/groups` reports what the signed-in user already watches, so a group row can offer a one-tap Watch. Mocks `auth()` directly — `tests/setup.ts` mocks `getAuthenticatedUser`, which this route does not use. |
 | `unit/pricing-match.test.ts` | `matchProduct()`, `parseSize()`, `sizesCompatible()`, `isMultiProductListing()` — one case per real mismatch (rule 8). |
 | `unit/pricing-adapters.test.ts` | PC Express response parsing and normalisation. |
 | `unit/parse-capture.test.ts` | Browser-capture parsing, pinned to real Walmart and Voilà fixtures. |

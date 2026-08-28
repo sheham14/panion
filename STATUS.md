@@ -21,29 +21,42 @@ Panion compares grocery prices in St. John's, NL. Two comparison axes:
   ranked by **unit price** (a group deliberately spans pack sizes, so sticker
   price would mislead).
 
-### Data — production, 2026-08-26
+### Data — production, 2026-08-28
 
 ```
-products                              701
-equivalence groups                    231
-groups comparable across 2+ stores     75   <- the demo metric
+products                              791
+equivalence groups (2+ members)       184   (244 distinct subcategories)
+groups comparable across 2+ stores     87   <- the demo metric
+
+Loblaw-exclusive brands               107   (unreachable off-Loblaw)
+addressable elsewhere                 684
 
 Dominion - Stavanger Dr               371   (PC Express API, automatic)
-Walmart Supercentre - St. John's      227   (browser capture)
-Sobeys - Mount Pearl                  187   (browser capture)
+Walmart Supercentre - St. John's      269   (browser capture)
+Sobeys - Mount Pearl                  246   (browser capture)
 No Frills                               3   (Flipp only; never scraped)
 Colemans / Costco                       0   (no capture path)
+
+suspicious cross-store spreads       none   (the bad-match detector is clean)
 ```
 
-Strongest groups: `multigrain-bread` (15 products, 4 stores), `salted-butter`
-(16, 3), `large-eggs` (15, 3), `whole-wheat-bread` (14, 3), `2-percent-milk`,
-`1-percent-milk`, `skim-milk`, `unsalted-butter`, `everything-bagel`.
+Strongest groups: `shredded-mozzarella-cheese` (20 products, 2 stores),
+`block-cheddar-cheese` (19, 2), `salted-butter` (16, 3), `multigrain-bread`
+(15, 4), `large-eggs` (15, 3), `whole-wheat-bread` (14, 3), `white-bread`
+(13, 2), `unsalted-butter` (12, 3), `block-mozzarella-cheese` (12, 2).
 
-**Weak aisle: cheese.** 64 products but only ONE comparable group
-(`cream-cheese`) — the rest fragmented into 30 groups (aged vs mild, block vs
-shredded), each with one or two members. Either capture `cheddar cheese` /
-`mozzarella` / `shredded cheese` at both stores, or steer the live demo away
-from cheese.
+**Cheese is now the strongest aisle, not the weakest.** This file said the
+opposite until 2026-08-28 — "64 products, only ONE comparable group, steer the
+live demo away from cheese". The capture pass happened and the note was never
+updated, which is exactly the kind of stale advice that costs a demo its best
+material. It is now **143 cheese products across 12 comparable groups**, and
+shredded mozzarella and block cheddar are the two largest comparable groups in
+the entire catalogue.
+
+Refresh all of the above with `npm run coverage -- --production`. Until
+2026-08-28 that script could only reach localhost, so these numbers were
+maintained by hand and drifted — the catalogue had grown by 90 products and
+the demo metric by 12 without anyone noticing.
 
 **Only three stores matter, and that is deliberate.** Dominion is fed
 automatically by the API. No Frills is a Loblaw banner that *could* be scraped —
@@ -51,9 +64,6 @@ but `PC_EXPRESS_BANNERS` in `adapters/pcexpress.ts` only has Dominion's store
 id, so adding it means discovering No Frills' id against a live API. Colemans
 has no online storefront; Costco is membership-gated with bulk sizes and no
 capture path. Neither is worth chasing before the demo.
-
-Run `npm run coverage` to refresh those numbers and to list any suspicious
-cross-store spreads (the bad-match detector).
 
 ### Verification state
 
@@ -215,19 +225,27 @@ Three operational facts that will bite anyone who forgets them:
 
 **Everything for the demo is built. What remains is rehearsal and polish.**
 
-1. **Rehearse the live searches on panion.dev.** Type `bread`, `butter`, `eggs`,
-   `milk` into search. Each should show **"Best value by type"** group cards
-   above the product list — "Cheapest salted butter · 16 products across 3
-   stores · up to 29% cheaper", expandable into the unit-price ranking. If a
-   search looks thin or wrong, that is the bug to fix; nothing else matters more.
-2. **Avoid `cheese` live** unless its groups get filled first (see §1).
-3. **Open a real list on panion.dev before demoing it.** The store-coverage
+1. **Rehearse the live searches on panion.dev.** Type `cheese`, `bread`,
+   `butter`, `eggs`, `milk` into search. Each should show **"Best value by
+   type"** group cards above the product list — "Cheapest salted butter · 16
+   products across 3 stores · up to 29% cheaper", expandable into the unit-price
+   ranking. If a search looks thin or wrong, that is the bug to fix; nothing
+   else matters more.
+2. **`cheese` is now a good search, not one to avoid** (see §1). Shredded
+   mozzarella and block cheddar are the two largest comparable groups in the
+   catalogue.
+3. **Tap through one search on a phone.** The one-tap Watch on group cards
+   (§3) is covered by API tests but has not been clicked in a browser. Search
+   `bread`, confirm the bell appears on the featured product and on each row of
+   the expanded ranking, and that tapping it fills in without navigating away.
+4. **Open a real list on panion.dev before demoing it.** The store-coverage
    work in §3 was verified against unit tests and the guest fixture, not
    against a signed-in account on production. Real lists will have far more
    gaps than the fixture's two, and the panel is the one screen whose whole
    job is to show them honestly.
-4. Optional: a capture pass on `cheddar cheese` / `mozzarella` / `shredded
-   cheese` at Walmart and Voilà to make cheese demoable.
+5. **Watchlist a few products first.** Production has **zero** watchlist rows,
+   so a signed-in home page shows the empty state and no product photography.
+   The images work; there is just nothing tracked to show.
 
 ### The capture loop, when more coverage is wanted
 
@@ -333,7 +351,7 @@ the extractor directly, and that is how Voilà was onboarded.
 
 ```
 npm run dev                 # never run `npm run build` while this is live
-npm run coverage            # coverage + bad-match detector
+npm run coverage            # coverage + bad-match detector; add -- --production
 npm run images              # product-photo coverage; add -- --production
 npm run role -- list        # who has which role
 npm run scrape:dominion     # PC Express  (needs PC_EXPRESS_API_KEY)

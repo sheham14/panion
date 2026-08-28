@@ -262,3 +262,39 @@ the savings banner in `PLAN.md` would have shipped straight on top of it.
 
 Related: rule 6. Silent success is the failure mode to design against, whether
 it arrives as a 200 for the wrong region or a subtotal for the wrong basket.
+
+---
+
+## 13. A card's recommendation has to be actionable where it is shown
+
+**Incident (2026-08-28).** Adding a product to the watchlist from a
+"Cheapest {group}" card on `/search` took three taps and a page load: expand
+the card, tap a row in the ranking, watch it on the product page. The flat
+result cards directly underneath had had a one-tap Watch button all along.
+
+The cause was one line of structure. The whole card header — title, image,
+product name, price — was wrapped in a single `<button onClick={toggle}>` to
+make the region tappable. That made the featured product, the single
+recommendation the card exists to make, the one element on screen you could
+not act on: tapping it collapsed the card. And because **a `<button>` cannot
+contain a `<button>`**, there was no way to add the action without
+restructuring first — so it never got added.
+
+Worse, the expanded ranking contains the featured product too. So the obvious
+move, tapping the thing you already wanted, led to a list that named it again.
+
+**The rule.**
+
+- Wrapping a region in a `<button>` to make it tappable **forecloses every
+  action inside it**. Nested interactive elements are invalid HTML, so this is
+  not a thing you can patch later — decide before wrapping.
+- The disclosure toggle gets the *heading*. The content keeps its own targets:
+  a `<Link>` for navigation and a sibling `<button>` for the action.
+- If a card recommends one thing, that thing is actionable from the card. Not
+  after an expand, and not on another page.
+- Anything shown in two places at once — a product in the flat results and in
+  its group — must update in both when acted on, or the second copy sits there
+  offering to do what was just done.
+
+Same shape as rule 12, one layer up: the answer was on screen, and the way to
+act on it was not.

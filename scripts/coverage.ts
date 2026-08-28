@@ -1,12 +1,34 @@
 import { config as loadEnv } from "dotenv";
 
+/*
+ * Local by default, matching `prisma.config.ts` (CLAUDE.md rule 2).
+ * `--production` redirects only DATABASE_URL, and refuses to run if `.env`
+ * does not resolve to Neon.
+ *
+ * This is read-only, but it still asks before it looks: the numbers in
+ * STATUS.md §1 describe production, and for a long time this script could only
+ * reach localhost — so refreshing them meant editing them by hand, and they
+ * drifted.
+ */
+const TARGET_PRODUCTION = process.argv.includes("--production");
+
 loadEnv({ path: ".env" });
+const PRODUCTION_DATABASE_URL = process.env.DATABASE_URL;
 loadEnv({ path: ".env.local", override: true });
+if (TARGET_PRODUCTION) process.env.DATABASE_URL = PRODUCTION_DATABASE_URL;
+
+if (TARGET_PRODUCTION && !/neon\.tech/i.test(process.env.DATABASE_URL ?? "")) {
+  console.error(
+    "\n❌ --production expects the Neon database, but .env does not resolve to one. Refusing to run.\n",
+  );
+  process.exit(1);
+}
 
 /**
  * Catalogue coverage and bad-match report.
  *
  *   npm run coverage
+ *   npm run coverage -- --production
  *
  * Read-only. Answers two questions after any scrape:
  *
@@ -39,6 +61,18 @@ const LOBLAW_ONLY = [
 const SUSPICIOUS_RATIO = 1.8;
 
 async function main() {
+  // Every ad-hoc script prints its target host on start (rule 2).
+  const host = (() => {
+    try {
+      return new URL(process.env.DATABASE_URL ?? "").host;
+    } catch {
+      return "(unparseable)";
+    }
+  })();
+  console.log(
+    `\nDatabase: ${host}${TARGET_PRODUCTION ? "  [--production]" : ""}`,
+  );
+
   const { prisma } = await import("@/lib/prisma");
 
   const products = await prisma.product.findMany({

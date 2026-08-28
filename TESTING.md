@@ -16,6 +16,8 @@ This codebase doesn't chase coverage. The test suite is small and deliberate, fo
 | [tests/unit/unit-convert.test.ts](tests/unit/unit-convert.test.ts) | Pure unit-conversion logic (no DB) |
 | [tests/unit/unit-price.test.ts](tests/unit/unit-price.test.ts) | Unit pricing, multipack quantities, ranking, comparable basis |
 | [tests/unit/list-pricing.test.ts](tests/unit/list-pricing.test.ts) | A list total never ranks a store cheapest on a smaller basket, and every excluded item lands in a named bucket |
+| [tests/api/watchlist-summary.test.ts](tests/api/watchlist-summary.test.ts) | The home summary ranks on the shared basket — a store dearer per item but missing one no longer wins on its smaller total |
+| [tests/api/groups-watch.test.ts](tests/api/groups-watch.test.ts) | `/api/groups` marks what the signed-in user already watches (mocks `auth()` itself; asserts the `true` case so a mis-resolved mock fails loudly) |
 | [tests/unit/pricing-match.test.ts](tests/unit/pricing-match.test.ts) | One case per real mismatch the matcher had to be tightened against (rule 8) |
 | [tests/unit/pricing-adapters.test.ts](tests/unit/pricing-adapters.test.ts) | PC Express response parsing and normalisation |
 | [tests/unit/parse-capture.test.ts](tests/unit/parse-capture.test.ts) | Browser-capture parsing, pinned to real Walmart and Voilà markup |
