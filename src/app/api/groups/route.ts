@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { auth } from "../../../../auth";
 import { getUnitPrice, rankByUnitPrice } from "@/lib/unit-price";
 
 /**
@@ -49,6 +50,24 @@ export async function GET(request: NextRequest) {
   const groupNames = [...new Set(candidates.map((c) => c.subcategory!))];
   if (groupNames.length === 0) return NextResponse.json({ groups: [] });
 
+  // Who is already watched, so a group row can offer the same one-tap Watch
+  // the flat results have. Optional, like `/api/products` — a guest still gets
+  // the ranking, just with nothing marked. Without this the only route from a
+  // group card to the watchlist was: expand the card, tap through to the
+  // product page, watch it there.
+  const session = await auth();
+  const userId = session?.user?.id ?? null;
+  const watchedIds = new Set(
+    userId
+      ? (
+          await prisma.watchlist.findMany({
+            where: { userId },
+            select: { productId: true },
+          })
+        ).map((w) => w.productId)
+      : [],
+  );
+
   // Pull every member of each candidate group — a group found by one product's
   // name must still be ranked against all its siblings.
   const members = await prisma.product.findMany({
@@ -95,6 +114,7 @@ export async function GET(request: NextRequest) {
             brand: p.brand,
             unitSize: p.unitSize,
             imageUrl: p.imageUrl,
+            isWatched: watchedIds.has(p.id),
             price,
             isSale: best.isSale,
             store: best.store,

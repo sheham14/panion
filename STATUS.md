@@ -57,7 +57,7 @@ cross-store spreads (the bad-match detector).
 
 ### Verification state
 
-**199 tests passing, 0 lint errors, `tsc` clean, `npm run build` clean.**
+**202 tests passing, 0 lint errors, `tsc` clean, `npm run build` clean.**
 Everything pushed to `master`.
 
 ---
@@ -91,6 +91,17 @@ Three operational facts that will bite anyone who forgets them:
 
 ---
 ## 3. What was built (most recent work first)
+
+- **Watch a product from the search results in one tap.** Adding to the
+  watchlist from a "Cheapest {group}" card took three taps and a page load:
+  expand the card, tap an option, watch it on the product page. The featured
+  product — the recommendation the card exists to make — sat *inside* the
+  disclosure button, so tapping it only collapsed the card, and the ranked list
+  underneath was links to product pages. `/api/groups` also had no session
+  awareness at all, so no row could know whether it was already watched. It now
+  stamps `isWatched` the way `/api/products` does, and every group row has a
+  bell beside it. The flat result cards always had this; only the group cards
+  did not.
 
 - **The home summary ranks on coverage too.** `getWatchlistSummary()` was the
   last place summing into a bare `Record<chain, number>` and picking the

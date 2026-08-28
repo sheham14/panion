@@ -9,6 +9,7 @@ import {
   Clock,
   Bell,
   BellOff,
+  BellRing,
   Plus,
   ArrowLeft,
   ChevronDown,
@@ -46,6 +47,7 @@ type GroupOption = {
   brand: string | null;
   unitSize: string | null;
   imageUrl: string | null;
+  isWatched: boolean;
   price: number;
   isSale: boolean;
   store: { id: string; name: string; chain: string };
@@ -111,16 +113,64 @@ function displayName(o: { brand: string | null; name: string }): string {
     : `${o.brand} ${o.name}`;
 }
 
-function GroupCard({ group }: { group: GroupResult }) {
+/** One-tap watch toggle, sized for a row rather than a card footer. */
+function WatchButton({
+  isWatched,
+  onClick,
+  label,
+}: {
+  isWatched: boolean;
+  onClick: () => void;
+  label: string;
+}) {
+  return (
+    <button
+      onClick={(e) => {
+        // These sit inside a link or beside a disclosure toggle. Without this
+        // the tap navigates or collapses the card instead of watching.
+        e.preventDefault();
+        e.stopPropagation();
+        onClick();
+      }}
+      aria-label={`${isWatched ? "Stop watching" : "Watch"} ${label}`}
+      aria-pressed={isWatched}
+      className={[
+        "flex items-center justify-center rounded-[8px] flex-shrink-0 transition-all active:scale-90",
+        "w-8 h-8",
+        isWatched
+          ? "bg-[#f0fdf9] dark:bg-[#1a2e2a] text-[#00b89e] border border-[#b2f0e4] dark:border-[#1e4a3a]"
+          : "bg-white dark:bg-[#242b2e] text-[#888] border border-[#e0e0e0] dark:border-[#2e3538]",
+      ].join(" ")}
+    >
+      {isWatched ? (
+        <BellRing size={14} strokeWidth={1.8} />
+      ) : (
+        <Bell size={14} strokeWidth={1.5} />
+      )}
+    </button>
+  );
+}
+
+function GroupCard({
+  group,
+  onToggleWatch,
+}: {
+  group: GroupResult;
+  onToggleWatch: (id: string, watched: boolean) => void;
+}) {
   const [open, setOpen] = useState(false);
   const best = group.cheapest;
   if (!best) return null;
 
   return (
     <div className="mx-4 mb-2 rounded-[14px] border border-[#00E5C3]/40 bg-[#00E5C3]/[0.04] overflow-hidden">
+      {/* Only the heading toggles. The featured product used to be inside this
+          button, so the one thing the card exists to recommend was the one
+          thing you could not act on — tapping it just collapsed the card. */}
       <button
         onClick={() => setOpen((o) => !o)}
-        className="w-full px-3.5 py-3 text-left"
+        aria-expanded={open}
+        className="w-full px-3.5 pt-3 pb-2 text-left"
       >
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
@@ -141,8 +191,15 @@ function GroupCard({ group }: { group: GroupResult }) {
             className={`flex-shrink-0 text-[#888] transition-transform ${open ? "rotate-180" : ""}`}
           />
         </div>
+      </button>
 
-        <div className="mt-2.5 flex items-center gap-2.5">
+      {/* The recommendation itself — tappable through to the product, and
+          watchable without leaving the page. */}
+      <div className="px-3.5 pb-3 flex items-center gap-2.5">
+        <Link
+          href={`/product/${best.productId}`}
+          className="flex items-center gap-2.5 min-w-0 flex-1"
+        >
           {best.imageUrl && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -173,35 +230,46 @@ function GroupCard({ group }: { group: GroupResult }) {
               </p>
             )}
           </div>
-        </div>
-      </button>
+        </Link>
+        <WatchButton
+          isWatched={best.isWatched}
+          onClick={() => onToggleWatch(best.productId, best.isWatched)}
+          label={displayName(best)}
+        />
+      </div>
 
       {open && (
         <div className="border-t border-[#00E5C3]/20 px-3.5 py-2">
           {group.options.map((o, i) => (
-            <Link
-              key={o.productId}
-              href={`/product/${o.productId}`}
-              className="flex items-center gap-2 py-1.5 text-[11px]"
-            >
-              <span className="w-4 text-[#aaa] flex-shrink-0">{i + 1}</span>
-              <span className="min-w-0 flex-1 truncate text-[#111] dark:text-[#e0e0e0]">
-                {displayName(o)}
-                {o.unitSize ? ` · ${o.unitSize}` : ""}
-              </span>
-              <span
-                className="flex-shrink-0"
-                style={{ color: getStoreColor(o.store.chain) }}
+            <div key={o.productId} className="flex items-center gap-2 py-1">
+              <Link
+                href={`/product/${o.productId}`}
+                className="flex items-center gap-2 min-w-0 flex-1 text-[11px]"
               >
-                {o.store.chain}
-              </span>
-              <span className="w-14 text-right flex-shrink-0 text-[#111] dark:text-[#e0e0e0]">
-                ${o.price.toFixed(2)}
-              </span>
-              <span className="w-20 text-right flex-shrink-0 text-[#888]">
-                {o.unitPrice?.label ?? ""}
-              </span>
-            </Link>
+                <span className="w-4 text-[#aaa] flex-shrink-0">{i + 1}</span>
+                <span className="min-w-0 flex-1 truncate text-[#111] dark:text-[#e0e0e0]">
+                  {displayName(o)}
+                  {o.unitSize ? ` · ${o.unitSize}` : ""}
+                </span>
+                <span
+                  className="flex-shrink-0"
+                  style={{ color: getStoreColor(o.store.chain) }}
+                >
+                  {o.store.chain}
+                </span>
+                <span className="w-14 text-right flex-shrink-0 text-[#111] dark:text-[#e0e0e0]">
+                  ${o.price.toFixed(2)}
+                </span>
+                <span className="w-16 text-right flex-shrink-0 text-[#888]">
+                  {o.unitPrice?.label ?? ""}
+                </span>
+              </Link>
+              <WatchButton
+                isWatched={o.isWatched}
+                onClick={() => onToggleWatch(o.productId, o.isWatched)}
+                label={displayName(o)}
+              />
+            </div>
           ))}
           {group.incomparable.length > 0 && (
             <p className="text-[10px] text-[#aaa] pt-1.5 mt-1 border-t border-[#ebebeb] dark:border-[#2e3538]">
@@ -407,13 +475,26 @@ export default function SearchPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ productId }),
     });
-    if (res.ok) {
-      setResults((prev) =>
-        prev.map((r) =>
-          r.id === productId ? { ...r, isWatched: !isWatched } : r,
-        ),
-      );
-    }
+    if (!res.ok) return;
+    const next = !isWatched;
+
+    setResults((prev) =>
+      prev.map((r) => (r.id === productId ? { ...r, isWatched: next } : r)),
+    );
+
+    // The same product appears in the flat list and in any group it belongs
+    // to, so both have to move together — otherwise watching from a group card
+    // leaves the row below it still offering to watch the same thing.
+    const applied = (o: GroupOption): GroupOption =>
+      o.productId === productId ? { ...o, isWatched: next } : o;
+    setGroups((prev) =>
+      prev.map((g) => ({
+        ...g,
+        cheapest: g.cheapest ? applied(g.cheapest) : null,
+        options: g.options.map(applied),
+        incomparable: g.incomparable.map(applied),
+      })),
+    );
   }
 
   const showRecent = !query && recentSearches.length > 0;
@@ -556,7 +637,11 @@ export default function SearchPage() {
                     Best value by type
                   </p>
                   {groups.map((g) => (
-                    <GroupCard key={g.group} group={g} />
+                    <GroupCard
+                      key={g.group}
+                      group={g}
+                      onToggleWatch={handleToggleWatch}
+                    />
                   ))}
                   <p className="text-[11px] font-medium text-[#aaa] dark:text-[#555] uppercase tracking-[0.8px] px-4 mb-2 mt-4">
                     {results.length} product{results.length !== 1 ? "s" : ""}
