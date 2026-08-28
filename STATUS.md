@@ -278,29 +278,41 @@ the extractor directly, and that is how Voilà was onboarded.
 3. **`/api/lists/[id]/recommend` still has its own coverage logic.** It ranks
    on coverage first (audit M3) rather than on a shared basket, so it and
    `computeListPricing()` can disagree about which store is best. Converge it.
-4. **The sorting agent, properly.** Capture-creates-products is built and
+4. **Browse: filter box, tile/list toggle, tile photography.** Proposed
+   2026-08-28 and **deliberately deferred** — the app works as it is and the
+   demo comes first. All three are small; the constraint is that browse ships
+   the whole catalogue to the client, so tiles multiply the rows on screen on
+   the page that can least afford it. Do the payload work first. Sizes,
+   thresholds and the filter-vs-pagination trade-off are in `SCALING.md` §1.
+5. **Scaling generally — see `SCALING.md`.** Written 2026-08-28 with measured
+   numbers. Nothing there is urgent; it records what breaks first (browse, at
+   ~2–5k products), what breaks worst (the matcher, O(rows × catalogue) with
+   `tokenize()` inside the loop), and what is already fine (every per-user
+   path). Read it before optimising anything — several of the obvious targets
+   are not the expensive ones.
+6. **The sorting agent, properly.** Capture-creates-products is built and
    human-gated. The owner's larger idea — search something broad, let an agent
    sort everything into sections unattended — is the right direction and is now
    most of the way there. What is missing is confidence in dedup: creation is
    safe because a bad creation is untidy, whereas a bad *match* writes a wrong
    price.
-5. **Cheese, and group granularity generally.** 30 groups for 64 cheeses is too
+7. **Cheese, and group granularity generally.** 30 groups for 64 cheeses is too
    fine to compare. A pass that merges over-specific groups would help several
    aisles.
-6. **Matcher: brand mismatch.** The matcher proposes cross-brand pairs because
+8. **Matcher: brand mismatch.** The matcher proposes cross-brand pairs because
    coverage counts a brand as one token among four, so "Newfoundland Eggs Large
    White" scores exactly at threshold against a Compliments carton. Tightening
    on brand would cut review noise — but a false reject now mints a duplicate
    product, so it needs a fixture and care. The verifier catches these today.
-7. **Images.** Retailer photography, now including Walmart's and Sobeys', on a
+9. **Images.** Retailer photography, now including Walmart's and Sobeys', on a
    public site. `DATA-SOURCING.md` §3.1 records this as a knowing decision with
    a stated expiry. Replace with Open Food Facts by barcode (every product has a
    real UPC) plus own photography for private label.
-8. **No Frills** via PC Express — needs its store id discovering.
-9. **`price_history` is empty on production.** It was deleted with the
+10. **No Frills** via PC Express — needs its store id discovering.
+11. **`price_history` is empty on production.** It was deleted with the
    fabricated seed products, so any sparkline or trend UI has nothing to draw
    until several scrape cycles have run.
-10. **Scheduled scrapes.** Inngest crons write to whatever `DATABASE_URL` the
+12. **Scheduled scrapes.** Inngest crons write to whatever `DATABASE_URL` the
    deployment has. Confirm Vercel carries `PC_EXPRESS_API_KEY` and that
    `SCRAPERS_ENABLED` works as a kill switch there.
 
@@ -325,4 +337,5 @@ npx vitest run --pool=threads --no-file-parallelism   # avoids the Windows flake
 
 *Rules and past incidents: `CLAUDE.md`. Source provenance and legal position:
 `DATA-SOURCING.md`. Pipeline design: `PRICING-PIPELINE.md`. File-by-file map:
-`CODEBASE.md`. Test strategy: `TESTING.md`.*
+`CODEBASE.md`. Test strategy: `TESTING.md`. What breaks as the catalogue grows,
+and at what size: `SCALING.md`.*

@@ -60,4 +60,5 @@ See [`TESTING.md`](TESTING.md) for the test strategy, Neon branch setup, and wha
 - [`CODEBASE.md`](CODEBASE.md) — every file explained
 - [`SECURITY.md`](SECURITY.md) — auth design, audit log, pre-deploy checklist
 - [`TESTING.md`](TESTING.md) — test strategy, coverage, CI
+- [`SCALING.md`](SCALING.md) — what breaks as the catalogue grows, and at what size
 - [`DISCOVERY.md`](DISCOVERY.md) — product overview, competitive analysis, risks

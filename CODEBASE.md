@@ -67,6 +67,7 @@ A file-by-file reference for the Sentinel / Panion grocery price comparison app.
 | `.github/workflows/ci.yml` | GitHub Actions — typecheck + Postgres service container + `npm test` on push and PR. |
 | `SECURITY.md` | Security audit log, auth/authorization design, pre-deploy checklist. |
 | `TESTING.md` | Test strategy, what's covered, local Neon branch setup. |
+| `SCALING.md` | What holds and what breaks as the catalogue grows, with measured payload and matcher costs and the thresholds for each. Read before optimising anything — several obvious targets are not the expensive ones. |
 | `CODEBASE.md` | This file. |
 | `README.md` | Project overview. |
 | `DISCOVERY.md` | Product overview, competitive analysis, weaknesses, risks. |

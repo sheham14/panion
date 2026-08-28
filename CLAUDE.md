@@ -144,6 +144,13 @@ each other, which `thigh`/`thighs` and `wing`/`wings` silently did for months.
 Tightening a rule does not retract prices already written. A sweep is needed —
 see rule 1 for how to do it without destroying the catalogue.
 
+The matcher is also the pipeline's scaling bottleneck: it scans the whole
+catalogue per scraped row, re-tokenising each product name every time
+(`SCALING.md` §2). The fixes there — precomputing tokens, blocking candidates
+by brand or category — shrink the *candidate set*, never the rules. A speed-up
+that changes which pairs match is a rules change and needs a fixture, whatever
+it was called in the commit message.
+
 ---
 
 ## 9. Read a retailer's page, don't assume its shape
