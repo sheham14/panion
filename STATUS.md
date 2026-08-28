@@ -21,42 +21,59 @@ Panion compares grocery prices in St. John's, NL. Two comparison axes:
   ranked by **unit price** (a group deliberately spans pack sizes, so sticker
   price would mislead).
 
-### Data — production, 2026-08-28
+### Data — production, 2026-08-28 (after the Dominion scrape)
 
 ```
 products                              791
 equivalence groups (2+ members)       184   (244 distinct subcategories)
-groups comparable across 2+ stores     87   <- the demo metric
+groups comparable across 2+ stores     92   <- the demo metric
+
+products priced at ALL THREE stores     15   <- what a full list row needs
+products priced at exactly two         111   (D+S 54, D+W 41, S+W 16)
 
 Loblaw-exclusive brands               107   (unreachable off-Loblaw)
 addressable elsewhere                 684
 
-Dominion - Stavanger Dr               371   (PC Express API, automatic)
+Dominion - Stavanger Dr               415   (PC Express API, automatic)
 Walmart Supercentre - St. John's      269   (browser capture)
 Sobeys - Mount Pearl                  246   (browser capture)
 No Frills                               3   (Flipp only; never scraped)
 Colemans / Costco                       0   (no capture path)
 
-suspicious cross-store spreads       none   (the bad-match detector is clean)
+suspicious cross-store spreads           4   <- see below, all new
 ```
 
 Strongest groups: `shredded-mozzarella-cheese` (20 products, 2 stores),
-`block-cheddar-cheese` (19, 2), `salted-butter` (16, 3), `multigrain-bread`
-(15, 4), `large-eggs` (15, 3), `whole-wheat-bread` (14, 3), `white-bread`
-(13, 2), `unsalted-butter` (12, 3), `block-mozzarella-cheese` (12, 2).
+`block-cheddar-cheese` (19, 3), `salted-butter` (16, 3), `multigrain-bread`
+(15, 4), `large-eggs` (15, 3), `salted-margarine` (15, 2).
+
+**The number that matters for a list demo is 15, not 92.** A store-comparison
+row is only full when all three stores can price that product, and only 15
+products clear that bar — six of them 2 L milk. A realistic demo list is
+therefore a mix: a few three-store anchors plus two-store items where the
+coverage panel does its job. Trying to build an all-full list means demoing the
+milk aisle.
 
 **Cheese is now the strongest aisle, not the weakest.** This file said the
 opposite until 2026-08-28 — "64 products, only ONE comparable group, steer the
 live demo away from cheese". The capture pass happened and the note was never
 updated, which is exactly the kind of stale advice that costs a demo its best
-material. It is now **143 cheese products across 12 comparable groups**, and
-shredded mozzarella and block cheddar are the two largest comparable groups in
-the entire catalogue.
+material. It is now **143 cheese products across 12 comparable groups**.
+
+**The 2026-08-28 Dominion scrape traded coverage for four bad matches.** It
+added 44 Dominion prices (371 → 415), took products-at-all-three from 10 to 15
+and comparable groups from 87 to 92. It also introduced four suspicious spreads
+where the detector had been clean, all of the same shape: a **generic Dominion
+name matched to a branded catalogue product** — "Vegetable Oil Margarine
+Original" onto "I Can't Believe It's Not Butter", "Apple Juice" onto "Oasis
+Apple Juice". The brand gate in `match.ts` should reject those, which suggests
+they came in through the **barcode** path, where the name and brand gates never
+run. Worth confirming: a wrong barcode produces a confident wrong match with no
+second opinion. None of the four are in dairy, bread or cheese.
 
 Refresh all of the above with `npm run coverage -- --production`. Until
 2026-08-28 that script could only reach localhost, so these numbers were
-maintained by hand and drifted — the catalogue had grown by 90 products and
-the demo metric by 12 without anyone noticing.
+maintained by hand and drifted.
 
 **Only three stores matter, and that is deliberate.** Dominion is fed
 automatically by the API. No Frills is a Loblaw banner that *could* be scraped —
@@ -354,11 +371,11 @@ npm run dev                 # never run `npm run build` while this is live
 npm run coverage            # coverage + bad-match detector; add -- --production
 npm run images              # product-photo coverage; add -- --production
 npm run role -- list        # who has which role
-npm run scrape:dominion     # PC Express  (needs PC_EXPRESS_API_KEY)
+npm run scrape:dominion     # PC Express  (needs PC_EXPRESS_API_KEY); -- --production
 npm run scrape:sobeys       # Voilà       (needs VOILA_SESSION_COOKIE)
 npm run scrape:flipp        # flyers, all chains
-npm run snapshot:save       # before any bulk mutation
-npm run snapshot:restore
+npm run snapshot:save       # before any bulk mutation; add -- --production
+npm run snapshot:restore    # local only — restoring to production is refused
 npx vitest run --pool=threads --no-file-parallelism   # avoids the Windows flake
 ```
 

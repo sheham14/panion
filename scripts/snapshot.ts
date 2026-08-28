@@ -2,8 +2,29 @@ import { config as loadEnv } from "dotenv";
 import { writeFileSync, readFileSync, existsSync, mkdirSync } from "fs";
 import { resolve, dirname } from "path";
 
+/*
+ * Local by default, matching `prisma.config.ts` (CLAUDE.md rule 2).
+ *
+ * `--production` is accepted for **save only**, and writes to a separate file.
+ * Restoring to production is refused outright: STATUS.md's standing warning is
+ * that production holds captured prices no local snapshot has, so pushing a
+ * snapshot over it destroys exactly the data that was expensive to collect.
+ * Two files rather than one so a production save can never be mistaken for the
+ * local snapshot a later restore would read.
+ */
+const TARGET_PRODUCTION = process.argv.includes("--production");
+
 loadEnv({ path: ".env" });
+const PRODUCTION_DATABASE_URL = process.env.DATABASE_URL;
 loadEnv({ path: ".env.local", override: true });
+if (TARGET_PRODUCTION) process.env.DATABASE_URL = PRODUCTION_DATABASE_URL;
+
+if (TARGET_PRODUCTION && !/neon\.tech/i.test(process.env.DATABASE_URL ?? "")) {
+  console.error(
+    "\n❌ --production expects the Neon database, but .env does not resolve to one. Refusing to run.\n",
+  );
+  process.exit(1);
+}
 
 /**
  * Save / restore a known-good catalogue snapshot.
@@ -21,7 +42,10 @@ loadEnv({ path: ".env.local", override: true });
  * lists, or history, which are per-environment and shouldn't travel.
  */
 
-const SNAPSHOT_PATH = resolve(process.cwd(), "prisma/snapshots/catalogue.json");
+const SNAPSHOT_NAME = TARGET_PRODUCTION
+  ? "catalogue.production.json"
+  : "catalogue.json";
+const SNAPSHOT_PATH = resolve(process.cwd(), `prisma/snapshots/${SNAPSHOT_NAME}`);
 
 type Snapshot = {
   takenAt: string;
@@ -30,7 +54,13 @@ type Snapshot = {
   storeProducts: unknown[];
 };
 
+function hostOf(): string {
+  return (process.env.DATABASE_URL ?? "").match(/@([^/?]+)/)?.[1] ?? "(unknown)";
+}
+
 async function save() {
+  console.log(`
+▸ Snapshot source: ${hostOf()}${TARGET_PRODUCTION ? "  [--production]" : ""}`);
   const { prisma } = await import("@/lib/prisma");
 
   const products = await prisma.product.findMany({
@@ -56,7 +86,7 @@ async function save() {
     JSON.stringify(snapshot, (_k, v) => (typeof v === "bigint" ? String(v) : v), 2),
   );
 
-  console.log(`\n✅ Snapshot saved → prisma/snapshots/catalogue.json`);
+  console.log(`\n✅ Snapshot saved → prisma/snapshots/${SNAPSHOT_NAME}`);
   console.log(`   ${products.length} products, ${storeProducts.length} store products`);
   console.log(`   taken ${snapshot.takenAt}\n`);
 
@@ -64,6 +94,21 @@ async function save() {
 }
 
 async function restore() {
+  if (TARGET_PRODUCTION) {
+    console.error(
+      [
+        "",
+        "❌ Refusing to restore to production.",
+        "   Production holds captured prices that no snapshot has, so a restore",
+        "   overwrites the expensive data with a stale copy (STATUS.md, top).",
+        "   If this is genuinely what you want, do it deliberately by hand.",
+        "",
+      ].join("\n"),
+    );
+    process.exit(1);
+  }
+  console.log(`
+▸ Restore target: ${hostOf()}`);
   if (!existsSync(SNAPSHOT_PATH)) {
     console.error(`\n❌ No snapshot at prisma/snapshots/catalogue.json`);
     console.error(`   Run \`npm run snapshot:save\` after a good scrape first.\n`);

@@ -1,7 +1,28 @@
 import { config as loadEnv } from "dotenv";
 
+/*
+ * Local by default, matching `prisma.config.ts` (CLAUDE.md rule 2).
+ * `--production` redirects only DATABASE_URL, and refuses to run if `.env`
+ * does not resolve to Neon.
+ *
+ * This one writes prices, so it announces its target loudly below. It only
+ * ever upserts: nothing in the ingest path deletes or deactivates a row, so a
+ * narrow `--terms` run leaves every product it did not fetch untouched rather
+ * than treating absence as "gone" (CLAUDE.md rule 1).
+ */
+const TARGET_PRODUCTION = process.argv.includes("--production");
+
 loadEnv({ path: ".env" });
+const PRODUCTION_DATABASE_URL = process.env.DATABASE_URL;
 loadEnv({ path: ".env.local", override: true });
+if (TARGET_PRODUCTION) process.env.DATABASE_URL = PRODUCTION_DATABASE_URL;
+
+if (TARGET_PRODUCTION && !/neon\.tech/i.test(process.env.DATABASE_URL ?? "")) {
+  console.error(
+    "\n❌ --production expects the Neon database, but .env does not resolve to one. Refusing to run.\n",
+  );
+  process.exit(1);
+}
 
 /**
  * Run one PC Express (Dominion) cycle.
@@ -33,7 +54,9 @@ async function main() {
   }
 
   const host = (process.env.DATABASE_URL ?? "").match(/@([^/?]+)/)?.[1];
-  console.log(`\n▸ PC Express (Dominion) scrape → ${host ?? "(unknown DB)"}\n`);
+  console.log(
+    `\n▸ PC Express (Dominion) scrape → ${host ?? "(unknown DB)"}${TARGET_PRODUCTION ? "  [--production]" : ""}\n`,
+  );
 
   const { runPcExpressCycle } = await import("@/lib/pricing/run-pcexpress");
 
