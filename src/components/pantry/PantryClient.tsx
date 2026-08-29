@@ -606,13 +606,11 @@ export default function PantryClient({
           >
             Add to list
           </button>
-          <button
-            onClick={handleBulkDelete}
-            disabled={deleting}
-            className="flex-1 py-[10px] rounded-[10px] text-[12px] font-medium text-[#004d40] bg-[#00E5C3] border border-[#00E5C3] disabled:opacity-50"
-          >
-            Used up
-          </button>
+          {/* One delete button, not two. "Used up" and "Remove" were the same
+              handler with different labels, so the UI promised a distinction
+              the code never made. If consumption ever becomes its own action —
+              decrementing quantity, or logging what was eaten — it can come
+              back as a genuinely separate thing. */}
           <button
             onClick={handleBulkDelete}
             disabled={deleting}
