@@ -21,55 +21,69 @@ Panion compares grocery prices in St. John's, NL. Two comparison axes:
   ranked by **unit price** (a group deliberately spans pack sizes, so sticker
   price would mislead).
 
-### Data — production, 2026-08-28 (after the Dominion scrape)
+### Data — production, 2026-08-28 (after the Dominion *and* Sobeys scrapes)
 
 ```
 products                              791
 equivalence groups (2+ members)       184   (244 distinct subcategories)
 groups comparable across 2+ stores     92   <- the demo metric
+products comparable at 2+ stores      173
 
-products priced at ALL THREE stores     15   <- what a full list row needs
-products priced at exactly two         111   (D+S 54, D+W 41, S+W 16)
+products priced at ALL THREE stores     32   <- what a full list row needs
+products priced at exactly two         139   (D+S 76, S+W 39, D+W 24)
 
 Loblaw-exclusive brands               107   (unreachable off-Loblaw)
 addressable elsewhere                 684
 
 Dominion - Stavanger Dr               415   (PC Express API, automatic)
-Walmart Supercentre - St. John's      269   (browser capture)
-Sobeys - Mount Pearl                  246   (browser capture)
+Sobeys - Mount Pearl                  308   (Voilà API, automatic)
+Walmart Supercentre - St. John's      269   (browser capture — manual only)
 No Frills                               3   (Flipp only; never scraped)
 Colemans / Costco                       0   (no capture path)
 
-suspicious cross-store spreads           4   <- see below, all new
+price age, median                      0d Dominion · 0d Sobeys · 2d Walmart
+price age, oldest                     12d at every store
+rows currently on sale                123/415 D · 77/308 S · 41/269 W
+
+suspicious cross-store spreads           6   <- see below
 ```
 
 Strongest groups: `shredded-mozzarella-cheese` (20 products, 2 stores),
 `block-cheddar-cheese` (19, 3), `salted-butter` (16, 3), `multigrain-bread`
 (15, 4), `large-eggs` (15, 3), `salted-margarine` (15, 2).
 
-**The number that matters for a list demo is 15, not 92.** A store-comparison
-row is only full when all three stores can price that product, and only 15
-products clear that bar — six of them 2 L milk. A realistic demo list is
-therefore a mix: a few three-store anchors plus two-store items where the
-coverage panel does its job. Trying to build an all-full list means demoing the
-milk aisle.
+**The number that matters for a list demo is 32, not 92.** A store-comparison
+row is only full when all three stores can price that product. 30 of those 32
+also have every price under three days old, which is what the home page's
+freshness chip cares about — it turns red at eight days.
+
+**Sobeys is automatable; Walmart is not.** That asymmetry drives everything.
+Dominion and Sobeys refresh with one command each. Walmart's 269 prices all
+came from a human with a bookmarklet, so its tail goes stale and only a capture
+pass fixes it. The 76 products sitting at Dominion+Sobeys are all missing
+Walmart for exactly this reason.
 
 **Cheese is now the strongest aisle, not the weakest.** This file said the
 opposite until 2026-08-28 — "64 products, only ONE comparable group, steer the
 live demo away from cheese". The capture pass happened and the note was never
-updated, which is exactly the kind of stale advice that costs a demo its best
-material. It is now **143 cheese products across 12 comparable groups**.
+updated, which is the kind of stale advice that costs a demo its best material.
+It is now **143 cheese products across 12 comparable groups**.
 
-**The 2026-08-28 Dominion scrape traded coverage for four bad matches.** It
-added 44 Dominion prices (371 → 415), took products-at-all-three from 10 to 15
-and comparable groups from 87 to 92. It also introduced four suspicious spreads
-where the detector had been clean, all of the same shape: a **generic Dominion
-name matched to a branded catalogue product** — "Vegetable Oil Margarine
-Original" onto "I Can't Believe It's Not Butter", "Apple Juice" onto "Oasis
-Apple Juice". The brand gate in `match.ts` should reject those, which suggests
-they came in through the **barcode** path, where the name and brand gates never
-run. Worth confirming: a wrong barcode produces a confident wrong match with no
-second opinion. None of the four are in dairy, bread or cheese.
+**The two scrapes bought coverage and cost accuracy.** Together they took
+products-at-all-three from 10 to 32 and comparable groups from 87 to 92. They
+also took the bad-match detector from clean to **six** flagged spreads, all the
+same shape: a **generic supermarket name matched onto a branded catalogue
+product** — "Vegetable Oil Margarine Original" onto "I Can't Believe It's Not
+Butter", "Apple Juice" onto "Oasis Apple Juice". The brand gate in `match.ts`
+should reject those, which points at the **barcode** path, where the name and
+brand gates never run. A wrong barcode produces a confident wrong match with no
+second opinion. None of the six are in dairy, bread or cheese.
+
+**And one class the detector cannot see.** `Great Value` is Walmart's private
+label and now shows a price at Dominion and Sobeys; `coverage.ts` has a
+`LOBLAW_ONLY` brand list but no equivalent for Walmart's or Sobeys' own labels,
+and the spread sits under the 1.8× threshold. Treat any store-exclusive brand
+showing three prices as wrong until proven otherwise.
 
 Refresh all of the above with `npm run coverage -- --production`. Until
 2026-08-28 that script could only reach localhost, so these numbers were
