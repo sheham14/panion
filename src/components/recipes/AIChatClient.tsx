@@ -42,10 +42,12 @@ function renderInline(text: string): React.ReactNode[] {
   );
 }
 
-function MarkdownText({ text }: { text: string }) {
+export function MarkdownText({ text }: { text: string }) {
   const lines = text.split("\n");
   const elements: React.ReactNode[] = [];
-  const listBuffer: React.ReactNode[] = [];
+  // One entry per list item, each holding its own blocks, so an item can be a
+  // title line with a description underneath and still be a single <li>.
+  const listBuffer: React.ReactNode[][] = [];
   let listType: "ul" | "ol" | null = null;
 
   const flushList = (key: string) => {
@@ -57,12 +59,24 @@ function MarkdownText({ text }: { text: string }) {
         : "list-disc pl-5 my-1.5 space-y-0.5";
     elements.push(
       <Tag key={key} className={cls}>
-        {[...listBuffer]}
+        {listBuffer.map((blocks, n) => (
+          <li key={`${key}-i${n}`} className="text-[13px] leading-relaxed">
+            {blocks}
+          </li>
+        ))}
       </Tag>,
     );
     listBuffer.length = 0;
     listType = null;
   };
+
+  /** Next line that has content — used to tell a gap from a real list end. */
+  const nextContent = (from: number): string | undefined =>
+    lines.slice(from).find((l) => l.trim() !== "");
+
+  const startsItem = (l: string | undefined, type: "ul" | "ol"): boolean =>
+    l !== undefined &&
+    (type === "ol" ? /^\s*\d+[.)]\s/.test(l) : /^\s*[-•*]\s/.test(l));
 
   lines.forEach((line, i) => {
     const key = `line-${i}`;
@@ -78,27 +92,41 @@ function MarkdownText({ text }: { text: string }) {
           {renderInline(content)}
         </p>,
       );
-    } else if (/^[-•*]\s/.test(line)) {
+    } else if (/^\s*[-•*]\s/.test(line)) {
       if (listType === "ol") flushList(key + "-fl");
       listType = "ul";
-      listBuffer.push(
-        <li key={key} className="text-[13px] leading-relaxed">
-          {renderInline(line.replace(/^[-•*]\s/, ""))}
-        </li>,
-      );
-    } else if (/^\d+\.\s/.test(line)) {
+      listBuffer.push([
+        <span key={`${key}-t`}>
+          {renderInline(line.replace(/^\s*[-•*]\s/, ""))}
+        </span>,
+      ]);
+    } else if (/^\s*\d+[.)]\s/.test(line)) {
       if (listType === "ul") flushList(key + "-fl");
       listType = "ol";
-      listBuffer.push(
-        <li key={key} className="text-[13px] leading-relaxed">
-          {renderInline(line.replace(/^\d+\.\s/, ""))}
-        </li>,
-      );
+      listBuffer.push([
+        <span key={`${key}-t`}>
+          {renderInline(line.replace(/^\s*\d+[.)]\s/, ""))}
+        </span>,
+      ]);
     } else if (line.trim() === "") {
-      flushList(key + "-fl");
-      if (elements.length > 0) {
-        elements.push(<div key={key} className="h-1.5" />);
+      // A blank line *between* two items of the same list is spacing, not a
+      // terminator. Flushing here closed the <ol> and opened a new one, so
+      // every option restarted at "1." — which is exactly how Clove formats
+      // its recipe choices.
+      if (!(listType && startsItem(nextContent(i + 1), listType))) {
+        flushList(key + "-fl");
+        if (elements.length > 0) {
+          elements.push(<div key={key} className="h-1.5" />);
+        }
       }
+    } else if (listType && listBuffer.length > 0) {
+      // A plain line directly under an item is that item's description, not a
+      // new block. Without this it also split the list.
+      listBuffer[listBuffer.length - 1].push(
+        <p key={`${key}-d`} className="text-[13px] leading-relaxed opacity-80">
+          {renderInline(line.trim())}
+        </p>,
+      );
     } else {
       flushList(key + "-fl");
       elements.push(

@@ -25,6 +25,7 @@ This codebase doesn't chase coverage. The test suite is small and deliberate, fo
 | [tests/unit/capture-token.test.ts](tests/unit/capture-token.test.ts) | The bearer secret that lets the bookmarklet post cross-site |
 | [tests/unit/capture-source-store.test.ts](tests/unit/capture-source-store.test.ts) | A queued batch is pinned to the store its source implies |
 | [tests/unit/capture-worklist.test.ts](tests/unit/capture-worklist.test.ts) | The worklist is built from products the selected store is missing |
+| [tests/components/MarkdownText.test.tsx](tests/components/MarkdownText.test.tsx) | Clove's reply renderer keeps a numbered list as one list — blank lines and description lines used to split it, so every recipe option rendered as "1." |
 | [tests/components/GuestBanner.test.tsx](tests/components/GuestBanner.test.tsx) | GuestBanner renders conditionally based on session state |
 
 S1–S4 reference the findings in [OPUS_AUDIT.md](OPUS_AUDIT.md). Each test corresponds to a real security concern that was identified and fixed.
