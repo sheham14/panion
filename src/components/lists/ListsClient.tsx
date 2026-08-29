@@ -21,6 +21,13 @@ type StoreProduct = {
   id: string;
   currentPrice: number | null;
   isActive: boolean;
+  /**
+   * Already in the payload — the lists query `include`s storeProducts, so
+   * every scalar arrives. It just had no type and nothing rendered it, which
+   * meant a sale price quietly improved a store's total with nothing on screen
+   * saying why.
+   */
+  isSale: boolean;
   store: {
     id: string;
     chain: string;
@@ -125,6 +132,35 @@ function chainLabel(chain: string): string {
   return chain.replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+/** Matches the badge on the product page, so "Sale" reads the same everywhere. */
+function SaleBadge() {
+  return (
+    <span className="text-[9px] bg-[#fef2f2] dark:bg-[#3a1a1a] text-[#ef4444] border border-[#fecaca] dark:border-[#5a2020] rounded px-1 py-px">
+      Sale
+    </span>
+  );
+}
+
+/**
+ * The cheapest priced row for a chain, or overall when no chain is given.
+ *
+ * Used only to answer "is the number on screen a sale price" — the price
+ * itself still comes from `priceItemAt`, which applies unit conversion.
+ */
+function cheapestRow(
+  product: Product | null,
+  chain: string | null,
+): StoreProduct | null {
+  if (!product) return null;
+  const rows = product.storeProducts.filter(
+    (sp) =>
+      sp.currentPrice !== null &&
+      (chain === null || sp.store.chain.toLowerCase() === chain.toLowerCase()),
+  );
+  if (rows.length === 0) return null;
+  return rows.reduce((a, b) => (b.currentPrice! < a.currentPrice! ? b : a));
+}
+
 const LAST_LIST_KEY = "sentinel_last_list_id";
 
 // ── List item row ──────────────────────────────
@@ -169,6 +205,12 @@ function ListItemRow({
     unpricedHere && activeChain ? cheapestElsewhere(item, activeChain) : null;
   const isUnlinked =
     !item.isChecked && item.product === null && item.customPrice === null;
+
+  // Whether the figure actually on screen is a sale price — the selected
+  // store's cheapest row, or the cheapest anywhere when showing the range.
+  const onSale =
+    cheapestRow(item.product, priceHere !== null ? activeChain : null)?.isSale ??
+    false;
 
   function onTouchStart(e: React.TouchEvent) {
     startX.current = e.touches[0].clientX;
@@ -255,9 +297,12 @@ function ListItemRow({
           {/* Price */}
           <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
             {priceHere !== null ? (
-              <span className="text-[12px] font-medium text-[#00b89e]">
-                ${priceHere.toFixed(2)}
-              </span>
+              <>
+                <span className="text-[12px] font-medium text-[#00b89e]">
+                  ${priceHere.toFixed(2)}
+                </span>
+                {onSale && <SaleBadge />}
+              </>
             ) : unpricedHere ? (
               <>
                 <span className="text-[11px] font-medium text-[#b45309] dark:text-[#d9a441]">
@@ -271,14 +316,19 @@ function ListItemRow({
                 )}
               </>
             ) : priceRange ? (
-              <span className="text-[12px] font-medium text-[#00b89e]">
-                ${priceRange.min.toFixed(2)}
-                {priceRange.min !== priceRange.max &&
-                  ` – $${priceRange.max.toFixed(2)}`}
-                {!item.product && (
-                  <span className="text-[10px] text-[#bbb] ml-1">your price</span>
-                )}
-              </span>
+              <>
+                <span className="text-[12px] font-medium text-[#00b89e]">
+                  ${priceRange.min.toFixed(2)}
+                  {priceRange.min !== priceRange.max &&
+                    ` – $${priceRange.max.toFixed(2)}`}
+                  {!item.product && (
+                    <span className="text-[10px] text-[#bbb] ml-1">
+                      your price
+                    </span>
+                  )}
+                </span>
+                {onSale && <SaleBadge />}
+              </>
             ) : isUnlinked ? (
               <button
                 onClick={(e) => {

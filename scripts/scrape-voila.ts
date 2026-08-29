@@ -1,8 +1,23 @@
 import { config as loadEnv } from "dotenv";
 
-// Same env precedence as prisma.config.ts and Next.js.
+/*
+ * Same env precedence as prisma.config.ts and Next.js — local by default
+ * (CLAUDE.md rule 2). `--production` redirects only DATABASE_URL, and refuses
+ * to run if `.env` does not resolve to Neon.
+ */
+const TARGET_PRODUCTION = process.argv.includes("--production");
+
 loadEnv({ path: ".env" });
+const PRODUCTION_DATABASE_URL = process.env.DATABASE_URL;
 loadEnv({ path: ".env.local", override: true });
+if (TARGET_PRODUCTION) process.env.DATABASE_URL = PRODUCTION_DATABASE_URL;
+
+if (TARGET_PRODUCTION && !/neon\.tech/i.test(process.env.DATABASE_URL ?? "")) {
+  console.error(
+    "\n❌ --production expects the Neon database, but .env does not resolve to one. Refusing to run.\n",
+  );
+  process.exit(1);
+}
 
 /**
  * Run one Voilà (Sobeys) cycle against whatever DATABASE_URL resolves to.
@@ -37,7 +52,9 @@ async function main() {
   }
 
   const host = (process.env.DATABASE_URL ?? "").match(/@([^/?]+)/)?.[1];
-  console.log(`\n▸ Voilà (Sobeys) scrape → ${host ?? "(unknown DB)"}\n`);
+  console.log(
+    `\n▸ Voilà (Sobeys) scrape → ${host ?? "(unknown DB)"}${TARGET_PRODUCTION ? "  [--production]" : ""}\n`,
+  );
 
   const { runVoilaCycle } = await import("@/lib/pricing/run-voila");
 

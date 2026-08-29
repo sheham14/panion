@@ -119,6 +119,16 @@ Three operational facts that will bite anyone who forgets them:
 ---
 ## 3. What was built (most recent work first)
 
+- **Sale prices are visible where the price is.** `isSale` was already in the
+  payload on search and lists and rendered on neither, so a flyer deal quietly
+  improved a store's total with nothing on screen saying why. Both now show the
+  same red "Sale" badge the product page uses, on the figure actually being
+  displayed — the selected store's row, or the cheapest when showing a range.
+  Sale status does **not** come from browser capture: PC Express returns a deal
+  badge with a was-price and an expiry, Voilà returns promo-vs-shelf, the
+  Walmart bookmarklet reads the strikethrough, and Flipp is sale-by-definition.
+  Currently 123 of 415 Dominion rows, 77 of 308 Sobeys, 41 of 269 Walmart.
+
 - **Watch a product from the search results in one tap.** Adding to the
   watchlist from a "Cheapest {group}" card took three taps and a page load:
   expand the card, tap an option, watch it on the product page. The featured

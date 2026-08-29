@@ -113,6 +113,15 @@ function displayName(o: { brand: string | null; name: string }): string {
     : `${o.brand} ${o.name}`;
 }
 
+/** Matches the badge on the product page, so "Sale" reads the same everywhere. */
+function SaleBadge() {
+  return (
+    <span className="text-[9px] bg-[#fef2f2] dark:bg-[#3a1a1a] text-[#ef4444] border border-[#fecaca] dark:border-[#5a2020] rounded px-1 py-px flex-shrink-0">
+      Sale
+    </span>
+  );
+}
+
 /** One-tap watch toggle, sized for a row rather than a card footer. */
 function WatchButton({
   isWatched,
@@ -229,6 +238,11 @@ function GroupCard({
                 {best.unitPrice.label}
               </p>
             )}
+            {best.isSale && (
+              <div className="mt-0.5">
+                <SaleBadge />
+              </div>
+            )}
           </div>
         </Link>
         <WatchButton
@@ -257,6 +271,7 @@ function GroupCard({
                 >
                   {o.store.chain}
                 </span>
+                {o.isSale && <SaleBadge />}
                 <span className="w-14 text-right flex-shrink-0 text-[#111] dark:text-[#e0e0e0]">
                   ${o.price.toFixed(2)}
                 </span>
@@ -338,6 +353,13 @@ function ResultCard({
               <p className="text-[17px] font-medium text-[#00b89e]">
                 ${result.bestPrice.toFixed(2)}
               </p>
+              {/* `prices` arrives sorted ascending, so [0] is the row the
+                  headline figure came from. */}
+              {result.prices[0]?.isSale && (
+                <div className="flex justify-end mt-0.5">
+                  <SaleBadge />
+                </div>
+              )}
               {result.bestStore && (
                 <div className="flex items-center justify-end gap-1 mt-0.5">
                   <span
