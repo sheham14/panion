@@ -194,6 +194,8 @@ export default function PantryEditSheet({ item, onClose, onSaved }: Props) {
         // it from the server would cost a round-trip to learn nothing.
         imageUrl: item?.imageUrl ?? null,
         expiresAt: payload.expiresAt,
+        // A new item starts now; an edited one keeps the date it arrived.
+        createdAt: item?.createdAt ?? new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         addedFrom: item?.addedFrom ?? "manual",
       });

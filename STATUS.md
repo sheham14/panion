@@ -1,8 +1,16 @@
-**Last updated: 2026-08-28.** Read this first, then `CLAUDE.md` for the rules.
+**Last updated: 2026-08-30.** Read this first, then `CLAUDE.md` for the rules.
 
-**DEMO: Saturday 2026-08-29**, a casual tech-community demo night — an audience of other
-builders, driven live, on **production (panion.dev)**. Optimise for "works live,
-looks real", not for breadth.
+**The demo happened — Saturday 2026-08-29**, a casual tech-community demo night,
+driven live on production for an audience of other builders. It went well. The
+data question came up and held up, which was the one worth preparing for: the
+honest framing — same endpoint their website calls, no account, no
+circumvention, and a bot wall deliberately not crossed — is what a room of
+developers actually respects. The script and the prepared answers live outside
+the repo, in the Claude artifact written for the night.
+
+**The demo is no longer the organising constraint.** What follows is the state
+of the project, not a countdown. Work can be picked up by size and interest
+again rather than by what survives a live run.
 
 **Production is the source of truth.** Both the catalogue and every captured
 price live on Neon. Do NOT restore a local snapshot over it — that would
@@ -98,7 +106,7 @@ capture path. Neither is worth chasing before the demo.
 
 ### Verification state
 
-**202 tests passing, 0 lint errors, `tsc` clean, `npm run build` clean.**
+**215 tests passing, 0 lint errors, `tsc` clean, `npm run build` clean.**
 Everything pushed to `master`.
 
 ---
@@ -132,6 +140,37 @@ Three operational facts that will bite anyone who forgets them:
 
 ---
 ## 3. What was built (most recent work first)
+
+- **Pantry tiles say how long ago an item was added.** Suggested by someone at
+  the demo — and it was half there already, showing a relative date from
+  `updatedAt`. That meant *time since last touched*, so editing a quantity made
+  a jar owned for months read as "today". It reads `createdAt` now, says
+  "added 3 weeks ago", and is a shade darker because the old `#ccc` was close
+  to unreadable on a projector. `updatedAt` still drives the sort order, which
+  is the right thing for it to drive. The test written alongside immediately
+  caught a real bug: `Math.floor` of a negative difference returned
+  **"added -1 days ago"** whenever the stored timestamp sat slightly ahead of
+  the browser clock, which is ordinary drift. Clamped at zero.
+- **Pantry: one delete button, not two.** "Used up" and "Remove" were the same
+  handler with different labels, so the UI offered a distinction the code never
+  made. If consuming ever becomes its own action — decrementing a quantity
+  rather than deleting the row — it can come back as something that genuinely
+  differs.
+- **Clove treats the pantry as fact.** It was asking users what ingredients
+  they had, while holding their pantry in context. Not plumbing: the persona
+  licensed a follow-up question, and the pantry arrived as "work these in where
+  it makes sense" — a hint, never established as a complete inventory. It is
+  now stated as the complete inventory with an explicit instruction not to ask,
+  and an empty pantry says so rather than being omitted, since silence leaves
+  the model unable to tell "empty" from "unknown".
+- **Recipe options no longer all render as "1."** The reply renderer buffers
+  consecutive list items into one `<ol>`, but a blank line flushed the buffer
+  and a description line under an item did the same — both are exactly how
+  Clove formats choices, so every option opened a new list and restarted at 1.
+- **Floating controls stay inside the app column.** `position: fixed` anchors
+  to the viewport, not to the centred `max-w-md` column, so on a laptop the
+  add-item buttons sat out in the dead space beside the app and the pantry bulk
+  bar stretched across the whole screen.
 
 - **Sale prices are visible where the price is.** `isSale` was already in the
   payload on search and lists and rendered on neither, so a flyer deal quietly
@@ -264,29 +303,27 @@ Three operational facts that will bite anyone who forgets them:
 
 ## 4. Next step — start here
 
-**Everything for the demo is built. What remains is rehearsal and polish.**
+**Nothing is urgent.** The demo is done and the app is in a good state: 215
+tests, clean typecheck, clean lint, clean build, everything pushed.
 
-1. **Rehearse the live searches on panion.dev.** Type `cheese`, `bread`,
-   `butter`, `eggs`, `milk` into search. Each should show **"Best value by
-   type"** group cards above the product list — "Cheapest salted butter · 16
-   products across 3 stores · up to 29% cheaper", expandable into the unit-price
-   ranking. If a search looks thin or wrong, that is the bug to fix; nothing
-   else matters more.
-2. **`cheese` is now a good search, not one to avoid** (see §1). Shredded
-   mozzarella and block cheddar are the two largest comparable groups in the
-   catalogue.
-3. **Tap through one search on a phone.** The one-tap Watch on group cards
-   (§3) is covered by API tests but has not been clicked in a browser. Search
-   `bread`, confirm the bell appears on the featured product and on each row of
-   the expanded ranking, and that tapping it fills in without navigating away.
-4. **Open a real list on panion.dev before demoing it.** The store-coverage
-   work in §3 was verified against unit tests and the guest fixture, not
-   against a signed-in account on production. Real lists will have far more
-   gaps than the fixture's two, and the panel is the one screen whose whole
-   job is to show them honestly.
-5. **Watchlist a few products first.** Production has **zero** watchlist rows,
-   so a signed-in home page shows the empty state and no product photography.
-   The images work; there is just nothing tracked to show.
+Two things are worth doing before anything else, both small and both found by
+using the app rather than reading it:
+
+1. **Guest Clove may be broken in production.** `UPSTASH_REDIS_REST_URL` in
+   `.env.local` points at a host that no longer resolves (NXDOMAIN), so the
+   guest path 500s locally. Redis is used *only* by the guest branch — the
+   signed-in path rate-limits on Postgres and is unaffected — but if Vercel's
+   copy of that variable is also dead, a logged-out visitor gets a 500 from
+   Clove. **Open panion.dev in a private window and send one message to check.**
+2. **The barcode path bypasses the matcher's gates.** The two scrapes on
+   2026-08-28 introduced six suspicious spreads, all the same shape: a generic
+   supermarket name matched onto a branded catalogue product. The brand gate in
+   `match.ts` should have rejected them, which points at `matchByBarcode` —
+   where the name and brand gates never run, so a wrong barcode produces a
+   confident wrong match with no second opinion. Worth confirming and, if true,
+   deciding whether a barcode should still have to survive a size check.
+
+After that, pick by interest — §5 is the standing list.
 
 ### The capture loop, when more coverage is wanted
 

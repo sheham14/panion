@@ -46,8 +46,19 @@ function formatQty(quantity: number | null, unit: string | null): string {
   return unit ? `${q} ${unit}` : q;
 }
 
-function relativeDate(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
+/**
+ * Age of an item, phrased to sit after the word "added".
+ *
+ * Reads `createdAt` at the call sites, not `updatedAt` — the tile used to show
+ * time since the row was last touched, so editing a quantity made a jar you had
+ * owned for months read as "today".
+ */
+export function relativeDate(iso: string): string {
+  // Clamped at zero. A timestamp a moment in the future — a server clock a
+  // little ahead of the browser's, which is ordinary drift — made
+  // Math.floor of a negative difference return -1, and the tile read
+  // "added -1 days ago".
+  const diff = Math.max(0, Date.now() - new Date(iso).getTime());
   const days = Math.floor(diff / 86400000);
   if (days === 0) return "today";
   if (days === 1) return "yesterday";
@@ -193,8 +204,8 @@ function GridItem({
           <p className="text-[11px] font-medium text-[#111] dark:text-[#e0e0e0]">
             {formatQty(item.quantity, item.unit) || "—"}
           </p>
-          <p className="text-[11px] text-[#ccc]">
-            {relativeDate(item.updatedAt)}
+          <p className="text-[11px] text-[#999] dark:text-[#777]">
+            added {relativeDate(item.createdAt)}
           </p>
         </div>
       </div>
@@ -279,7 +290,7 @@ function ListItem({
             </>
           )}
           <span className="text-[#ddd]">·</span>
-          <span>{relativeDate(item.updatedAt)}</span>
+          <span>added {relativeDate(item.createdAt)}</span>
         </div>
       </div>
 

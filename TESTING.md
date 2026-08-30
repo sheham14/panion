@@ -25,6 +25,7 @@ This codebase doesn't chase coverage. The test suite is small and deliberate, fo
 | [tests/unit/capture-token.test.ts](tests/unit/capture-token.test.ts) | The bearer secret that lets the bookmarklet post cross-site |
 | [tests/unit/capture-source-store.test.ts](tests/unit/capture-source-store.test.ts) | A queued batch is pinned to the store its source implies |
 | [tests/unit/capture-worklist.test.ts](tests/unit/capture-worklist.test.ts) | The worklist is built from products the selected store is missing |
+| [tests/components/pantry-age.test.ts](tests/components/pantry-age.test.ts) | Item age reads correctly, including a timestamp slightly in the future — which used to render "added -1 days ago" |
 | [tests/components/MarkdownText.test.tsx](tests/components/MarkdownText.test.tsx) | Clove's reply renderer keeps a numbered list as one list — blank lines and description lines used to split it, so every recipe option rendered as "1." |
 | [tests/components/GuestBanner.test.tsx](tests/components/GuestBanner.test.tsx) | GuestBanner renders conditionally based on session state |
 
@@ -109,7 +110,7 @@ No external dependencies (Anthropic, SendGrid, Redis) — all mocked.
 
 ## What I didn't test (and why)
 
-- **Most components.** UI testing has a poor effort/value ratio for a portfolio app. The few worth testing are conditional renderers (`GuestBanner`) and form-validation logic.
+- **Most components.** UI testing has a poor effort/value ratio for a portfolio app. The few worth testing are conditional renderers (`GuestBanner`), and any pure function that decides what a user reads — `relativeDate`, the markdown pass. Those earn tests for the same reason the pricing code does: they fail silently. A split list or a negative day count throws nothing, renders happily, and is only ever caught by a person looking at the screen. Both of those bugs reached production and were found by eye, one of them by an audience member.
 - **NextAuth flows.** The auth library is well-tested by its maintainers. The integration points worth verifying — JWT callback, session shape — are exercised indirectly through every API test.
 - **Prisma queries themselves.** Trusting the ORM. What I test is that the *route handlers* call the right queries with the right scoping.
 - **The Anthropic streaming response.** Mocked. Testing the real Claude response would be slow, expensive, and non-deterministic.

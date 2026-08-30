@@ -22,6 +22,13 @@ export type SerializedPantryItem = {
    */
   imageUrl: string | null;
   expiresAt: string | null;
+  /**
+   * When the item entered the pantry. The tile shows age from this, not from
+   * `updatedAt` — editing a quantity should not make a three-month-old jar
+   * look like it arrived today.
+   */
+  createdAt: string;
+  /** Still what the list sorts on: recently touched is the useful order. */
   updatedAt: string;
   addedFrom: string;
 };
@@ -43,6 +50,7 @@ async function PantryData({ userId }: { userId: string }) {
     productId: item.productId ?? null,
     imageUrl: item.product?.imageUrl ?? null,
     expiresAt: item.expiresAt ? item.expiresAt.toISOString() : null,
+    createdAt: item.createdAt.toISOString(),
     updatedAt: item.updatedAt.toISOString(),
     addedFrom: item.addedFrom,
   }));
