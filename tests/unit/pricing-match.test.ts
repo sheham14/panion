@@ -414,3 +414,69 @@ describe("matchProduct — mismatch found on the first live Voilà bread capture
     expect(hasConflictingAttribute(["whole", "grain", "wheat", "bread"], ["whole", "wheat", "bread"])).toBe(false);
   });
 });
+
+describe("matchProduct — another brand onto a brandless product (Great Value at Sobeys)", () => {
+  /**
+   * Browser captures of Walmart create catalogue products with `brand: null`:
+   * the bookmarklet's DOM tier reads title, price and size but no brand, so the
+   * brand words stay in the name. The brand gate is `if (product.brand)`, so it
+   * never ran for these, and "value" is a stop word, leaving "great" as the only
+   * trace of the brand. On the 2026-08-28 scrapes, Sobeys and Dominion own-brand
+   * items with no catalogue twin landed on Great Value products this way.
+   */
+  const capturedGreatValue: CanonicalProduct = {
+    id: "prod_gv_eggs",
+    name: "Great Value Large White Eggs, 12 Count",
+    brand: null,
+    unitSize: "12 count",
+    unitQuantity: null,
+    unitMeasure: null,
+  };
+
+  it("rejects an item that states a different brand", () => {
+    expect(
+      matchProduct("Compliments Large White Eggs 12 ea", [capturedGreatValue], {
+        itemBrand: "Compliments",
+      }),
+    ).toBeNull();
+  });
+
+  it("still matches an item from the brand the product's name carries", () => {
+    expect(
+      matchProduct("Great Value Large White Eggs 12 ea", [capturedGreatValue], {
+        itemBrand: "Great Value",
+      })?.productId,
+    ).toBe("prod_gv_eggs");
+  });
+
+  it("is unchanged when the item states no brand", () => {
+    // A capture with no brand of its own has nothing to check against.
+    expect(
+      matchProduct("Great Value Large White Eggs 12 Count", [capturedGreatValue])?.productId,
+    ).toBe("prod_gv_eggs");
+  });
+
+  it("matches the brand on word boundaries, not inside another word", () => {
+    // "PC" must not count as named just because "pcs" appears.
+    const brandless: CanonicalProduct = {
+      id: "prod_napkins",
+      name: "Dinner Napkins 100 pcs",
+      brand: null,
+      unitSize: null,
+      unitQuantity: null,
+      unitMeasure: null,
+    };
+    expect(
+      matchProduct("PC Dinner Napkins 100 pcs", [brandless], { itemBrand: "PC" }),
+    ).toBeNull();
+  });
+
+  it("passes the brand through the barcode-or-name entry point", () => {
+    expect(
+      matchProductByBarcodeOrName(
+        { barcode: null, name: "Compliments Large White Eggs 12 ea", brand: "Compliments" },
+        [capturedGreatValue],
+      ),
+    ).toBeNull();
+  });
+});

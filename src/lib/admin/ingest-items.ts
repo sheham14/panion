@@ -170,7 +170,7 @@ export async function resolveAndIngest(opts: {
 
   for (const [index, item] of items.entries()) {
     const match = matchProductByBarcodeOrName(
-      { barcode: item.barcode, name: item.name ?? "" },
+      { barcode: item.barcode, name: item.name ?? "", brand: item.create?.brand },
       catalogue,
     );
 

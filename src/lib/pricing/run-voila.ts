@@ -144,7 +144,9 @@ export async function runVoilaCycle(
     // packageSize is included for the same reason as PC Express: without it the
     // size guard is bypassed and a 2L product happily matches a 1L SKU.
     const matchName = [p.brand, p.name, p.packageSize].filter(Boolean).join(" ");
-    const match = matchProduct(matchName, products);
+    // The brand also goes in separately: a brandless catalogue product must
+    // name it, or a Compliments item lands on a captured Great Value one.
+    const match = matchProduct(matchName, products, { itemBrand: p.brand });
 
     if (!match) {
       unmatched += 1;

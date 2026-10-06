@@ -66,11 +66,12 @@ export function matchByBarcode(
  * The single entry point adapters should use.
  */
 export function matchProductByBarcodeOrName(
-  input: { barcode?: string | null; name: string },
+  input: { barcode?: string | null; name: string; brand?: string | null },
   products: CanonicalProduct[],
 ): MatchResult | null {
   return (
-    matchByBarcode(input.barcode, products) ?? matchProduct(input.name, products)
+    matchByBarcode(input.barcode, products) ??
+    matchProduct(input.name, products, { itemBrand: input.brand })
   );
 }
 
@@ -382,6 +383,11 @@ export const MIN_ITEM_COVERAGE = 0.5;
 export function matchProduct(
   itemName: string,
   products: CanonicalProduct[],
+  /**
+   * The brand the source states for this item, kept separate from the name.
+   * PC Express and Voilà both supply one; Flipp and DOM-tier captures do not.
+   */
+  opts: { itemBrand?: string | null } = {},
 ): MatchResult | null {
   // "X or Y" advertises multiple products under one price — unattributable.
   if (isMultiProductListing(itemName)) return null;
@@ -391,6 +397,7 @@ export function matchProduct(
 
   const itemSize = parseSize(itemName);
   const itemNorm = normalizeName(itemName);
+  const itemBrandNorm = opts.itemBrand ? normalizeName(opts.itemBrand) : "";
 
   let best: MatchResult | null = null;
 
@@ -424,6 +431,22 @@ export function matchProduct(
     if (product.brand) {
       const brandNorm = normalizeName(product.brand);
       if (brandNorm && !itemNorm.includes(brandNorm)) continue;
+    }
+
+    // The converse, for a product with no brand: the gate above has nothing
+    // to check, and capture-created products often have none — the
+    // bookmarklet's DOM tier reads no brand, so "Great Value Large White Eggs"
+    // was stored brandless with the brand left in its name. A Sobeys
+    // "Compliments Large White Eggs" then scored 0.775 against it and Great
+    // Value carried Sobeys prices. When the item states its brand, a brandless
+    // product has to name that brand. Matched on word boundaries, so "PC" is
+    // not found inside "pcs".
+    if (
+      !product.brand &&
+      itemBrandNorm &&
+      !` ${normalizeName(product.name)} `.includes(` ${itemBrandNorm} `)
+    ) {
+      continue;
     }
 
     let score = tokenOverlap(itemTokens, productTokens) * 0.5 + coverage * 0.5;

@@ -152,7 +152,7 @@ export async function runPcExpressCycle(
       .join(" ");
 
     const match = matchProductByBarcodeOrName(
-      { barcode: p.barcode, name: matchName },
+      { barcode: p.barcode, name: matchName, brand: p.brand },
       products,
     );
     if (!match) {
@@ -230,9 +230,15 @@ export async function runPcExpressCycle(
           where: { barcode, NOT: { id: productId } },
           select: { id: true },
         });
+        // Fill a missing barcode only, never replace one. Replacing existed for
+        // the fabricated seed's placeholder UPCs, which are gone; what it does
+        // now is let a name match onto a sibling SKU (same brand, same size —
+        // say sticks for a block, on a run where the block is out of stock)
+        // overwrite the product's real barcode with the sibling's, after which
+        // every run matches the sibling at full confidence.
         if (!taken) {
           const { count } = await prisma.product.updateMany({
-            where: { id: productId, OR: [{ barcode: null }, { barcode: { not: barcode } }] },
+            where: { id: productId, barcode: null },
             data: { barcode },
           });
           barcodesBackfilled += count;

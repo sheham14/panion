@@ -7,6 +7,7 @@ import { requireElevatedRole, canWriteStore } from "@/lib/admin/require-role";
 import { resolveAndIngest } from "@/lib/admin/ingest-items";
 import { parseCapture, matchNameFor } from "@/lib/capture/parse-capture";
 import { sourceAllowsChain, requiredChainFor } from "@/lib/capture/source-store";
+import { STORE_BRANDS, splitLeadingBrand } from "@/lib/pricing/brands";
 
 /**
  * Import a browser capture: parse → resolve → preview or write.
@@ -108,13 +109,36 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // DOM-tier captures carry no brand field, so the brand sits inside the
+  // title. Split a known one off the front before matching: it gives the
+  // matcher's brand gates something to check, and a product created from the
+  // capture gets a brand instead of `brand: null`. The match string and the
+  // displayed name come out the same, since both are brand + name.
+  let items = parsed.items;
+  if (items.some((i) => !i.brand)) {
+    const catalogueBrands = await prisma.product.findMany({
+      where: { isActive: true, brand: { not: null } },
+      select: { brand: true },
+      distinct: ["brand"],
+    });
+    const known = [
+      ...STORE_BRANDS.flatMap((s) => s.brands),
+      ...catalogueBrands.map((r) => r.brand as string),
+    ];
+    items = items.map((i) => {
+      if (i.brand) return i;
+      const split = splitLeadingBrand(i.name, known);
+      return split ? { ...i, brand: split.brand, name: split.name } : i;
+    });
+  }
+
   const now = new Date();
   const result = await resolveAndIngest({
     storeId: store.id,
     // Brand and size are folded into the name here: with no barcode from
     // either Walmart or Voilà, that string is the only identity a capture has,
     // and omitting size bypasses the size guard entirely.
-    items: parsed.items.map((i) => ({
+    items: items.map((i) => ({
       name: matchNameFor(i),
       price: i.price,
       isSale: i.isSale,
