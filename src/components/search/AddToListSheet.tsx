@@ -54,12 +54,26 @@ export default function AddToListSheet(props: Props) {
   useEffect(() => {
     fetch("/api/lists")
       .then((r) => r.json())
-      .then((data) => {
-        setLists(data);
+      .then((data: { id: string; name: string; _count?: { items: number } }[]) => {
+        // The route returns Prisma's `_count`, not `itemCount`; reading the
+        // latter rendered every list as " items" with no number.
+        setLists(
+          data.map((l) => ({
+            id: l.id,
+            name: l.name,
+            itemCount: l._count?.items ?? 0,
+          })),
+        );
         setLoading(false);
       })
       .catch(() => setLoading(false));
   }, []);
+
+  function bumpCount(listId: string, by: number) {
+    setLists((prev) =>
+      prev.map((l) => (l.id === listId ? { ...l, itemCount: l.itemCount + by } : l)),
+    );
+  }
 
   async function handleAddToList(listId: string, knownName?: string) {
     if (addedTo.has(listId) || isPending) return;
@@ -139,6 +153,8 @@ export default function AddToListSheet(props: Props) {
           return;
         }
         setAddedTo((prev) => new Set([...prev, listId]));
+        // Only 201s are new rows; a 200 merged into an item already there.
+        bumpCount(listId, responses.filter((r) => r.status === 201).length);
         // Close after brief confirmation in recipe mode
         setTimeout(onClose, 700);
       } else {
@@ -156,6 +172,8 @@ export default function AddToListSheet(props: Props) {
           return;
         }
         setAddedTo((prev) => new Set([...prev, listId]));
+        // 201 is a new row; 200 means it merged into an existing one.
+        if (res.status === 201) bumpCount(listId, 1);
       }
     } catch {
       setError(`Couldn't reach Panion to add to ${listName}. Check your connection.`);
@@ -175,7 +193,10 @@ export default function AddToListSheet(props: Props) {
       });
       if (res.ok) {
         const newList = await res.json();
-        setLists((prev) => [...prev, newList]);
+        setLists((prev) => [
+          ...prev,
+          { id: newList.id, name: newList.name, itemCount: 0 },
+        ]);
         setNewListName("");
         setCreating(false);
         handleAddToList(newList.id, newList.name);
