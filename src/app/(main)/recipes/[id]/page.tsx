@@ -5,6 +5,12 @@ import { cookies } from "next/headers";
 import { Suspense } from "react";
 import RecipeDetailClient from "@/components/recipes/RecipeDetailClient";
 import { GUEST_RECIPE_DETAILS } from "@/lib/guest-data";
+import { ensureIngredientGroups } from "@/lib/recipes/match-ingredients";
+import {
+  planRecipeShopping,
+  type IngredientPick,
+  type ShoppingProduct,
+} from "@/lib/recipes/recipe-shopping";
 
 export type RecipeStep = { text: string; timerMinutes: number | null };
 
@@ -22,6 +28,28 @@ export type SerializedIngredient = {
   productUnitQuantity: number | null;
   productUnitMeasure: string | null;
   productUnitSize: string | null;
+  /** The cheapest way to buy it at the shopper's stores. Absent for guests. */
+  pick?: IngredientPick | null;
+};
+
+/**
+ * What the recipe costs per store, for the ingredients not already in the
+ * pantry. Every store states its own coverage (CLAUDE.md rule 12).
+ */
+export type RecipeShoppingSummary = {
+  /** Ingredients being bought: everything not in the pantry. */
+  itemCount: number;
+  pantryCount: number;
+  stores: {
+    chain: string;
+    total: number;
+    covered: number;
+    isBest: boolean;
+    /** Ingredients this store has no price for. */
+    missing: string[];
+  }[];
+  /** Ingredients with no price at any store. */
+  unpriced: string[];
 };
 
 export type RecipeDetailData = {
@@ -34,9 +62,49 @@ export type RecipeDetailData = {
   servings: number;
   steps: RecipeStep[];
   ingredients: SerializedIngredient[];
-  estimatedTotal: number | null;
-  hasUnlinkedIngredients: boolean;
+  shopping?: RecipeShoppingSummary | null;
 };
+
+/** Store rows with a live price, shaped for pricing. */
+const pricedRows = {
+  where: { isActive: true, currentPrice: { not: null } },
+  select: {
+    currentPrice: true,
+    isSale: true,
+    store: { select: { name: true, chain: true } },
+  },
+} as const;
+
+type PricedProduct = {
+  id: string;
+  name: string;
+  brand: string | null;
+  unitSize: string | null;
+  unitQuantity: unknown;
+  unitMeasure: string | null;
+  storeProducts: {
+    currentPrice: unknown;
+    isSale: boolean;
+    store: { name: string; chain: string };
+  }[];
+};
+
+function toShoppingProduct(p: PricedProduct): ShoppingProduct {
+  return {
+    id: p.id,
+    name: p.name,
+    brand: p.brand,
+    unitSize: p.unitSize,
+    unitQuantity: p.unitQuantity ? Number(p.unitQuantity) : null,
+    unitMeasure: p.unitMeasure,
+    prices: p.storeProducts.map((sp) => ({
+      price: Number(sp.currentPrice),
+      isSale: sp.isSale,
+      storeName: sp.store.name,
+      chain: sp.store.chain.toLowerCase(),
+    })),
+  };
+}
 
 function parseSteps(value: unknown): RecipeStep[] {
   if (!Array.isArray(value)) return [];
@@ -63,6 +131,15 @@ async function RecipeDetail({ id }: { id: string }) {
   const { user } = await getAuthenticatedUser();
   if (!user) redirect("/signin");
 
+  // Recipes saved before ingredient matching existed are matched on first
+  // view, once. Every later view reads the stored groups.
+  const head = await prisma.recipe.findUnique({
+    where: { id },
+    select: { isActive: true, ingredientsMatchedAt: true },
+  });
+  if (!head || !head.isActive) redirect("/lists");
+  if (!head.ingredientsMatchedAt) await ensureIngredientGroups(id);
+
   const recipe = await prisma.recipe.findUnique({
     where: { id },
     include: {
@@ -70,12 +147,14 @@ async function RecipeDetail({ id }: { id: string }) {
         orderBy: { sortOrder: "asc" },
         include: {
           product: {
-            include: {
-              storeProducts: {
-                include: { store: true },
-                orderBy: { currentPrice: "asc" },
-                take: 1,
-              },
+            select: {
+              id: true,
+              name: true,
+              brand: true,
+              unitSize: true,
+              unitQuantity: true,
+              unitMeasure: true,
+              storeProducts: pricedRows,
             },
           },
         },
@@ -91,13 +170,81 @@ async function RecipeDetail({ id }: { id: string }) {
     select: { name: true },
   });
   const pantryNames = pantryItems.map((p) => p.name.toLowerCase());
+  const inPantryById = new Map(
+    recipe.ingredients.map((ing) => {
+      const nameLower = ing.name.toLowerCase();
+      return [
+        ing.id,
+        pantryNames.some((p) => p.includes(nameLower) || nameLower.includes(p)),
+      ] as const;
+    }),
+  );
+
+  // Every member of the groups the ingredients are bought as, with live prices.
+  const slugs = [
+    ...new Set(
+      recipe.ingredients
+        .filter((i) => !i.productId && i.groupSlug)
+        .map((i) => i.groupSlug as string),
+    ),
+  ];
+  const members = slugs.length
+    ? await prisma.product.findMany({
+        where: { isActive: true, subcategory: { in: slugs } },
+        select: {
+          id: true,
+          name: true,
+          brand: true,
+          unitSize: true,
+          unitQuantity: true,
+          unitMeasure: true,
+          subcategory: true,
+          storeProducts: pricedRows,
+        },
+      })
+    : [];
+  const membersByGroup = new Map<string, ShoppingProduct[]>();
+  for (const m of members) {
+    if (m.storeProducts.length === 0) continue;
+    const slug = m.subcategory as string;
+    membersByGroup.set(slug, [...(membersByGroup.get(slug) ?? []), toShoppingProduct(m)]);
+  }
+
+  // The shopper's stores, as the list page uses them. With none chosen, price
+  // at every active store rather than show nothing.
+  const preferred = await prisma.userPreferredStore.findMany({
+    where: { userId: user.id },
+    select: { store: { select: { chain: true } } },
+  });
+  const chains = preferred.length
+    ? preferred.map((p) => p.store.chain.toLowerCase())
+    : (
+        await prisma.store.findMany({
+          where: { isActive: true },
+          select: { chain: true },
+          distinct: ["chain"],
+        })
+      ).map((s) => s.chain.toLowerCase());
+
+  const { picks, pricing } = planRecipeShopping(
+    recipe.ingredients.map((ing) => ({
+      id: ing.id,
+      name: ing.name,
+      quantity: ing.quantity ? Number(ing.quantity) : null,
+      unit: ing.unit ?? null,
+      inPantry: inPantryById.get(ing.id) ?? false,
+      linked:
+        ing.product && ing.product.storeProducts.length > 0
+          ? toShoppingProduct(ing.product)
+          : null,
+      groupSlug: ing.groupSlug,
+    })),
+    membersByGroup,
+    chains,
+  );
 
   const ingredients: SerializedIngredient[] = recipe.ingredients.map((ing) => {
-    const best = ing.product?.storeProducts[0];
-    const nameLower = ing.name.toLowerCase();
-    const inPantry = pantryNames.some(
-      (p) => p.includes(nameLower) || nameLower.includes(p),
-    );
+    const pick = picks[ing.id] ?? null;
     return {
       id: ing.id,
       name: ing.name,
@@ -105,23 +252,34 @@ async function RecipeDetail({ id }: { id: string }) {
       unit: ing.unit ?? null,
       notes: ing.notes ?? null,
       isOptional: ing.isOptional,
-      productId: ing.productId ?? null,
-      inPantry,
-      bestPrice: best ? Number(best.currentPrice) : null,
-      bestStore: best?.store?.name ?? null,
-      productUnitQuantity: ing.product?.unitQuantity
-        ? Number(ing.product.unitQuantity)
-        : null,
-      productUnitMeasure: ing.product?.unitMeasure ?? null,
-      productUnitSize: ing.product?.unitSize ?? null,
+      // A group pick stands in for a link, so Add to list carries a real
+      // product either way.
+      productId: ing.productId ?? pick?.productId ?? null,
+      inPantry: inPantryById.get(ing.id) ?? false,
+      bestPrice: pick?.cost ?? null,
+      bestStore: pick?.storeName ?? null,
+      productUnitQuantity: pick?.unitQuantity ?? null,
+      productUnitMeasure: pick?.unitMeasure ?? null,
+      productUnitSize: pick?.unitSize ?? null,
+      pick,
     };
   });
 
-  const linkedPrices = ingredients.filter((i) => i.bestPrice !== null);
-  const estimatedTotal =
-    linkedPrices.length > 0
-      ? linkedPrices.reduce((sum, i) => sum + (i.bestPrice ?? 0), 0)
-      : null;
+  const nameOf = new Map(recipe.ingredients.map((i) => [i.id, i.name]));
+  const shopping: RecipeShoppingSummary = {
+    itemCount: pricing.itemCount,
+    pantryCount: recipe.ingredients.length - pricing.itemCount,
+    stores: pricing.baskets.map((b, i) => ({
+      chain: b.chain,
+      total: Math.round(b.total * 100) / 100,
+      covered: b.covered.length,
+      // Only when there is a real comparison: more than one store priced
+      // something, and the ranking ran on a shared basket.
+      isBest: i === 0 && pricing.ranked.length > 1,
+      missing: b.missing.map((m) => nameOf.get(m.itemId) ?? ""),
+    })),
+    unpriced: pricing.unlinkedItemIds.map((id) => nameOf.get(id) ?? ""),
+  };
 
   const data: RecipeDetailData = {
     id: recipe.id,
@@ -133,8 +291,7 @@ async function RecipeDetail({ id }: { id: string }) {
     servings: recipe.servings ?? 4,
     steps: parseSteps(recipe.instructions),
     ingredients,
-    estimatedTotal,
-    hasUnlinkedIngredients: ingredients.some((i) => !i.productId),
+    shopping,
   };
 
   const isOwner = recipe.userId === user.id;

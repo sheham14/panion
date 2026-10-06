@@ -8,6 +8,7 @@ import {
   tooManyRequests,
 } from "@/lib/api-error";
 import Anthropic from "@anthropic-ai/sdk";
+import { ensureIngredientGroups } from "@/lib/recipes/match-ingredients";
 
 const DAILY_LIMIT = 20;
 
@@ -135,6 +136,14 @@ export async function POST(request: NextRequest) {
       },
     },
   });
+
+  // Match the ingredients to product groups now, so the recipe opens priced.
+  // A failure must not fail the save: the recipe page retries on first view.
+  try {
+    await ensureIngredientGroups(recipe.id);
+  } catch (err) {
+    console.error("[extract-recipe] ingredient matching failed:", err);
+  }
 
   return NextResponse.json({ recipeId: recipe.id }, { status: 201 });
 }

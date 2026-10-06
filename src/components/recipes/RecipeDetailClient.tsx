@@ -3,9 +3,106 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import AddToListSheet from "@/components/search/AddToListSheet";
-import type { RecipeDetailData } from "@/app/(main)/recipes/[id]/page";
+import type {
+  RecipeDetailData,
+  RecipeShoppingSummary,
+} from "@/app/(main)/recipes/[id]/page";
+import { packsFor } from "@/lib/recipes/recipe-shopping";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
+
+/**
+ * What the recipe costs at each of the shopper's stores. Each card says how
+ * many ingredients it covers, what a store has no price for is named, and
+ * "Best" appears only when more than one store priced something — the ranking
+ * runs on the ingredients every store can price.
+ */
+function ShoppingCard({
+  shopping,
+  scaled,
+  baseServings,
+}: {
+  shopping: RecipeShoppingSummary;
+  scaled: boolean;
+  baseServings: number;
+}) {
+  const priced = shopping.stores.some((s) => s.covered > 0);
+  const best = shopping.stores.find((s) => s.isBest) ?? null;
+
+  return (
+    <div className="mx-4 mt-3 rounded-[12px] border border-[#ebebeb] dark:border-[#2e3538] bg-white dark:bg-[#1e2528] p-3">
+      <div className="flex items-baseline justify-between mb-2">
+        <p className="text-[13px] font-medium text-[#111] dark:text-[#e0e0e0]">
+          Shop this recipe
+        </p>
+        <p className="text-[10px] text-[#aaa]">
+          {shopping.itemCount} to buy
+          {shopping.pantryCount > 0 ? ` · ${shopping.pantryCount} in pantry` : ""}
+        </p>
+      </div>
+
+      {!priced ? (
+        <p className="text-[12px] text-[#aaa]">No prices yet for these ingredients.</p>
+      ) : (
+        <div className="flex gap-2 overflow-x-auto scrollbar-none">
+          {shopping.stores.map((s) => {
+            const empty = s.covered === 0;
+            return (
+              <div
+                key={s.chain}
+                className={[
+                  "flex-shrink-0 rounded-[10px] px-3 py-2 text-center border min-w-[78px]",
+                  empty
+                    ? "border-[#ebebeb] dark:border-[#2e3538] opacity-60"
+                    : s.isBest
+                      ? "border-[#00E5C3] bg-[#f7f7f7] dark:bg-[#161b1e]"
+                      : "border-[#ebebeb] dark:border-[#2e3538] bg-[#f7f7f7] dark:bg-[#161b1e]",
+                ].join(" ")}
+              >
+                <p className="text-[10px] text-[#888] dark:text-[#666] mb-0.5 capitalize">
+                  {s.chain}
+                </p>
+                <p className="text-[13px] font-semibold text-[#111] dark:text-[#e0e0e0]">
+                  {empty ? "—" : `$${s.total.toFixed(2)}`}
+                </p>
+                <p
+                  className={[
+                    "text-[9px] mt-0.5",
+                    s.covered < shopping.itemCount
+                      ? "text-[#b45309] dark:text-[#d9a441]"
+                      : "text-[#aaa] dark:text-[#666]",
+                  ].join(" ")}
+                >
+                  {s.covered} of {shopping.itemCount}
+                </p>
+                {s.isBest && (
+                  <span className="inline-block text-[9px] bg-[#00E5C3] text-[#004d40] rounded px-1 py-px mt-0.5">
+                    Best
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {best && best.missing.length > 0 && (
+        <p className="text-[11px] text-[#b45309] dark:text-[#d9a441] mt-2">
+          No price at <span className="capitalize">{best.chain}</span> for{" "}
+          {best.missing.join(", ")}
+        </p>
+      )}
+      {shopping.unpriced.length > 0 && (
+        <p className="text-[11px] text-[#999] mt-1">
+          No price anywhere for {shopping.unpriced.join(", ")}
+        </p>
+      )}
+      <p className="text-[10px] text-[#bbb] dark:text-[#666] mt-2">
+        In whole packages{scaled ? `, for ${baseServings} servings` : ""}.
+      </p>
+    </div>
+  );
+}
 
 function formatQty(
   quantity: number | null,
@@ -457,6 +554,17 @@ export default function RecipeDetailClient({
         </div>
       </div>
 
+      {/* What the recipe costs at each store. Every card states its own
+          coverage, and "Best" is only awarded on the ingredients every store
+          can price (CLAUDE.md rule 12). */}
+      {recipe.shopping && recipe.shopping.itemCount > 0 && (
+        <ShoppingCard
+          shopping={recipe.shopping}
+          scaled={servings !== recipe.servings}
+          baseServings={recipe.servings}
+        />
+      )}
+
       {/* Ingredients */}
       <div className="mt-2">
         <div className="flex items-center justify-between px-4 pt-[14px] pb-2">
@@ -507,6 +615,29 @@ export default function RecipeDetailClient({
                   {formatQty(ing.quantity, ing.unit, scale)}
                   {ing.notes ? ` · ${ing.notes}` : ""}
                 </p>
+                {/* What to buy, and where it is cheapest among the shopper's
+                    stores. Guests have no pricing, so nothing is shown. */}
+                {ing.pick ? (
+                  <p className="text-[11px] text-[#666] dark:text-[#999] mt-0.5 truncate">
+                    <span className="font-medium text-[#0a7a62] dark:text-[#6ee7c7]">
+                      {ing.pick.packs > 1 ? `${ing.pick.packs} × ` : ""}$
+                      {(ing.pick.cost / ing.pick.packs).toFixed(2)}
+                    </span>
+                    {ing.pick.isSale && (
+                      <span className="ml-1 text-[9px] font-medium text-[#ef4444]">
+                        Sale
+                      </span>
+                    )}
+                    {` · ${ing.pick.label} at ${ing.pick.storeName}`}
+                  </p>
+                ) : (
+                  recipe.shopping &&
+                  !ing.inPantry && (
+                    <p className="text-[11px] text-[#bbb] dark:text-[#666] mt-0.5">
+                      No price yet
+                    </p>
+                  )
+                )}
               </div>
 
               {/* Right: pantry badge */}
@@ -678,19 +809,37 @@ export default function RecipeDetailClient({
       {showSheet && (
         <AddToListSheet
           mode="recipe"
-          ingredients={selectedIngredients.map((ing) => ({
-            id: ing.id,
-            name: ing.name,
-            productId: ing.productId,
-            quantity:
+          ingredients={selectedIngredients.map((ing) => {
+            const quantity =
               ing.quantity !== null
                 ? Math.round(ing.quantity * scale * 10) / 10
-                : null,
-            unit: ing.unit,
-            productUnitQuantity: ing.productUnitQuantity,
-            productUnitMeasure: ing.productUnitMeasure,
-            productUnitSize: ing.productUnitSize,
-          }))}
+                : null;
+            // A priced ingredient goes on the list as whole packages of the
+            // product picked for it. Sent as "2 cups", the list cannot convert
+            // cups and would price two cartons of milk.
+            if (ing.pick) {
+              return {
+                id: ing.id,
+                name: ing.name,
+                productId: ing.pick.productId,
+                quantity: packsFor(quantity, ing.unit, ing.pick),
+                unit: null,
+                productUnitQuantity: null,
+                productUnitMeasure: null,
+                productUnitSize: null,
+              };
+            }
+            return {
+              id: ing.id,
+              name: ing.name,
+              productId: ing.productId,
+              quantity,
+              unit: ing.unit,
+              productUnitQuantity: ing.productUnitQuantity,
+              productUnitMeasure: ing.productUnitMeasure,
+              productUnitSize: ing.productUnitSize,
+            };
+          })}
           onClose={() => setShowSheet(false)}
         />
       )}

@@ -495,7 +495,6 @@ export const GUEST_RECIPE_DETAILS: Record<string, {
   prepTime: number | null; cookTime: number | null; servings: number;
   steps: { text: string; timerMinutes: number | null }[];
   ingredients: ReturnType<typeof makeGuestIngredient>[];
-  estimatedTotal: number | null; hasUnlinkedIngredients: boolean;
 }> = {
   "guest-recipe-1": {
     id: "guest-recipe-1",
@@ -520,8 +519,6 @@ export const GUEST_RECIPE_DETAILS: Record<string, {
       makeGuestIngredient("gr1-5", "Red pepper flakes", null,  null,     null,                      null, null,   null),
       makeGuestIngredient("gr1-6", "Fresh parsley",     null,  null,     null,                      null, null,   null),
     ],
-    estimatedTotal: null,
-    hasUnlinkedIngredients: true,
   },
   "guest-recipe-2": {
     id: "guest-recipe-2",
@@ -545,8 +542,6 @@ export const GUEST_RECIPE_DETAILS: Record<string, {
       makeGuestIngredient("gr2-4", "Garlic",                   2, "cloves", "prod_p006",               3, "unit", "3 bulb pack"),
       makeGuestIngredient("gr2-5", "Salt & pepper",         null, null,     null,                   null, null,   null),
     ],
-    estimatedTotal: null,
-    hasUnlinkedIngredients: false,
   },
   "guest-recipe-3": {
     id: "guest-recipe-3",
@@ -571,8 +566,6 @@ export const GUEST_RECIPE_DETAILS: Record<string, {
       makeGuestIngredient("gr3-6", "Worcestershire sauce",   null, null,     null,                   null, null,   null),
       makeGuestIngredient("gr3-7", "Dijon mustard",          null, null,     null,                   null, null,   null),
     ],
-    estimatedTotal: null,
-    hasUnlinkedIngredients: true,
   },
   "guest-recipe-4": {
     id: "guest-recipe-4",
@@ -597,8 +590,6 @@ export const GUEST_RECIPE_DETAILS: Record<string, {
       makeGuestIngredient("gr4-5", "Turnip",              500, "g",  "prod_p004", 1000, "g",    "per kg"),
       makeGuestIngredient("gr4-6", "Split peas (yellow)", null, null, null,       null, null,   null),
     ],
-    estimatedTotal: null,
-    hasUnlinkedIngredients: true,
   },
 };
 

@@ -599,6 +599,9 @@ model Recipe {
     instructions Json?
     isActive     Boolean  @default(true) @map("is_active")
     userId       String?  @map("user_id") // ← add
+    /// When the ingredients were last matched to product groups. Null means
+    /// not yet — set on save, cleared when an edit replaces the ingredients.
+    ingredientsMatchedAt DateTime? @map("ingredients_matched_at")
     createdAt    DateTime @default(now()) @map("created_at")
     updatedAt    DateTime @updatedAt @map("updated_at")
 
@@ -614,6 +617,10 @@ model RecipeIngredient {
     id         String   @id @default(cuid())
     recipeId   String   @map("recipe_id")
     productId  String?  @map("product_id") // linked canonical product if matched
+    /// Equivalence group (`Product.subcategory`) this ingredient is bought as,
+    /// when no specific product is linked: "any shredded mozzarella", priced
+    /// from whichever member is cheapest at each store.
+    groupSlug  String?  @map("group_slug")
     name       String // "chicken breast", "olive oil"
     quantity   Decimal? @db.Decimal(10, 3)
     unit       String? // "g", "ml", "cups", "tbsp"

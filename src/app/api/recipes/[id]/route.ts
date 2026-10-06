@@ -104,6 +104,9 @@ export async function PATCH(
         deleteMany: {},
         create: (data.ingredients ?? []).map(toIngredientCreate),
       },
+      // The ingredients are new rows with no groups; have them matched again
+      // on the next view.
+      ingredientsMatchedAt: null,
     },
     include: { ingredients: { orderBy: { sortOrder: "asc" } } },
   });
