@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  label,
   packsFor,
   planRecipeShopping,
   type ShoppingIngredient,
@@ -70,6 +71,19 @@ describe("packsFor", () => {
   it("distrusts an absurd package count", () => {
     // A size misread as 10 g would ask for 50 packs of a 500 g recipe.
     expect(packsFor(500, "g", { unitQuantity: 10, unitMeasure: "g", unitSize: "10g" })).toBe(1);
+  });
+});
+
+describe("label", () => {
+  it("does not say the brand twice", () => {
+    // Read "No Name No Name Club Pack…" on the live page.
+    expect(label({ brand: "No Name", name: "No Name Club Pack Chicken Breasts" })).toBe(
+      "No Name Club Pack Chicken Breasts",
+    );
+    expect(label({ brand: "Compliments", name: "Shredded Mozzarella" })).toBe(
+      "Compliments Shredded Mozzarella",
+    );
+    expect(label({ brand: null, name: "Bananas" })).toBe("Bananas");
   });
 });
 

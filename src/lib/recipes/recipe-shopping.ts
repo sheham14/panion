@@ -135,7 +135,15 @@ export function packsFor(
   return packs >= 1 && packs <= MAX_PACKS ? packs : 1;
 }
 
-const label = (p: ShoppingProduct) => [p.brand, p.name].filter(Boolean).join(" ");
+/**
+ * Brand plus name, without saying the brand twice — PC Express names often
+ * already lead with it, and a plain join read "No Name No Name Club Pack
+ * Chicken Breasts" on the live recipe page. Same rule as search's displayName.
+ */
+export const label = (p: Pick<ShoppingProduct, "brand" | "name">): string =>
+  !p.brand || p.name.toLowerCase().startsWith(p.brand.toLowerCase())
+    ? p.name
+    : `${p.brand} ${p.name}`;
 
 /** Cheapest way to buy one ingredient at one chain, among the candidates. */
 function cheapestAt(
