@@ -19,47 +19,11 @@ process.env.DATABASE_URL = process.env.TEST_DATABASE_URL;
 process.env.AUTH_SECRET = process.env.AUTH_SECRET ?? "test-secret-not-for-prod";
 process.env.GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID ?? "test-google-id";
 process.env.GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET ?? "test-google-secret";
-process.env.UPSTASH_REDIS_REST_URL = "http://localhost"; // mocked
-process.env.UPSTASH_REDIS_REST_TOKEN = "test-token";    // mocked
 
-// In-memory Redis mock — replaces @upstash/redis for tests
-const redisStore = new Map<string, string>();
-const redisTtl = new Map<string, number>();
-// A real class, not `vi.fn().mockImplementation(...)`. The mock-function form
-// wasn't constructible under Vitest 4, so `new Redis()` in src/lib/redis threw
-// "is not a constructor" and took the whole ai-rate-limit suite with it.
-vi.mock("@upstash/redis", () => {
-  class Redis {
-    async incr(key: string) {
-      const next = (parseInt(redisStore.get(key) ?? "0", 10) + 1).toString();
-      redisStore.set(key, next);
-      return parseInt(next, 10);
-    }
-    async expire(key: string, seconds: number) {
-      redisTtl.set(key, Date.now() + seconds * 1000);
-      return 1;
-    }
-    async get(key: string) {
-      return redisStore.get(key) ?? null;
-    }
-    async set(key: string, value: string) {
-      redisStore.set(key, value);
-      return "OK";
-    }
-    async del(key: string) {
-      redisStore.delete(key);
-      return 1;
-    }
-    async ping() {
-      return "PONG";
-    }
-  }
-  return { Redis };
-});
-
-// Mock the Anthropic SDK so tests don't make external calls or burn tokens
-// Real class for the same reason as the Redis mock above — routes call
-// `new Anthropic()`, and a vi.fn() implementation isn't constructible here.
+// Mock the Anthropic SDK so tests don't make external calls or burn tokens.
+// A real class, not `vi.fn().mockImplementation(...)`: routes call
+// `new Anthropic()`, and the mock-function form isn't constructible under
+// Vitest 4 — it throws "is not a constructor" and takes whole suites with it.
 vi.mock("@anthropic-ai/sdk", () => {
   class MockAnthropic {
     messages = {
@@ -132,10 +96,9 @@ vi.mock("@/lib/auth-utils", async () => {
   };
 });
 
-// Reset Redis store + mock session between tests
+// Reset the mock session between tests. Rate-limit counters live in Postgres
+// now and are cleared by `resetDb()` with the other tables.
 beforeEach(() => {
-  redisStore.clear();
-  redisTtl.clear();
   mockSession = null;
 });
 

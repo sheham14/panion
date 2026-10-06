@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import sgMail from "@sendgrid/mail";
-import { redis } from "@/lib/redis";
+import { hitRateLimit } from "@/lib/rate-limit";
 import { validateBody } from "@/lib/validate";
 import { serverError, tooManyRequests } from "@/lib/api-error";
 
@@ -14,7 +14,7 @@ import { serverError, tooManyRequests } from "@/lib/api-error";
  * the inbox directly, with no captcha or rate limit in the way (audit M7).
  *
  * Moving it server-side keeps the credential out of the bundle and puts the
- * submission behind the Redis limiter the app already runs.
+ * submission behind the app's rate limiter (`src/lib/rate-limit.ts`).
  */
 
 const DAILY_IP_LIMIT = 5;
@@ -38,9 +38,7 @@ export async function POST(request: NextRequest) {
   if (error) return error;
 
   const ip = getClientIp(request);
-  const key = `feedback:ip:${ip}`;
-  const used = await redis.incr(key);
-  if (used === 1) await redis.expire(key, 60 * 60 * 24);
+  const used = await hitRateLimit(`feedback:ip:${ip}`, 60 * 60 * 24);
 
   if (used > DAILY_IP_LIMIT) {
     return tooManyRequests(

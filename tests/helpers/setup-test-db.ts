@@ -24,9 +24,11 @@ if (!process.env.TEST_DATABASE_URL) {
   process.exit(1);
 }
 
+// The test config, not an overridden DATABASE_URL: the default
+// prisma.config.ts loads .env.local with override, which silently replaced
+// the URL passed here and pushed to the dev database instead.
 console.log("→ Pushing schema to test database...");
-execSync("npx prisma db push", {
-  env: { ...process.env, DATABASE_URL: process.env.TEST_DATABASE_URL },
+execSync("npx prisma db push --config prisma.test.config.ts", {
   stdio: "inherit",
 });
 

@@ -647,6 +647,27 @@ model FeatureUsage {
     @@map("feature_usage")
 }
 
+/**
+ * Fixed-window counters for limits that have no user row to hang off — guest
+ * Clove (per cookie and per IP), the public feedback form, capture auto-submit.
+ *
+ * Replaced Upstash Redis (2026-10-06). That database was deleted at some point
+ * after August, and because every guest and feedback request incremented it
+ * before doing anything else, guest Clove and the feedback form returned 500s
+ * in production with nothing reporting it. Postgres is already a hard
+ * dependency of every route, so this adds no new way to fail.
+ *
+ * Written only through `src/lib/rate-limit.ts`, which increments atomically.
+ */
+model RateLimit {
+    key       String   @id
+    count     Int
+    expiresAt DateTime @map("expires_at")
+
+    @@index([expiresAt]) // sweep of expired windows
+    @@map("rate_limits")
+}
+
 model AiChatSession {
     id         String   @id @default(cuid())
     userId     String   @map("user_id")

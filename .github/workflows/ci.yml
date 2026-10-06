@@ -48,8 +48,6 @@ jobs:
       AUTH_SECRET: ci-test-secret
       GOOGLE_CLIENT_ID: ci-test-id
       GOOGLE_CLIENT_SECRET: ci-test-secret
-      UPSTASH_REDIS_REST_URL: http://localhost
-      UPSTASH_REDIS_REST_TOKEN: ci-token
 
     steps:
       - uses: actions/checkout@v4

@@ -19,7 +19,7 @@ manage shopping lists, log your pantry, and get AI meal suggestions from Clove.
 - **Framework:** Next.js 16 (App Router), React 18, TypeScript
 - **Auth:** next-auth v5 (Google OAuth, JWT)
 - **Database:** PostgreSQL via Prisma 7
-- **Caching:** Redis (Upstash)
+- **Rate limiting:** Postgres (`src/lib/rate-limit.ts`)
 - **AI:** Anthropic Claude SDK
 - **Styling:** Tailwind CSS, mobile-first (max-width 384px)
 - **Background jobs:** Inngest
@@ -38,7 +38,7 @@ cp .env.example .env.local
 #          ANTHROPIC_API_KEY, SENDGRID_API_KEY, EMAIL_FROM, ADMIN_EMAIL,
 #          NEXT_PUBLIC_VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY
 
-docker compose up -d        # starts PostgreSQL + Redis
+docker compose up -d        # starts PostgreSQL
 npx prisma migrate dev      # run migrations
 npx prisma db seed          # seed stores, products, test users
 npm run dev                 # http://localhost:3000

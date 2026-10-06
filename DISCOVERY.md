@@ -74,7 +74,7 @@ Panion's premise: **give shoppers one place to compare prices across all four st
 - **All auth is JWT-based** — middleware reads `onboardingCompleted` from the token without hitting the DB on every request
 - **All API routes enforce `userId` scoping** — user data is never accessible by another user (verified by integration tests, see [`TESTING.md`](TESTING.md))
 - **PostgreSQL + Prisma** for relational data (products, prices, recipes, lists, pantry); Neon in production
-- **Redis (Upstash)** for caching and AI rate limiting (cookie- and IP-keyed)
+- **Rate limiting in Postgres** — guest AI (cookie- and IP-keyed), feedback and capture limits in a `rate_limits` table; signed-in limits count `FeatureUsage` rows
 - **Anthropic Claude** for Clove — 10 queries/day for authenticated users, 5 per guest cookie + 15 per guest IP/day ceiling
 - **SendGrid** for transactional email (magic link sign-in, admin signup notifications)
 - **web-push + Service Worker** for installable PWA notifications (cooking timers, future price alerts)

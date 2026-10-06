@@ -10,6 +10,7 @@ export async function resetDb() {
     prisma.aiChatMessage.deleteMany(),
     prisma.aiChatSession.deleteMany(),
     prisma.featureUsage.deleteMany(),
+    prisma.rateLimit.deleteMany(),
     prisma.alert.deleteMany(),
     prisma.pushSubscription.deleteMany(),
     prisma.recipeIngredient.deleteMany(),

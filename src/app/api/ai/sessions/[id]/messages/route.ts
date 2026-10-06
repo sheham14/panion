@@ -2,7 +2,7 @@
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
-import { redis } from "@/lib/redis";
+import { hitRateLimit } from "@/lib/rate-limit";
 import { badRequest, notFound } from "@/lib/api-error";
 import Anthropic from "@anthropic-ai/sdk";
 
@@ -214,9 +214,7 @@ export async function POST(
 
     // IP-level ceiling first — protects against cookie-clear bypass
     const ip = getClientIp(request);
-    const ipKey = `guest:ai:ip:${ip}`;
-    const ipUsed = await redis.incr(ipKey);
-    if (ipUsed === 1) await redis.expire(ipKey, 60 * 60 * 24);
+    const ipUsed = await hitRateLimit(`guest:ai:ip:${ip}`, 60 * 60 * 24);
 
     if (ipUsed > GUEST_IP_DAILY_LIMIT) {
       const enc = new TextEncoder();
@@ -229,9 +227,7 @@ export async function POST(
       return new Response(stream, { headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" } });
     }
 
-    const redisKey = `guest:ai:${guestId}`;
-    const used = await redis.incr(redisKey);
-    if (used === 1) await redis.expire(redisKey, 60 * 60 * 24);
+    const used = await hitRateLimit(`guest:ai:${guestId}`, 60 * 60 * 24);
 
     if (used > GUEST_LIMIT) {
       const enc = new TextEncoder();

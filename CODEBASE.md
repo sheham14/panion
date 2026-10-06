@@ -33,7 +33,7 @@ A file-by-file reference for the Sentinel / Panion grocery price comparison app.
 | Styling | Tailwind CSS, DM Sans (Google Fonts), dark mode, mobile-first (max-width 384px) |
 | Auth | next-auth v5 (Google OAuth + magic link via SendGrid, JWT sessions) |
 | Database | PostgreSQL via Prisma 7 ORM (Neon in prod) |
-| Caching / rate limits | Redis (Upstash) |
+| Rate limits | Postgres — `FeatureUsage` rows for signed-in users, `RateLimit` counters for everything else |
 | AI | Anthropic Claude SDK |
 | Email | SendGrid (magic link + admin notifications) |
 | Push notifications | web-push + VAPID + Service Worker |
@@ -61,7 +61,8 @@ A file-by-file reference for the Sentinel / Panion grocery price comparison app.
 | `next.config.mjs` | Minimal Next.js config. |
 | `tsconfig.json` | TypeScript config with strict mode and `@/*` path alias for `src/`. |
 | `postcss.config.mjs` | PostCSS config enabling Tailwind. |
-| `docker-compose.yml` | Local dev services — PostgreSQL and Redis containers. |
+| `docker-compose.yml` | Local dev services — the PostgreSQL container. |
+| `prisma.test.config.ts` | Prisma config that targets `TEST_DATABASE_URL`, used by `npm run test:setup`. Refuses a URL that is really the dev or production database. |
 | `package.json` | Dependencies and scripts (`dev`, `build`, `lint`, `test`, `test:watch`, `test:coverage`, `test:setup`). |
 | `vitest.config.ts` | Vitest config — jsdom env, path aliases, single-fork pool for shared test DB. |
 | `.github/workflows/ci.yml` | GitHub Actions — typecheck + Postgres service container + `npm test` on push and PR. |
@@ -248,7 +249,7 @@ All routes return JSON. All protected routes call `getAuthenticatedUser()` first
 |---|---|---|
 | `/api/user` | GET, PATCH | GET: user profile with preferences. PATCH: update name, dietary restrictions, allergies, notification settings, preferred stores. |
 | `/api/user/delete` | POST, DELETE | POST: request account deletion — sets `deletionRequestedAt`. The `purge-deleted-accounts` Inngest cron anonymizes the account 30 days later (credentials and personal content are hard-deleted; crowdsourced price contributions are severed from the person rather than destroyed). DELETE: cancel a pending request. |
-| `/api/feedback` | POST | Public feedback intake. Rate-limited to 5/day/IP via Redis; sends through SendGrid server-side. |
+| `/api/feedback` | POST | Public feedback intake. Rate-limited to 5/day/IP (`src/lib/rate-limit.ts`); sends through SendGrid server-side. |
 | `/api/inngest` | GET, POST, PUT | Inngest function endpoint. Hosts the scheduled jobs. |
 | `/api/user/export` | GET | Export all of the user's personal data as JSON (PIPEDA compliance). |
 
@@ -275,7 +276,7 @@ All routes return JSON. All protected routes call `getAuthenticatedUser()` first
 | `/api/scan` | GET | Barcode lookup — returns product + per-store current prices. |
 | `/api/flyers` | GET | Fetch store flyers — integration point for future scraper. |
 | `/api/icons/[size]` | GET | Generate PWA icon at 192px or 512px via Edge runtime. |
-| `/api/health` | GET | Health check. Pings Postgres **and** Redis; returns 200 when both are up, 503 otherwise. |
+| `/api/health` | GET | Health check. Pings Postgres, the only backing service (it also holds the rate limits); returns 200 when it is up, 503 otherwise. |
 
 ---
 
@@ -363,7 +364,7 @@ All routes return JSON. All protected routes call `getAuthenticatedUser()` first
 | `unit-convert.ts` | Unit conversion for list cost estimation. `TO_BASE` maps units to grams/ml. `calculateEffectivePrice()` normalizes prices to the same unit so you can compare "per 100g" across products. `getAllowedUnits()` returns compatible units based on product type (packaged vs bulk). |
 | `list-pricing.ts` | `computeListPricing(items, preferredChains)` — prices a grocery list at each preferred store **and records what each one could not price**. Returns per-store `covered`/`missing` (each missing item carrying the cheapest price held elsewhere), `commonItemIds` (the basket every contributing store can price, which is what ranking runs on), `unlinkedItemIds` (typed-in items with no product and no custom price), and `cheapestSplit`. Also exports `priceItemAt()` and `cheapestElsewhere()`. Lifted out of `ListsClient` so it could be tested — see `tests/unit/list-pricing.test.ts`. |
 | `watchlist-summary.ts` | `getWatchlistSummary(userId)` — aggregates the user's watchlist across their preferred stores. Returns best price per item, total per store, and overall cheapest-store breakdown. Used by the home dashboard and the watchlist summary API. Totals and `bestStore` go through `computeListPricing()`, so a store is never ranked cheapest on a smaller basket; each entry also carries `covered`/`missing` counts, and the summary carries `itemCount`/`comparableItemCount`. |
-| `redis/index.ts` | Redis client setup (Upstash). Used for caching and rate limiting. |
+| `rate-limit.ts` | `hitRateLimit(key, windowSeconds)` — fixed-window counters in the `rate_limits` table, for limits with no user row (guest Clove per cookie and per IP, feedback per IP, capture auto-submit per token). Atomic upsert; expired windows restart on the next hit. Replaced Upstash Redis on 2026-10-06 after that database was deleted and took guest Clove and the feedback form down with it. |
 | `push.ts` | `sendPush(subscription, payload)` — server-side helper that signs and delivers a Web Push notification using `web-push` and VAPID keys. |
 | `guest-data.ts` | Mock data served to guest-mode users (watchlist, lists, pantry, recipes). Dates rebase on module load so the demo always looks current. |
 
@@ -448,11 +449,11 @@ themselves carry no such asterisk. See `DATA-SOURCING.md`.
 ---
 ## Tests — `tests/`
 
-Vitest + RTL + a dedicated Neon test branch. Real Prisma queries; Anthropic/SendGrid/Redis are mocked. See [`TESTING.md`](TESTING.md) for setup and philosophy.
+Vitest + RTL + a dedicated Neon test branch. Real Prisma queries; Anthropic and SendGrid are mocked. See [`TESTING.md`](TESTING.md) for setup and philosophy.
 
 | File | What it covers |
 |---|---|
-| `setup.ts` | Global test setup — loads env, mocks Anthropic/SendGrid/Redis (in-memory), provides `setMockSession()` helper for injecting authenticated users. |
+| `setup.ts` | Global test setup — loads env, mocks Anthropic and SendGrid, provides `setMockSession()` helper for injecting authenticated users. |
 | `helpers/db.ts` | `resetDb()` (truncate user-owned tables between tests), `createTestUser()`, `ensureTestProduct()`. |
 | `helpers/setup-test-db.ts` | One-shot script (`npm run test:setup`) — pushes the Prisma schema to `TEST_DATABASE_URL`. |
 | `api/recipes.test.ts` | Recipe authorization — user A can't read user B's recipes via `GET /api/recipes` or `/api/recipes/[id]`. |

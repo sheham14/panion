@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { redis } from "@/lib/redis";
+import { hitRateLimit } from "@/lib/rate-limit";
 import { parseCapture } from "@/lib/capture/parse-capture";
 import { resolveCaptureToken } from "@/lib/capture/token";
 
@@ -92,9 +92,10 @@ export async function POST(req: NextRequest) {
     return json({ error: "Invalid capture token" }, 401);
   }
 
-  const key = `capture:submit:${owner.tokenId}:${new Date().getUTCHours()}`;
-  const used = await redis.incr(key);
-  if (used === 1) await redis.expire(key, 60 * 60);
+  const used = await hitRateLimit(
+    `capture:submit:${owner.tokenId}:${new Date().getUTCHours()}`,
+    60 * 60,
+  );
   if (used > HOURLY_LIMIT) {
     return json({ error: "Too many captures this hour" }, 429);
   }

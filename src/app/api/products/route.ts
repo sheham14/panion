@@ -99,7 +99,7 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json(shaped, {
     headers: {
-      // Cache for 5 min as per PLAN.md — Redis caching can replace this later
+      // Cache for 5 min as per PLAN.md
       "Cache-Control": "public, s-maxage=300, stale-while-revalidate=60",
     },
   });

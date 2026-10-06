@@ -1,7 +1,7 @@
 ﻿import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
-import { redis } from "@/lib/redis";
+import { hitRateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 import { validateBody, boundedString } from "@/lib/validate";
 import { badRequest, tooManyRequests } from "@/lib/api-error";
@@ -39,8 +39,8 @@ export async function POST(request: NextRequest) {
   const isGuest =
     request.cookies.get("panion-guest")?.value === "1" && !!guestId;
 
-  // Validate the request *before* touching Redis. The counters below are
-  // atomic `incr`s, so validating afterwards meant a malformed body still
+  // Validate the request *before* touching the rate limiter. Each hit is an
+  // atomic increment, so validating afterwards meant a malformed body still
   // consumed one of the guest's five daily queries (audit H5).
   const contentType = request.headers.get("content-type");
   if (!contentType?.includes("application/json")) {
@@ -54,12 +54,12 @@ export async function POST(request: NextRequest) {
   if (!sanitizedQuery) return badRequest("query cannot be empty");
   const budget = parsed.budget ?? null;
 
+  let guestUsed = 0;
+
   if (isGuest) {
     // IP-level ceiling first — protects against cookie-clear bypass
     const ip = getClientIp(request);
-    const ipKey = `guest:ai:ip:${ip}`;
-    const ipUsed = await redis.incr(ipKey);
-    if (ipUsed === 1) await redis.expire(ipKey, 60 * 60 * 24);
+    const ipUsed = await hitRateLimit(`guest:ai:ip:${ip}`, 60 * 60 * 24);
 
     if (ipUsed > GUEST_IP_DAILY_LIMIT) {
       return tooManyRequests(
@@ -68,11 +68,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const redisKey = `guest:ai:${guestId}`;
-    const used = await redis.incr(redisKey);
-    if (used === 1) await redis.expire(redisKey, 60 * 60 * 24); // 24h TTL on first use
+    guestUsed = await hitRateLimit(`guest:ai:${guestId}`, 60 * 60 * 24);
 
-    if (used > GUEST_LIMIT) {
+    if (guestUsed > GUEST_LIMIT) {
       return tooManyRequests(
         `You've used your ${GUEST_LIMIT} free Clove queries. Sign in for unlimited access.`,
         { code: "guest_limit" },
@@ -228,7 +226,7 @@ Suggest 2-3 recipes that fit the user's request and budget. For each recipe:
     answer,
     usageToday: usageCount + 1,
     remainingToday: isGuest
-      ? GUEST_LIMIT - (parseInt(await redis.get(`guest:ai:${guestId}`) ?? "1", 10))
+      ? GUEST_LIMIT - guestUsed
       : DAILY_LIMIT - usageCount - 1,
   });
 }

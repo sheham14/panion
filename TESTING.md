@@ -42,7 +42,7 @@ supposed to mean.
 - **Vitest** — fast, ESM-native, drop-in TypeScript support
 - **@testing-library/react** + **jsdom** — for the one component test
 - **Real Postgres** via a dedicated test database — integration tests hit actual Prisma queries, not mocked promises
-- **Mocked externals** — Anthropic SDK, Redis (in-memory), SendGrid. No real API calls during tests, no token spend, no email sent.
+- **Mocked externals** — Anthropic SDK, SendGrid. No real API calls during tests, no token spend, no email sent. Rate limits live in Postgres, so they run for real against the test database.
 - **Mocked `getAuthenticatedUser`** — tests inject the session they want via `setMockSession()` from `tests/setup.ts`
 
 ## Local setup
@@ -73,12 +73,16 @@ Either option works — Docker is quicker and costs nothing.
 
 ### Then, either way
 
-3. **Push the schema to the test database**:
+3. **Push the schema to the test database** (again after any schema change):
    ```
-   npx prisma db push --url "$TEST_DATABASE_URL"
+   npm run test:setup
    ```
-   > Prisma 7 removed `--skip-generate` and added `--url`; the datasource
-   > otherwise comes from `prisma.config.ts`, which reads `DATABASE_URL`.
+   > This runs `prisma db push --config prisma.test.config.ts`. Do not pass
+   > `DATABASE_URL=$TEST_DATABASE_URL` to a plain Prisma command instead:
+   > `prisma.config.ts` loads `.env.local` with `override: true`, which
+   > silently replaces it with the dev database. Until 2026-10-06 that is
+   > exactly what `test:setup` did. The test config also refuses a URL that is
+   > really the dev or production database.
 
 4. **Run tests**:
    ```
@@ -99,13 +103,12 @@ so a stray run can never point at the development or production database.
 - `prisma db push` against it
 - `npm test`
 
-No external dependencies (Anthropic, SendGrid, Redis) — all mocked.
+No external dependencies (Anthropic, SendGrid) — all mocked.
 
 ## How tests are isolated
 
-- Vitest is configured with `pool: "forks", singleFork: true` — tests run in a single Node process so the in-memory Redis mock is consistent.
-- Each test file calls `resetDb()` in `beforeEach` to truncate user-owned tables (preserving reference data like stores and products).
-- The Redis mock is cleared between tests via the global `beforeEach` in `tests/setup.ts`.
+- Vitest is configured with `pool: "forks", singleFork: true` — tests run in a single Node process against one shared test database.
+- Each test file calls `resetDb()` in `beforeEach` to truncate user-owned tables, rate-limit counters included (preserving reference data like stores and products).
 - The mock session is reset to `null` between tests, so a test that forgets to call `setMockSession()` will get an unauthenticated request — failing loudly rather than silently using a stale session.
 
 ## What I didn't test (and why)
