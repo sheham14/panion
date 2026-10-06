@@ -51,6 +51,11 @@ OPUS_AUDIT.md
 # data provenance / legal risk record — deliberately not published. Records a
 # knowing decision about source access; belongs with the author, not the repo.
 DATA-SOURCING.md
+# draft plan that discusses the same legal position; same reason
+DEVICE-CHECKS.md
+# working notes (project state, incidents, operating rules) — kept local
+STATUS.md
+CLAUDE.md
 
 # marketing/portfolio artifacts (handed off, not part of the app)
 panion-landing.tsx
