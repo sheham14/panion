@@ -553,6 +553,11 @@ export default function HomeClient({
     setSelectedIds(new Set());
   }
 
+  function closeAddToList() {
+    setAddToListTargets(null);
+    exitSelectMode();
+  }
+
   return (
     <div>
       {/* ── Sticky header ── */}
@@ -770,19 +775,26 @@ export default function HomeClient({
         </div>
       )}
 
-      {/* Add to list sheet */}
-      {addToListTargets && addToListTargets.length > 0 && (
+      {/* Add to list sheet. Several selected products go through the
+          multi-item mode: the single-product mode only ever added the first
+          one, named "3 products". */}
+      {addToListTargets && addToListTargets.length === 1 && (
         <AddToListSheet
           productId={addToListTargets[0].id}
-          productName={
-            addToListTargets.length === 1
-              ? addToListTargets[0].name
-              : `${addToListTargets.length} products`
-          }
-          onClose={() => {
-            setAddToListTargets(null);
-            exitSelectMode();
-          }}
+          productName={addToListTargets[0].name}
+          onClose={closeAddToList}
+        />
+      )}
+      {addToListTargets && addToListTargets.length > 1 && (
+        <AddToListSheet
+          mode="recipe"
+          ingredients={addToListTargets.map((t) => ({
+            id: t.id,
+            name: t.name,
+            productId: t.id,
+            quantity: 1,
+          }))}
+          onClose={closeAddToList}
         />
       )}
     </div>

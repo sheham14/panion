@@ -3,6 +3,14 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
 
+const createSchema = z.object({
+  productId: z.string().min(1).nullish(),
+  name: z.string().trim().min(1).max(200).optional(),
+  quantity: z.number().finite().nonnegative().nullish(),
+  unit: z.string().max(50).nullish(),
+  notes: z.string().max(1000).nullish(),
+});
+
 const patchSchema = z.object({
   itemId: z.string(),
   isChecked: z.boolean().optional(),
@@ -40,9 +48,29 @@ export async function POST(
   if (!list)
     return NextResponse.json({ error: "List not found" }, { status: 404 });
 
-  const body = await request.json();
+  const parsed = createSchema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid body" }, { status: 400 });
+  }
+  const { productId, quantity, unit, notes } = parsed.data;
 
-  const { productId, name, quantity, unit, notes } = body;
+  // A product-linked add may arrive without a name. Add to list from search,
+  // home and the product page sent only { productId, quantity } and every one
+  // was rejected here — and the sheet ignored the 400, so nothing happened and
+  // nothing said why. Name it from the catalogue instead of demanding the
+  // client repeat it. Checking the product also turns an unknown id into a
+  // 404; it used to reach Prisma as a foreign-key violation and come back 500.
+  let name = parsed.data.name;
+  if (productId) {
+    const product = await prisma.product.findUnique({
+      where: { id: productId },
+      select: { name: true },
+    });
+    if (!product) {
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    }
+    name ??= product.name;
+  }
 
   if (!name)
     return NextResponse.json({ error: "name is required" }, { status: 400 });

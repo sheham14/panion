@@ -49,6 +49,7 @@ export default function AddToListSheet(props: Props) {
   const [creating, setCreating] = useState(false);
   const [newListName, setNewListName] = useState("");
   const [isPending, setIsPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/lists")
@@ -60,14 +61,20 @@ export default function AddToListSheet(props: Props) {
       .catch(() => setLoading(false));
   }, []);
 
-  async function handleAddToList(listId: string) {
+  async function handleAddToList(listId: string, knownName?: string) {
     if (addedTo.has(listId) || isPending) return;
     setIsPending(true);
+    setError(null);
+    // A list created a moment ago isn't in `lists` yet, so its name is passed in.
+    const listName =
+      knownName ?? lists.find((l) => l.id === listId)?.name ?? "that list";
 
     try {
       if (isRecipeMode) {
-        // Add all selected ingredients in parallel
-        await Promise.all(
+        // Add all selected items in parallel. `fetch` resolves on a 400, so
+        // each response is checked: treating "sent" as "added" is how a
+        // rejected add used to show a tick.
+        const responses = await Promise.all(
           props.ingredients.map((ing) => {
             const body = (() => {
               if (!ing.productId) {
@@ -124,21 +131,34 @@ export default function AddToListSheet(props: Props) {
             });
           }),
         );
+        const failed = responses.filter((r) => !r.ok).length;
+        if (failed > 0) {
+          setError(
+            `${failed} of ${responses.length} couldn't be added to ${listName}. Try again.`,
+          );
+          return;
+        }
         setAddedTo((prev) => new Set([...prev, listId]));
         // Close after brief confirmation in recipe mode
         setTimeout(onClose, 700);
       } else {
-        // Single product mode — unchanged behaviour
-
         const res = await fetch(`/api/lists/${listId}/items`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ productId: props.productId, quantity: 1 }),
+          body: JSON.stringify({
+            productId: props.productId,
+            name: props.productName,
+            quantity: 1,
+          }),
         });
-        if (res.ok) {
-          setAddedTo((prev) => new Set([...prev, listId]));
+        if (!res.ok) {
+          setError(`Couldn't add this to ${listName}. Try again.`);
+          return;
         }
+        setAddedTo((prev) => new Set([...prev, listId]));
       }
+    } catch {
+      setError(`Couldn't reach Panion to add to ${listName}. Check your connection.`);
     } finally {
       setIsPending(false);
     }
@@ -158,15 +178,17 @@ export default function AddToListSheet(props: Props) {
         setLists((prev) => [...prev, newList]);
         setNewListName("");
         setCreating(false);
-        handleAddToList(newList.id);
+        handleAddToList(newList.id, newList.name);
       }
     } finally {
       setIsPending(false);
     }
   }
 
+  // "items", not "ingredients": the multi-item mode also serves pantry and
+  // home selections, which are products rather than recipe ingredients.
   const headerSubtitle = isRecipeMode
-    ? `${props.ingredients.length} ingredient${props.ingredients.length !== 1 ? "s" : ""}`
+    ? `${props.ingredients.length} item${props.ingredients.length !== 1 ? "s" : ""}`
     : props.productName;
 
   return (
@@ -261,6 +283,12 @@ export default function AddToListSheet(props: Props) {
             </div>
           )}
         </div>
+
+        {error && (
+          <p role="alert" className="px-5 pt-3 text-[12px] text-[#ef4444]">
+            {error}
+          </p>
+        )}
 
         {/* Create new list */}
         <div className="px-5 pt-3">
