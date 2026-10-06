@@ -22,6 +22,7 @@
     "coverage": "tsx scripts/coverage.ts",
     "images": "tsx scripts/image-coverage.ts",
     "prices:clean": "tsx scripts/clear-bad-prices.ts",
+    "prices:store-brands": "tsx scripts/sweep-store-brands.ts",
     "role": "tsx scripts/grant-role.ts"
   },
   "dependencies": {
