@@ -145,7 +145,7 @@ Routes that operate on user-owned resources (lists, recipes, pantry, watchlist, 
 - [ ] `NEXTAUTH_URL` set to production origin
 - [ ] `NEXT_PUBLIC_VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` set (web push)
 - [ ] `SENDGRID_API_KEY`, `EMAIL_FROM`, `ADMIN_EMAIL` set (magic link + admin notifications)
-- [ ] `SENTRY_DSN` set (error reporting — without it, production errors reach only the Vercel logs)
+- [ ] `NEXT_PUBLIC_SENTRY_DSN` set (error reporting, browser and server — without it, production errors reach only the Vercel logs). Verify with `GET /api/admin/sentry-test` as a moderator.
 - [ ] `npm audit` — no high/critical findings
 - [ ] `npm test` — all tests pass
 - [ ] Verify middleware matcher covers all protected routes

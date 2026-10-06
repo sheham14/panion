@@ -13,7 +13,8 @@ const csp = [
   // Product/flyer imagery is proxied through our own domain or Vercel Blob.
   "img-src 'self' data: blob: https://*.public.blob.vercel-storage.com https://lh3.googleusercontent.com",
   "font-src 'self' data:",
-  "connect-src 'self' https://va.vercel-scripts.com https://vitals.vercel-insights.com",
+  // Sentry's ingest host, or browser error reports are blocked by this policy.
+  "connect-src 'self' https://va.vercel-scripts.com https://vitals.vercel-insights.com https://*.ingest.us.sentry.io",
   "frame-ancestors 'none'",
   "form-action 'self'",
   "base-uri 'self'",
