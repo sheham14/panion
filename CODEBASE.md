@@ -182,7 +182,7 @@ All routes return JSON. All protected routes call `getAuthenticatedUser()` first
 
 | Route | Methods | What it does |
 |---|---|---|
-| `/api/products` | GET | Search/filter products by name, category, page — returns current prices from each store and user's watchlist status. `page`/`limit` are clamped (max 100). Cached 5 min. |
+| `/api/products` | GET | Search/filter products by name, category, page — returns current prices from each store and user's watchlist status. `page`/`limit` are clamped (max 100). Never cached for sharing (`private, no-store`): the body carries the caller's watchlist. |
 | `/api/products/[id]` | GET | Fetch a specific product. |
 | `/api/products/[id]/prices` | GET | Price history for a product. `range` is capped at 365 days. |
 

@@ -99,8 +99,11 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json(shaped, {
     headers: {
-      // Cache for 5 min as per PLAN.md
-      "Cache-Control": "public, s-maxage=300, stale-while-revalidate=60",
+      // Never shared. This was `public, s-maxage=300`, but the body carries the
+      // caller's `isWatched` and the CDN's cache key ignores the session
+      // cookie: one shopper's watchlist could be served to another, and a
+      // signed-out response to everyone signed in.
+      "Cache-Control": "private, no-store",
     },
   });
 }

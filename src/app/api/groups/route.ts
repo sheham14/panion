@@ -25,9 +25,16 @@ const MIN_GROUP_SIZE = 2;
 const MAX_GROUPS = 12;
 const MAX_MEMBERS = 24;
 
+/**
+ * Responses are per caller (`isWatched`), so never cached where another
+ * shopper could be served them. Was `public, s-maxage=300`, and the CDN's
+ * cache key ignores the session cookie — same fix as /api/products.
+ */
+const NO_SHARE = { headers: { "Cache-Control": "private, no-store" } };
+
 export async function GET(request: NextRequest) {
   const q = (request.nextUrl.searchParams.get("q") ?? "").trim();
-  if (q.length < 2) return NextResponse.json({ groups: [] });
+  if (q.length < 2) return NextResponse.json({ groups: [] }, NO_SHARE);
 
   // Match the group slug itself as well as product names: "bread" should find
   // `multigrain-bread` even where no product name contains the bare word.
@@ -48,7 +55,7 @@ export async function GET(request: NextRequest) {
   });
 
   const groupNames = [...new Set(candidates.map((c) => c.subcategory!))];
-  if (groupNames.length === 0) return NextResponse.json({ groups: [] });
+  if (groupNames.length === 0) return NextResponse.json({ groups: [] }, NO_SHARE);
 
   // Who is already watched, so a group row can offer the same one-tap Watch
   // the flat results have. Optional, like `/api/products` — a guest still gets
@@ -206,12 +213,5 @@ export async function GET(request: NextRequest) {
     )
     .slice(0, MAX_GROUPS);
 
-  return NextResponse.json(
-    { groups },
-    {
-      headers: {
-        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=60",
-      },
-    },
-  );
+  return NextResponse.json({ groups }, NO_SHARE);
 }
