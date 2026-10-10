@@ -223,22 +223,40 @@ function ListItemRow({
     else if (diff < -20) setSwiped(false);
   }
 
+  // Tapping the row opens the edit sheet, which also holds "Remove from list".
+  // Swiping used to be the only way to reach edit and delete, which left a
+  // mouse, a trackpad or a keyboard with no way to change an item at all.
+  function onRowClick() {
+    if (item.isChecked) return;
+    if (swiped) {
+      setSwiped(false);
+      return;
+    }
+    onEdit(item);
+  }
+
   return (
     <div className="relative overflow-hidden border-b border-[#f5f5f5] dark:border-[#1e2528]">
-      {/* Swipe actions — only for active items */}
+      {/* Swipe actions — only for active items. Hidden behind the row until
+          swiped, so they stay out of the tab order until then; the edit sheet
+          is the keyboard path to the same two actions. */}
       {!item.isChecked && (
-        <div className="absolute right-0 top-0 bottom-0 flex">
+        <div className="absolute right-0 top-0 bottom-0 flex" aria-hidden={!swiped}>
           <button
             onClick={() => {
               setSwiped(false);
               onEdit(item);
             }}
+            tabIndex={swiped ? 0 : -1}
+            aria-label={`Edit ${item.name}`}
             className="w-10 flex items-center justify-center bg-[#f0fdf9] dark:bg-[#1a2e2a]"
           >
             <Pencil size={14} className="text-[#00b89e]" strokeWidth={1.5} />
           </button>
           <button
             onClick={() => onDelete(item.id)}
+            tabIndex={swiped ? 0 : -1}
+            aria-label={`Remove ${item.name}`}
             className="w-10 flex items-center justify-center bg-[#fef2f2] dark:bg-[#2e1a1a]"
           >
             <Trash2 size={14} className="text-[#ef4444]" strokeWidth={1.5} />
@@ -250,9 +268,10 @@ function ListItemRow({
       <div
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
+        onClick={onRowClick}
         className={[
           "flex items-center gap-2.5 px-4 py-3 bg-white dark:bg-[#0f1416] transition-all duration-200",
-          item.isChecked ? "opacity-50" : "",
+          item.isChecked ? "opacity-50" : "cursor-pointer",
           swiped && !item.isChecked ? "-translate-x-20" : "translate-x-0",
         ].join(" ")}
       >
@@ -262,6 +281,9 @@ function ListItemRow({
             e.stopPropagation();
             onCheck(item.id);
           }}
+          role="checkbox"
+          aria-checked={item.isChecked}
+          aria-label={`${item.name} — got it`}
           className={[
             "w-[22px] h-[22px] rounded-full border flex items-center justify-center flex-shrink-0 transition-all",
             item.isChecked
@@ -276,16 +298,20 @@ function ListItemRow({
 
         {/* Info */}
         <div className="flex-1 min-w-0">
-          <p
-            className={[
-              "text-[15px] font-semibold truncate",
-              item.isChecked
-                ? "line-through text-[#aaa]"
-                : "text-[#111] dark:text-[#e0e0e0]",
-            ].join(" ")}
-          >
-            {item.name}
-          </p>
+          {item.isChecked ? (
+            <p className="text-[15px] font-semibold truncate line-through text-[#aaa]">
+              {item.name}
+            </p>
+          ) : (
+            // A real button so the row can be focused and opened from the
+            // keyboard; the click bubbles to the row's handler.
+            <button
+              type="button"
+              className="block w-full text-left text-[15px] font-semibold truncate text-[#111] dark:text-[#e0e0e0] rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#00E5C3]"
+            >
+              {item.name}
+            </button>
+          )}
 
           {/* Notes */}
           {item.notes && !item.isChecked && (
@@ -353,6 +379,7 @@ function ListItemRow({
                 e.stopPropagation();
                 if (qty > 1) onQuantityChange(item.id, qty - 1);
               }}
+              aria-label={`One less ${item.name}`}
               className="w-6 h-6 rounded-lg border border-[#e0e0e0] dark:border-[#2e3538] flex items-center justify-center text-[#888] dark:text-[#555]"
             >
               <svg width="10" height="2" viewBox="0 0 10 2" fill="none">
@@ -373,6 +400,7 @@ function ListItemRow({
                 e.stopPropagation();
                 if (qty < 999) onQuantityChange(item.id, qty + 1);
               }}
+              aria-label={`One more ${item.name}`}
               className="w-6 h-6 rounded-lg border border-[#e0e0e0] dark:border-[#2e3538] flex items-center justify-center text-[#888] dark:text-[#555]"
             >
               <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
@@ -564,14 +592,19 @@ export default function ListsClient({
     const item = items.find((i) => i.id === itemId);
     if (!item || !activeList) return;
     const newChecked = !item.isChecked;
-    setItems((prev) =>
-      prev.map((i) => (i.id === itemId ? { ...i, isChecked: newChecked } : i)),
-    );
-    await fetch(`/api/lists/${activeList.id}/items`, {
+    const setChecked = (value: boolean) =>
+      setItems((prev) =>
+        prev.map((i) => (i.id === itemId ? { ...i, isChecked: value } : i)),
+      );
+    setChecked(newChecked);
+    // Optimistic, so a failed save has to be undone — otherwise the tick
+    // silently reverts on the next load.
+    const res = await fetch(`/api/lists/${activeList.id}/items`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ itemId, isChecked: newChecked }),
-    });
+    }).catch(() => null);
+    if (!res?.ok) setChecked(!newChecked);
   }
 
   function handleQuantityChange(itemId: string, quantity: number) {
@@ -650,36 +683,52 @@ export default function ListsClient({
       notes: string;
       customPrice: number | null;
     },
-  ) {
-    if (!activeList) return;
+  ): Promise<boolean> {
+    if (!activeList) return false;
     const res = await fetch(`/api/lists/${activeList.id}/items`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ itemId, ...data }),
-    });
-    if (!res.ok) return;
+    }).catch(() => null);
+    if (!res?.ok) return false;
     setItems((prev) =>
       prev.map((i) => (i.id === itemId ? { ...i, ...data } : i)),
     );
+    return true;
   }
 
   // ── Delete item ────────────────────────────
 
-  async function handleDelete(itemId: string) {
-    if (!activeList) return;
+  async function handleDelete(itemId: string): Promise<boolean> {
+    if (!activeList) return false;
+    const listId = activeList.id;
+    const index = items.findIndex((i) => i.id === itemId);
+    const removed = items[index];
+    if (!removed) return false;
+    const bumpCount = (delta: number) =>
+      setLists((prev) =>
+        prev.map((l) =>
+          l.id === listId
+            ? { ...l, itemCount: Math.max(0, l.itemCount + delta) }
+            : l,
+        ),
+      );
     setItems((prev) => prev.filter((i) => i.id !== itemId));
-    await fetch(`/api/lists/${activeList.id}/items`, {
+    bumpCount(-1);
+    const res = await fetch(`/api/lists/${listId}/items`, {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ itemId }),
+    }).catch(() => null);
+    if (res?.ok) return true;
+    // Put it back where it was rather than letting it reappear on reload.
+    setItems((prev) => {
+      const next = [...prev];
+      next.splice(Math.min(index, next.length), 0, removed);
+      return next;
     });
-    setLists((prev) =>
-      prev.map((l) =>
-        l.id === activeList.id
-          ? { ...l, itemCount: Math.max(0, l.itemCount - 1) }
-          : l,
-      ),
-    );
+    bumpCount(1);
+    return false;
   }
 
   // ── Empty state ────────────────────────────
@@ -1224,6 +1273,7 @@ export default function ListsClient({
               : null,
           }}
           onSave={handleSaveEdit}
+          onDelete={handleDelete}
           onClose={() => setEditingItem(null)}
         />
       )}

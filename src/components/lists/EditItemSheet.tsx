@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { X } from "lucide-react";
 import { getAllowedUnits } from "@/lib/unit-convert";
 
@@ -35,11 +36,13 @@ type Props = {
       notes: string;
       customPrice: number | null;
     },
-  ) => Promise<void>;
+  ) => Promise<boolean>;
+  /** Resolves false when the server refused, so the sheet can stay open. */
+  onDelete: (id: string) => Promise<boolean>;
   onClose: () => void;
 };
 
-export default function EditItemSheet({ item, onSave, onClose }: Props) {
+export default function EditItemSheet({ item, onSave, onDelete, onClose }: Props) {
   const [customPrice, setCustomPrice] = useState<string>(
     item.customPrice !== null ? String(item.customPrice) : "",
   );
@@ -49,6 +52,8 @@ export default function EditItemSheet({ item, onSave, onClose }: Props) {
   const [selectedUnit, setSelectedUnit] = useState(item.unit ?? "each");
   const [notes, setNotes] = useState(item.notes ?? "");
   const [saving, setSaving] = useState(false);
+  const [removing, setRemoving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const allowedUnits = getAllowedUnits(
     item.product?.unitMeasure,
     item.product?.unitSize,
@@ -67,24 +72,54 @@ export default function EditItemSheet({ item, onSave, onClose }: Props) {
     return () => { document.body.style.overflow = ""; };
   }, []);
 
+  // Separate from the scroll lock: the parent passes a fresh `onClose` each
+  // render, and re-binding a key listener is cheap where re-toggling the
+  // body's overflow is not.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  // Both actions used to close the sheet whatever the server said, so a
+  // failed save looked exactly like a successful one.
   async function handleSave() {
     setSaving(true);
-    await onSave(item.id, {
+    setError(null);
+    const ok = await onSave(item.id, {
       quantity: Math.max(1, parseInt(String(quantity)) || 1),
       unit,
       notes,
       customPrice: customPrice ? parseFloat(customPrice) : null,
     });
     setSaving(false);
-    onClose();
+    if (ok) onClose();
+    else setError("Couldn't save that. Check your connection and try again.");
   }
+
+  async function handleRemove() {
+    setRemoving(true);
+    setError(null);
+    const ok = await onDelete(item.id);
+    setRemoving(false);
+    if (ok) onClose();
+    else setError("Couldn't remove that. Check your connection and try again.");
+  }
+
   return (
     <>
       {/* Backdrop */}
       <div className="fixed inset-0 bg-black/40 z-20" onClick={onClose} />
 
       {/* Sheet */}
-      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-sm bg-white dark:bg-[#1e2528] rounded-t-[20px] z-30 pb-8">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Edit ${item.name}`}
+        className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-sm bg-white dark:bg-[#1e2528] rounded-t-[20px] z-30 pb-8"
+      >
         {/* Handle */}
         <div className="flex justify-center pt-3 pb-1">
           <div className="w-9 h-1 rounded-full bg-[#e0e0e0] dark:bg-[#2e3538]" />
@@ -100,6 +135,7 @@ export default function EditItemSheet({ item, onSave, onClose }: Props) {
           </p>
           <button
             onClick={onClose}
+            aria-label="Close"
             className="w-7 h-7 rounded-full bg-[#f4f4f4] dark:bg-[#242b2e] flex items-center justify-center"
           >
             <X size={13} className="text-[#888]" />
@@ -230,19 +266,42 @@ export default function EditItemSheet({ item, onSave, onClose }: Props) {
           </div>
         )}
 
-        {/* Report */}
-        <p className="text-[11px] text-[#aaa] text-center pt-3">
-          Price looks wrong? <span className="text-[#00b89e]">Report it</span>
-        </p>
+        {/* Report — reporting lives on the product page, which knows every
+            store's price. This used to be plain text styled as a link. An
+            unlinked item has no stored price to be wrong, so it gets none. */}
+        {item.product && (
+          <p className="text-[11px] text-[#aaa] text-center pt-3">
+            Price looks wrong?{" "}
+            <Link
+              href={`/product/${item.product.id}`}
+              className="text-[#00b89e] font-medium"
+            >
+              Report it
+            </Link>
+          </p>
+        )}
+
+        {error && (
+          <p role="alert" className="text-[12px] text-[#ef4444] text-center px-5 pt-3">
+            {error}
+          </p>
+        )}
 
         {/* Save */}
         <div className="px-5 pt-3">
           <button
             onClick={handleSave}
-            disabled={saving}
+            disabled={saving || removing}
             className="w-full py-3 bg-[#00E5C3] rounded-xl text-[14px] font-medium text-[#004d40] active:scale-[0.98] transition-all disabled:opacity-60"
           >
             {saving ? "Saving…" : "Save changes"}
+          </button>
+          <button
+            onClick={handleRemove}
+            disabled={saving || removing}
+            className="w-full py-2.5 mt-2 text-[13px] font-medium text-[#ef4444] disabled:opacity-60"
+          >
+            {removing ? "Removing…" : "Remove from list"}
           </button>
         </div>
       </div>
