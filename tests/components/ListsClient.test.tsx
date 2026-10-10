@@ -99,6 +99,58 @@ describe("ListsClient without swiping", () => {
     expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
 
+  it("links a typed-in item to a product found in the sheet", async () => {
+    const linked = {
+      id: "prod_1",
+      name: "Natrel 2% Milk 2L",
+      brand: "Natrel",
+      unitSize: "2L",
+      unitMeasure: "ml",
+      unitQuantity: 2000,
+      storeProducts: [
+        {
+          id: "sp_1",
+          currentPrice: 5.29,
+          isActive: true,
+          isSale: false,
+          store: { id: "s1", chain: "Walmart", name: "Walmart Kenmount" },
+        },
+      ],
+    };
+    fetchMock.mockImplementation(async (url: string, init?: RequestInit) => {
+      if (url.startsWith("/api/products")) {
+        return new Response(
+          JSON.stringify([
+            { id: "prod_1", name: linked.name, brand: "Natrel", unitSize: "2L", bestPrice: 5.29, bestStore: "walmart" },
+          ]),
+          { status: 200 },
+        );
+      }
+      if (init?.method === "PATCH") {
+        return new Response(
+          JSON.stringify({ ...list.items[0], customPrice: null, product: linked }),
+          { status: 200 },
+        );
+      }
+      return new Response("{}", { status: 200 });
+    });
+    renderList();
+    await userEvent.click(screen.getByRole("button", { name: "Oat milk" }));
+    await userEvent.type(screen.getByRole("searchbox", { name: /search products/i }), "milk");
+    await userEvent.click(await screen.findByRole("button", { name: /Natrel 2% Milk 2L/ }));
+    await userEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    const patchCall = fetchMock.mock.calls.find(([, init]) => init?.method === "PATCH");
+    expect(JSON.parse(patchCall![1].body)).toMatchObject({
+      itemId: "item_1",
+      productId: "prod_1",
+      customPrice: null,
+    });
+    // Priced from the linked product's stores, without a reload.
+    expect(screen.getByText("$5.29")).toBeInTheDocument();
+  });
+
   it("closes the sheet with Escape", async () => {
     renderList();
     await userEvent.click(screen.getByRole("button", { name: "Oat milk" }));

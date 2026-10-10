@@ -2,7 +2,9 @@
 
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { Plus, Check, Trash2, Pencil, ChevronDown } from "lucide-react";
-import EditItemSheet from "@/components/lists/EditItemSheet";
+import EditItemSheet, {
+  type EditItemChanges,
+} from "@/components/lists/EditItemSheet";
 import ListDropdown from "@/components/lists/ListDropdown";
 import ListOptionsMenu from "@/components/lists/ListOptionsMenu";
 import PantryFromListSheet from "@/components/pantry/PantryFromListSheet";
@@ -677,12 +679,7 @@ export default function ListsClient({
 
   async function handleSaveEdit(
     itemId: string,
-    data: {
-      quantity: number;
-      unit: string;
-      notes: string;
-      customPrice: number | null;
-    },
+    data: EditItemChanges,
   ): Promise<boolean> {
     if (!activeList) return false;
     const res = await fetch(`/api/lists/${activeList.id}/items`, {
@@ -691,8 +688,24 @@ export default function ListsClient({
       body: JSON.stringify({ itemId, ...data }),
     }).catch(() => null);
     if (!res?.ok) return false;
+    // The server returns the item with its product's store rows, which is
+    // what a newly linked item needs to be priced without a reload.
+    const saved: Pick<ListItem, "product" | "customPrice"> | null = await res
+      .json()
+      .catch(() => null);
     setItems((prev) =>
-      prev.map((i) => (i.id === itemId ? { ...i, ...data } : i)),
+      prev.map((i) =>
+        i.id === itemId
+          ? {
+              ...i,
+              quantity: data.quantity,
+              unit: data.unit,
+              notes: data.notes,
+              customPrice: saved ? saved.customPrice : data.customPrice,
+              product: saved ? saved.product : i.product,
+            }
+          : i,
+      ),
     );
     return true;
   }

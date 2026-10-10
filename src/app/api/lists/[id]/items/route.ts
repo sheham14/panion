@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
+import type { ListItemGetPayload } from "../../../../../../prisma/generated/models/ListItem";
 
 const createSchema = z.object({
   productId: z.string().min(1).nullish(),
@@ -11,14 +12,56 @@ const createSchema = z.object({
   notes: z.string().max(1000).nullish(),
 });
 
+// Bounded like `createSchema`: this accepted any number, so a negative
+// quantity or price could be saved and then summed into a list total.
 const patchSchema = z.object({
   itemId: z.string(),
   isChecked: z.boolean().optional(),
-  quantity: z.number().optional(),
-  unit: z.string().optional(),
-  notes: z.string().optional(),
-  customPrice: z.number().nullable().optional(),
+  quantity: z.number().finite().nonnegative().max(999).optional(),
+  unit: z.string().max(50).optional(),
+  notes: z.string().max(1000).optional(),
+  customPrice: z.number().finite().nonnegative().max(100_000).nullable().optional(),
+  /** Link a typed-in item to a catalogue product, change it, or unlink (null). */
+  productId: z.string().min(1).nullable().optional(),
 });
+
+/** What every write returns: the item with its product's live store rows. */
+const itemInclude = {
+  product: {
+    include: {
+      storeProducts: {
+        where: { isActive: true },
+        include: {
+          store: { select: { id: true, chain: true, name: true } },
+        },
+        orderBy: { currentPrice: "asc" },
+      },
+    },
+  },
+} as const;
+
+type ItemWithProduct = ListItemGetPayload<{ include: typeof itemInclude }>;
+
+function serializeItem(item: ItemWithProduct) {
+  return {
+    ...item,
+    quantity: item.quantity !== null ? Number(item.quantity) : null,
+    customPrice: item.customPrice ? Number(item.customPrice) : null,
+    product: item.product
+      ? {
+          ...item.product,
+          unitQuantity:
+            item.product.unitQuantity !== null
+              ? Number(item.product.unitQuantity)
+              : null,
+          storeProducts: item.product.storeProducts.map((sp) => ({
+            ...sp,
+            currentPrice: sp.currentPrice ? Number(sp.currentPrice) : null,
+          })),
+        }
+      : null,
+  };
+}
 
 const deleteSchema = z.union([
   z.object({ itemId: z.string() }),
@@ -115,36 +158,9 @@ export async function POST(
             ? Number(existing.quantity) + (quantity ?? 1)
             : (quantity ?? 1),
       },
-      include: {
-        product: {
-          include: {
-            storeProducts: {
-              where: { isActive: true },
-              include: {
-                store: { select: { id: true, chain: true, name: true } },
-              },
-              orderBy: { currentPrice: "asc" },
-            },
-          },
-        },
-      },
+      include: itemInclude,
     });
-    const serialized = {
-      ...item,
-      quantity: item.quantity !== null ? Number(item.quantity) : null,
-      customPrice: item.customPrice ? Number(item.customPrice) : null,
-      product: item.product
-        ? {
-            ...item.product,
-            storeProducts: item.product.storeProducts.map((sp) => ({
-              ...sp,
-              currentPrice: sp.currentPrice ? Number(sp.currentPrice) : null,
-            })),
-          }
-        : null,
-    };
-
-    return NextResponse.json(serialized, { status: 200 });
+    return NextResponse.json(serializeItem(item), { status: 200 });
   }
 
   // No duplicate — proceed with create as before
@@ -159,39 +175,9 @@ export async function POST(
       customPrice: lastCustomPrice,
       sortOrder: (lastItem?.sortOrder ?? -1) + 1,
     },
-    include: {
-      product: {
-        include: {
-          storeProducts: {
-            where: { isActive: true },
-            include: {
-              store: { select: { id: true, chain: true, name: true } },
-            },
-            orderBy: { currentPrice: "asc" },
-          },
-        },
-      },
-    },
+    include: itemInclude,
   });
-  const serialized = {
-    ...item,
-    quantity:
-      item.quantity !== null && item.quantity !== undefined
-        ? Number(item.quantity)
-        : null,
-    customPrice: item.customPrice ? Number(item.customPrice) : null,
-    product: item.product
-      ? {
-          ...item.product,
-          storeProducts: item.product.storeProducts.map((sp) => ({
-            ...sp,
-            currentPrice: sp.currentPrice ? Number(sp.currentPrice) : null,
-          })),
-        }
-      : null,
-  };
-
-  return NextResponse.json(serialized, { status: 201 });
+  return NextResponse.json(serializeItem(item), { status: 201 });
 }
 
 export async function PATCH(
@@ -207,7 +193,7 @@ export async function PATCH(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const body = await req.json();
+  const body = await req.json().catch(() => null);
   const parsed = patchSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid body" }, { status: 400 });
@@ -224,6 +210,18 @@ export async function PATCH(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
+  // Linking is checked like POST: an unknown id would otherwise reach Prisma
+  // as a foreign-key violation and come back a 500.
+  if (data.productId) {
+    const product = await prisma.product.findUnique({
+      where: { id: data.productId },
+      select: { id: true },
+    });
+    if (!product) {
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    }
+  }
+
   // Only update fields that were provided
   const updateData: Record<string, unknown> = {};
   if (data.isChecked !== undefined) updateData.isChecked = data.isChecked;
@@ -231,10 +229,17 @@ export async function PATCH(
   if (data.unit !== undefined) updateData.unit = data.unit;
   if (data.notes !== undefined) updateData.notes = data.notes;
   if (data.customPrice !== undefined) updateData.customPrice = data.customPrice;
+  if (data.productId !== undefined) {
+    updateData.productId = data.productId;
+    // Store prices replace a hand-entered one once the item is linked; left
+    // behind, it would come back as the price if the item were unlinked.
+    if (data.productId) updateData.customPrice = null;
+  }
 
   const updated = await prisma.listItem.update({
     where: { id: itemId },
     data: updateData,
+    include: itemInclude,
   });
 
   // Touch list updatedAt so dropdown sorts correctly
@@ -243,7 +248,7 @@ export async function PATCH(
     data: { updatedAt: new Date() },
   });
 
-  return NextResponse.json(updated);
+  return NextResponse.json(serializeItem(updated));
 }
 
 export async function DELETE(
@@ -259,7 +264,7 @@ export async function DELETE(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const body = await req.json();
+  const body = await req.json().catch(() => null);
   const parsed = deleteSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid body" }, { status: 400 });
