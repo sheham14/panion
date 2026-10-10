@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   label,
+  listItemFor,
   packsFor,
   planRecipeShopping,
   type ShoppingIngredient,
@@ -173,5 +174,40 @@ describe("planRecipeShopping", () => {
     expect(walmart.total).toBeLessThan(pricing.baskets.find((b) => b.chain === "sobeys")!.total);
     expect(pricing.ranked[0].chain).toBe("sobeys");
     expect(walmart.missing.map((m) => m.itemId)).toEqual(["i2"]);
+  });
+});
+
+describe("listItemFor", () => {
+  const base = {
+    id: "i1",
+    name: "Shredded mozzarella",
+    productId: null,
+    unit: "g",
+  };
+
+  it("adds a picked ingredient as whole packages of the pick", () => {
+    const mozz = product("p1", "Great Value", "Mozzarella", { qty: 320, measure: "g" }, [
+      ["walmart", 5],
+    ]);
+    const [pick] = Object.values(
+      planRecipeShopping(
+        [ingredient("i1", "Shredded mozzarella", { quantity: 600, unit: "g", groupSlug: "mozz" })],
+        new Map([["mozz", [mozz]]]),
+        ["walmart"],
+      ).picks,
+    );
+    expect(listItemFor(base, 600, pick)).toMatchObject({
+      productId: "p1",
+      quantity: 2,
+      unit: null,
+    });
+  });
+
+  it("keeps an unpriced ingredient as the recipe states it", () => {
+    expect(listItemFor({ ...base, productId: "linked" }, 200, null)).toMatchObject({
+      productId: "linked",
+      quantity: 200,
+      unit: "g",
+    });
   });
 });

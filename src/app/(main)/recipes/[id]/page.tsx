@@ -6,11 +6,11 @@ import { Suspense } from "react";
 import RecipeDetailClient from "@/components/recipes/RecipeDetailClient";
 import { GUEST_RECIPE_DETAILS } from "@/lib/guest-data";
 import { ensureIngredientGroups } from "@/lib/recipes/match-ingredients";
+import type { IngredientPick } from "@/lib/recipes/recipe-shopping";
 import {
-  planRecipeShopping,
-  type IngredientPick,
-  type ShoppingProduct,
-} from "@/lib/recipes/recipe-shopping";
+  planRecipesForUser,
+  plannableProductSelect,
+} from "@/lib/recipes/load-shopping";
 
 export type RecipeStep = { text: string; timerMinutes: number | null };
 
@@ -65,47 +65,6 @@ export type RecipeDetailData = {
   shopping?: RecipeShoppingSummary | null;
 };
 
-/** Store rows with a live price, shaped for pricing. */
-const pricedRows = {
-  where: { isActive: true, currentPrice: { not: null } },
-  select: {
-    currentPrice: true,
-    isSale: true,
-    store: { select: { name: true, chain: true } },
-  },
-} as const;
-
-type PricedProduct = {
-  id: string;
-  name: string;
-  brand: string | null;
-  unitSize: string | null;
-  unitQuantity: unknown;
-  unitMeasure: string | null;
-  storeProducts: {
-    currentPrice: unknown;
-    isSale: boolean;
-    store: { name: string; chain: string };
-  }[];
-};
-
-function toShoppingProduct(p: PricedProduct): ShoppingProduct {
-  return {
-    id: p.id,
-    name: p.name,
-    brand: p.brand,
-    unitSize: p.unitSize,
-    unitQuantity: p.unitQuantity ? Number(p.unitQuantity) : null,
-    unitMeasure: p.unitMeasure,
-    prices: p.storeProducts.map((sp) => ({
-      price: Number(sp.currentPrice),
-      isSale: sp.isSale,
-      storeName: sp.store.name,
-      chain: sp.store.chain.toLowerCase(),
-    })),
-  };
-}
-
 function parseSteps(value: unknown): RecipeStep[] {
   if (!Array.isArray(value)) return [];
   return value
@@ -135,9 +94,13 @@ async function RecipeDetail({ id }: { id: string }) {
   // view, once. Every later view reads the stored groups.
   const head = await prisma.recipe.findUnique({
     where: { id },
-    select: { isActive: true, ingredientsMatchedAt: true },
+    select: { isActive: true, ingredientsMatchedAt: true, userId: true },
   });
   if (!head || !head.isActive) redirect("/lists");
+  // The owner's recipes and the built-in ones only, as `GET /api/recipes/[id]`
+  // already enforces. The page didn't, so anyone with a link could read
+  // someone else's recipe.
+  if (head.userId !== null && head.userId !== user.id) redirect("/recipes");
   if (!head.ingredientsMatchedAt) await ensureIngredientGroups(id);
 
   const recipe = await prisma.recipe.findUnique({
@@ -145,103 +108,15 @@ async function RecipeDetail({ id }: { id: string }) {
     include: {
       ingredients: {
         orderBy: { sortOrder: "asc" },
-        include: {
-          product: {
-            select: {
-              id: true,
-              name: true,
-              brand: true,
-              unitSize: true,
-              unitQuantity: true,
-              unitMeasure: true,
-              storeProducts: pricedRows,
-            },
-          },
-        },
+        include: { product: { select: plannableProductSelect } },
       },
     },
   });
 
   if (!recipe || !recipe.isActive) redirect("/lists");
 
-  // Pantry match — fuzzy case-insensitive contains (no-op until pantry is built)
-  const pantryItems = await prisma.pantryItem.findMany({
-    where: { userId: user.id },
-    select: { name: true },
-  });
-  const pantryNames = pantryItems.map((p) => p.name.toLowerCase());
-  const inPantryById = new Map(
-    recipe.ingredients.map((ing) => {
-      const nameLower = ing.name.toLowerCase();
-      return [
-        ing.id,
-        pantryNames.some((p) => p.includes(nameLower) || nameLower.includes(p)),
-      ] as const;
-    }),
-  );
-
-  // Every member of the groups the ingredients are bought as, with live prices.
-  const slugs = [
-    ...new Set(
-      recipe.ingredients
-        .filter((i) => !i.productId && i.groupSlug)
-        .map((i) => i.groupSlug as string),
-    ),
-  ];
-  const members = slugs.length
-    ? await prisma.product.findMany({
-        where: { isActive: true, subcategory: { in: slugs } },
-        select: {
-          id: true,
-          name: true,
-          brand: true,
-          unitSize: true,
-          unitQuantity: true,
-          unitMeasure: true,
-          subcategory: true,
-          storeProducts: pricedRows,
-        },
-      })
-    : [];
-  const membersByGroup = new Map<string, ShoppingProduct[]>();
-  for (const m of members) {
-    if (m.storeProducts.length === 0) continue;
-    const slug = m.subcategory as string;
-    membersByGroup.set(slug, [...(membersByGroup.get(slug) ?? []), toShoppingProduct(m)]);
-  }
-
-  // The shopper's stores, as the list page uses them. With none chosen, price
-  // at every active store rather than show nothing.
-  const preferred = await prisma.userPreferredStore.findMany({
-    where: { userId: user.id },
-    select: { store: { select: { chain: true } } },
-  });
-  const chains = preferred.length
-    ? preferred.map((p) => p.store.chain.toLowerCase())
-    : (
-        await prisma.store.findMany({
-          where: { isActive: true },
-          select: { chain: true },
-          distinct: ["chain"],
-        })
-      ).map((s) => s.chain.toLowerCase());
-
-  const { picks, pricing } = planRecipeShopping(
-    recipe.ingredients.map((ing) => ({
-      id: ing.id,
-      name: ing.name,
-      quantity: ing.quantity ? Number(ing.quantity) : null,
-      unit: ing.unit ?? null,
-      inPantry: inPantryById.get(ing.id) ?? false,
-      linked:
-        ing.product && ing.product.storeProducts.length > 0
-          ? toShoppingProduct(ing.product)
-          : null,
-      groupSlug: ing.groupSlug,
-    })),
-    membersByGroup,
-    chains,
-  );
+  const plan = (await planRecipesForUser(user.id, [recipe])).get(recipe.id)!;
+  const { picks, pricing, inPantry: inPantryById } = plan;
 
   const ingredients: SerializedIngredient[] = recipe.ingredients.map((ing) => {
     const pick = picks[ing.id] ?? null;

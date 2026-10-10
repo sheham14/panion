@@ -135,6 +135,63 @@ export function packsFor(
   return packs >= 1 && packs <= MAX_PACKS ? packs : 1;
 }
 
+/** What "Add to list" sends for one ingredient — `AddToListSheet`'s item shape. */
+export type RecipeListItem = {
+  id: string;
+  name: string;
+  productId: string | null;
+  quantity: number | null;
+  unit: string | null;
+  productUnitQuantity: number | null;
+  productUnitMeasure: string | null;
+  productUnitSize: string | null;
+};
+
+/**
+ * One ingredient as a list item, at `quantity` (already scaled for servings).
+ *
+ * A priced ingredient goes on the list as whole packages of the product picked
+ * for it. Sent as "2 cups", the list cannot convert cups and would price two
+ * cartons of milk. Shared by the recipe page and the recipes index so the two
+ * add the same thing.
+ */
+export function listItemFor(
+  ing: {
+    id: string;
+    name: string;
+    productId: string | null;
+    unit: string | null;
+    productUnitQuantity?: number | null;
+    productUnitMeasure?: string | null;
+    productUnitSize?: string | null;
+  },
+  quantity: number | null,
+  pick: IngredientPick | null | undefined,
+): RecipeListItem {
+  if (pick) {
+    return {
+      id: ing.id,
+      name: ing.name,
+      productId: pick.productId,
+      quantity: packsFor(quantity, ing.unit, pick),
+      unit: null,
+      productUnitQuantity: null,
+      productUnitMeasure: null,
+      productUnitSize: null,
+    };
+  }
+  return {
+    id: ing.id,
+    name: ing.name,
+    productId: ing.productId,
+    quantity,
+    unit: ing.unit,
+    productUnitQuantity: ing.productUnitQuantity ?? null,
+    productUnitMeasure: ing.productUnitMeasure ?? null,
+    productUnitSize: ing.productUnitSize ?? null,
+  };
+}
+
 /**
  * Brand plus name, without saying the brand twice — PC Express names often
  * already lead with it, and a plain join read "No Name No Name Club Pack

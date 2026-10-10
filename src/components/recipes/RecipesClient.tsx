@@ -103,7 +103,7 @@ export default function RecipesClient({
       {addToListRecipe && (
         <AddToListSheet
           mode="recipe"
-          ingredients={addToListRecipe.ingredients}
+          ingredients={addToListRecipe.toBuy ?? addToListRecipe.ingredients}
           onClose={() => setAddToListRecipe(null)}
         />
       )}

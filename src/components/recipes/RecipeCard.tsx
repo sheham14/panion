@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Plus, Trash2, Pencil, MoreHorizontal } from "lucide-react";
+import type { RecipeListItem } from "@/lib/recipes/recipe-shopping";
 
 export type Recipe = {
   id: string;
@@ -23,6 +24,12 @@ export type Recipe = {
     productUnitMeasure?: string | null;
     productUnitSize?: string | null;
   }[];
+  /**
+   * What "Add to list" adds: the ingredients not already in the pantry, as
+   * the products the recipe page picks for them. Absent in guest mode, which
+   * falls back to `ingredients`.
+   */
+  toBuy?: RecipeListItem[];
 };
 
 function DeleteConfirmSheet({

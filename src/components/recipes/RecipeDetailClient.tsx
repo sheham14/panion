@@ -7,7 +7,7 @@ import type {
   RecipeDetailData,
   RecipeShoppingSummary,
 } from "@/app/(main)/recipes/[id]/page";
-import { packsFor } from "@/lib/recipes/recipe-shopping";
+import { listItemFor } from "@/lib/recipes/recipe-shopping";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -809,37 +809,15 @@ export default function RecipeDetailClient({
       {showSheet && (
         <AddToListSheet
           mode="recipe"
-          ingredients={selectedIngredients.map((ing) => {
-            const quantity =
+          ingredients={selectedIngredients.map((ing) =>
+            listItemFor(
+              ing,
               ing.quantity !== null
                 ? Math.round(ing.quantity * scale * 10) / 10
-                : null;
-            // A priced ingredient goes on the list as whole packages of the
-            // product picked for it. Sent as "2 cups", the list cannot convert
-            // cups and would price two cartons of milk.
-            if (ing.pick) {
-              return {
-                id: ing.id,
-                name: ing.name,
-                productId: ing.pick.productId,
-                quantity: packsFor(quantity, ing.unit, ing.pick),
-                unit: null,
-                productUnitQuantity: null,
-                productUnitMeasure: null,
-                productUnitSize: null,
-              };
-            }
-            return {
-              id: ing.id,
-              name: ing.name,
-              productId: ing.productId,
-              quantity,
-              unit: ing.unit,
-              productUnitQuantity: ing.productUnitQuantity,
-              productUnitMeasure: ing.productUnitMeasure,
-              productUnitSize: ing.productUnitSize,
-            };
-          })}
+                : null,
+              ing.pick,
+            ),
+          )}
           onClose={() => setShowSheet(false)}
         />
       )}
