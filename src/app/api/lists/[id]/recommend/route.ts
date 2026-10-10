@@ -1,16 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
+import { computeListPricing } from "@/lib/list-pricing";
 
-type StoreTotal = {
-  store: { id: string; chain: string; name: string };
-  total: number;
-  matchedItems: number;
-  items: { name: string; price: number; storeProductId: string }[];
-};
-
+/**
+ * Which of the shopper's stores to buy this list at — the same answer the
+ * list page gives, because it is the same function.
+ *
+ * This route used to keep its own ranking: coverage first, then sticker total
+ * per store, quantity times price with no unit conversion and no custom
+ * prices, across every store rather than the shopper's. So it could name a
+ * different "best" store than the list page did for the same list. It now
+ * returns `computeListPricing()` (CLAUDE.md rule 12): stores rank on the basket
+ * every one of them can price, and each states what it covers and leaves out.
+ */
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { user, error } = await getAuthenticatedUser();
@@ -18,98 +23,89 @@ export async function GET(
 
   const { id } = await params;
 
-  const list = await prisma.list.findFirst({
-    where: { id, userId: user.id },
-    include: {
-      items: {
-        where: { isChecked: false },
-        include: {
-          product: {
-            include: {
-              storeProducts: {
-                where: { isActive: true },
-                include: {
-                  store: { select: { id: true, chain: true, name: true } },
+  const [list, preferred] = await Promise.all([
+    prisma.list.findFirst({
+      where: { id, userId: user.id },
+      include: {
+        items: {
+          orderBy: { sortOrder: "asc" },
+          include: {
+            product: {
+              select: {
+                unitSize: true,
+                unitMeasure: true,
+                unitQuantity: true,
+                storeProducts: {
+                  where: { isActive: true },
+                  select: {
+                    currentPrice: true,
+                    store: { select: { chain: true } },
+                  },
                 },
               },
             },
           },
         },
       },
-    },
-  });
+    }),
+    prisma.userPreferredStore.findMany({
+      where: { userId: user.id },
+      select: { store: { select: { chain: true } } },
+    }),
+  ]);
 
   if (!list)
     return NextResponse.json({ error: "List not found" }, { status: 404 });
 
-  const storeTotals: { [storeId: string]: StoreTotal } = {};
+  const items = list.items.map((item) => ({
+    id: item.id,
+    isChecked: item.isChecked,
+    quantity: item.quantity !== null ? Number(item.quantity) : null,
+    unit: item.unit,
+    customPrice: item.customPrice !== null ? Number(item.customPrice) : null,
+    product: item.product
+      ? {
+          unitSize: item.product.unitSize,
+          unitMeasure: item.product.unitMeasure,
+          unitQuantity:
+            item.product.unitQuantity !== null
+              ? Number(item.product.unitQuantity)
+              : null,
+          storeProducts: item.product.storeProducts.map((sp) => ({
+            currentPrice: sp.currentPrice !== null ? Number(sp.currentPrice) : null,
+            store: sp.store,
+          })),
+        }
+      : null,
+  }));
 
-  // Free-text items belong to the list, not to any one store. They used to be
-  // pushed into whatever stores happened to already exist in `storeTotals`,
-  // which meant an unmatched *first* item was dropped entirely (the map was
-  // still empty) and the rest were scattered per-store (audit M3).
-  const unmatchedItems: string[] = [];
-
-  for (const item of list.items) {
-    if (!item.product) {
-      unmatchedItems.push(item.name);
-      continue;
-    }
-
-    for (const sp of item.product.storeProducts) {
-      if (!sp.currentPrice) continue;
-
-      const storeId = sp.store.id;
-      if (!storeTotals[storeId]) {
-        storeTotals[storeId] = {
-          store: sp.store,
-          total: 0,
-          matchedItems: 0,
-          items: [],
-        };
-      }
-
-      const lineTotal = Number(sp.currentPrice) * Number(item.quantity);
-      storeTotals[storeId].total += lineTotal;
-      storeTotals[storeId].matchedItems += 1;
-      storeTotals[storeId].items.push({
-        name: item.name,
-        price: Number(sp.currentPrice),
-        storeProductId: sp.id,
-      });
-    }
-  }
-
-  // Rank by coverage first, then price. Sorting on total alone let a store that
-  // stocks 1 of your 10 items "win" as cheapest despite being unable to fill
-  // the basket (audit M3).
-  const ranked = Object.values(storeTotals).sort((a, b) =>
-    b.matchedItems !== a.matchedItems
-      ? b.matchedItems - a.matchedItems
-      : a.total - b.total,
+  // Like the list page: no stores chosen means nothing to rank, said as such.
+  const pricing = computeListPricing(
+    items,
+    preferred.map((p) => p.store.chain.toLowerCase()),
   );
-
-  const best = ranked[0];
+  const nameOf = new Map(list.items.map((i) => [i.id, i.name]));
+  const round = (n: number) => Math.round(n * 100) / 100;
 
   return NextResponse.json({
-    listId: id,
+    listId: list.id,
     listName: list.name,
-    totalItems: list.items.length,
-    matchableItems: list.items.length - unmatchedItems.length,
-    // One top-level list rather than a copy per store.
-    unmatchedItems,
-    ranked: ranked.map((s, index) => ({
-      rank: index + 1,
-      store: s.store,
-      total: Math.round(s.total * 100) / 100,
-      matchedItems: s.matchedItems,
-      // Only meaningful between stores with the same coverage; null otherwise
-      // so the UI doesn't present an apples-to-oranges "saving".
-      savingsVsBest:
-        index === 0 || s.matchedItems !== best.matchedItems
-          ? null
-          : Math.round((s.total - best.total) * 100) / 100,
-      items: s.items,
+    itemCount: pricing.itemCount,
+    hasPreferredStores: preferred.length > 0,
+    best: pricing.ranked[0]?.chain ?? null,
+    stores: pricing.baskets.map((b) => ({
+      chain: b.chain,
+      total: round(b.total),
+      /** Comparable between stores: the shared basket only. */
+      comparableTotal: round(b.comparableTotal),
+      covered: b.covered.length,
+      missing: b.missing.map((m) => ({
+        name: nameOf.get(m.itemId) ?? "",
+        elsewhere: m.elsewhere,
+      })),
     })),
+    sharedItemCount: pricing.commonItemIds.length,
+    unlinkedItems: pricing.unlinkedItemIds.map((itemId) => nameOf.get(itemId) ?? ""),
+    cheapestSplit: pricing.cheapestSplit,
   });
 }

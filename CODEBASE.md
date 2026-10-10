@@ -207,7 +207,7 @@ All routes return JSON. All protected routes call `getAuthenticatedUser()` first
 | `/api/lists` | GET, POST | GET: all user lists. POST: create a new list. |
 | `/api/lists/[id]` | GET, PATCH, DELETE | Fetch, rename, or delete a list. |
 | `/api/lists/[id]/items` | POST, PATCH, DELETE | POST: add item (deduplicates, increments quantity if already present). PATCH: update item (checked state, quantity, unit, notes, custom price) — scoped to verified list. DELETE: delete single item, clear completed, or clear all — scoped to verified list. |
-| `/api/lists/[id]/recommend` | GET | Product recommendations and price comparisons for items on the list. |
+| `/api/lists/[id]/recommend` | GET | Which of the shopper's stores to buy the list at: `computeListPricing()`, the same ranking the list page shows, with per-store coverage and what each leaves out. |
 
 ### Pantry
 

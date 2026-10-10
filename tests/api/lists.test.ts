@@ -210,3 +210,90 @@ describe("Linking a list item to a product (PATCH)", () => {
     expect((await patch(list.id, "{not json")).status).toBe(400);
   });
 });
+
+describe("Store recommendation (GET recommend)", () => {
+  beforeEach(async () => {
+    await resetDb();
+  });
+
+  it("ranks on the shared basket at the shopper's stores, like the list page", async () => {
+    const { GET: recommend } = await import("@/../src/app/api/lists/[id]/recommend/route");
+    const user = await createTestUser();
+    const cheap = await prisma.store.upsert({
+      where: { id: "test_store_rec_a" },
+      update: {},
+      create: { id: "test_store_rec_a", chain: "Recmart", name: "Recmart" },
+    });
+    const pricey = await prisma.store.upsert({
+      where: { id: "test_store_rec_b" },
+      update: {},
+      create: { id: "test_store_rec_b", chain: "Pricey", name: "Pricey" },
+    });
+    const product = await prisma.product.upsert({
+      where: { id: "test_product_rec" },
+      update: {},
+      create: { id: "test_product_rec", name: "Rec Eggs 12", isActive: true },
+    });
+    const other = await prisma.product.upsert({
+      where: { id: "test_product_rec_2" },
+      update: {},
+      create: { id: "test_product_rec_2", name: "Rec Butter", isActive: true },
+    });
+    await prisma.storeProduct.deleteMany({
+      where: { productId: { in: [product.id, other.id] } },
+    });
+    await prisma.storeProduct.createMany({
+      data: [
+        { storeId: cheap.id, productId: product.id, currentPrice: 3 },
+        { storeId: pricey.id, productId: product.id, currentPrice: 4 },
+        // Only the pricier store carries butter. Ranked on coverage first, as
+        // the old route did, it would "win" for stocking more of the list.
+        { storeId: pricey.id, productId: other.id, currentPrice: 6 },
+      ],
+    });
+    await prisma.userPreferredStore.createMany({
+      data: [
+        { userId: user.id, storeId: cheap.id },
+        { userId: user.id, storeId: pricey.id },
+      ],
+    });
+    const list = await prisma.list.create({
+      data: {
+        userId: user.id,
+        name: "Weekly",
+        items: {
+          create: [
+            { name: "eggs", productId: product.id },
+            { name: "butter", productId: other.id },
+            { name: "something typed" },
+          ],
+        },
+      },
+    });
+    setMockSession({ user: { id: user.id } });
+
+    try {
+      const res = await recommend(
+        new NextRequest(`http://localhost/api/lists/${list.id}/recommend`),
+        { params: Promise.resolve({ id: list.id }) },
+      );
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.best).toBe("recmart");
+      expect(body.sharedItemCount).toBe(1);
+      expect(body.unlinkedItems).toEqual(["something typed"]);
+      const recmart = body.stores.find((s: { chain: string }) => s.chain === "recmart");
+      expect(recmart).toMatchObject({ covered: 1, comparableTotal: 3 });
+      expect(recmart.missing).toEqual([
+        { name: "butter", elsewhere: { chain: "pricey", price: 6 } },
+      ]);
+    } finally {
+      await prisma.storeProduct.deleteMany({
+        where: { productId: { in: [product.id, other.id] } },
+      });
+      await prisma.product.deleteMany({ where: { id: { in: [product.id, other.id] } } });
+      await prisma.userPreferredStore.deleteMany({ where: { userId: user.id } });
+      await prisma.store.deleteMany({ where: { id: { in: [cheap.id, pricey.id] } } });
+    }
+  });
+});
