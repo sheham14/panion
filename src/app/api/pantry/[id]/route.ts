@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
 import { validateBody } from "@/lib/validate";
 import { notFound } from "@/lib/api-error";
-import { pantryFields } from "../route";
+import { pantryFields, linkedProduct } from "../route";
 
 const UpdatePantryItemSchema = z.object(pantryFields).partial();
 
@@ -22,6 +22,9 @@ export async function PATCH(
   );
   if (invalid) return invalid;
 
+  const product = await linkedProduct(data.productId);
+  if (product instanceof NextResponse) return product;
+
   // updateMany is already scoped to the caller, so this can't touch another
   // user's row.
   const item = await prisma.pantryItem.updateMany({
@@ -33,7 +36,12 @@ export async function PATCH(
     return notFound("Item not found");
   }
 
-  return NextResponse.json({ success: true });
+  // `imageUrl` only when the link was part of this update; otherwise the
+  // tile keeps the photo it already has.
+  return NextResponse.json({
+    success: true,
+    ...(data.productId !== undefined && { imageUrl: product?.imageUrl ?? null }),
+  });
 }
 
 export async function DELETE(

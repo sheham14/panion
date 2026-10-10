@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { X, Search } from "lucide-react";
 import type { SerializedPantryItem } from "@/app/(main)/pantry/page";
 
@@ -104,28 +104,49 @@ export default function PantryEditSheet({ item, onClose, onSaved }: Props) {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<ProductResult[]>([]);
   const [searching, setSearching] = useState(false);
+  // An item that is already linked opens showing its link. This started as
+  // null, so a linked item showed an empty search box and looked unlinked.
   const [linkedProduct, setLinkedProduct] = useState<ProductResult | null>(
-    null,
+    item?.productId
+      ? {
+          id: item.productId,
+          name: item.name,
+          brand: item.brand,
+          category: item.category,
+        }
+      : null,
   );
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  // A search per keystroke, so responses can land out of order; only the
+  // latest query's results are shown.
+  const searchSeq = useRef(0);
 
-  async function handleSearch(q: string) {
+  useEffect(() => () => clearTimeout(searchTimer.current), []);
+
+  function handleSearch(q: string) {
     setSearchQuery(q);
-    if (q.length < 2) {
+    clearTimeout(searchTimer.current);
+    const seq = ++searchSeq.current;
+    if (q.trim().length < 2) {
       setSearchResults([]);
+      setSearching(false);
       return;
     }
     setSearching(true);
-    try {
-      const res = await fetch(
-        `/api/products?q=${encodeURIComponent(q)}&limit=5`,
-      );
-      if (res.ok) {
-        const data = await res.json();
-        setSearchResults(data);
+    searchTimer.current = setTimeout(async () => {
+      let found: ProductResult[] = [];
+      try {
+        const res = await fetch(
+          `/api/products?q=${encodeURIComponent(q.trim())}&limit=5`,
+        );
+        if (res.ok) found = await res.json();
+      } catch {
+        // Nothing found is the honest result of a failed search.
       }
-    } finally {
+      if (seq !== searchSeq.current) return;
+      setSearchResults(found);
       setSearching(false);
-    }
+    }, 300);
   }
 
   function handleLinkProduct(product: ProductResult) {
@@ -189,10 +210,11 @@ export default function PantryEditSheet({ item, onClose, onSaved }: Props) {
         quantity: payload.quantity,
         unit: payload.unit,
         productId: payload.productId,
-        // The edit sheet never changes which product a row points at, so the
-        // photo the tile was already showing is still the right one. Re-reading
-        // it from the server would cost a round-trip to learn nothing.
-        imageUrl: item?.imageUrl ?? null,
+        // The sheet can link, change or unlink the product, so the photo
+        // comes from the server's answer for the product now linked. It used
+        // to keep the old photo on the assumption the link never changed.
+        imageUrl:
+          "imageUrl" in saved ? (saved.imageUrl ?? null) : (item?.imageUrl ?? null),
         expiresAt: payload.expiresAt,
         // A new item starts now; an edited one keeps the date it arrived.
         createdAt: item?.createdAt ?? new Date().toISOString(),

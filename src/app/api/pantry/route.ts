@@ -31,6 +31,23 @@ export const pantryFields = {
 
 const CreatePantryItemSchema = z.object(pantryFields);
 
+/**
+ * The linked product's photo flag, or a 404 for an unknown id. Checked before
+ * writing: an unknown id used to reach Prisma as a foreign-key violation and
+ * come back a 500. The flag is returned so the tile can show (or drop) the
+ * photo for a newly linked product without a reload.
+ */
+export async function linkedProduct(
+  productId: string | null | undefined,
+): Promise<{ imageUrl: string | null } | NextResponse | null> {
+  if (!productId) return null;
+  const product = await prisma.product.findUnique({
+    where: { id: productId },
+    select: { imageUrl: true },
+  });
+  return product ?? NextResponse.json({ error: "Product not found" }, { status: 404 });
+}
+
 export async function GET() {
   const { user, error } = await getAuthenticatedUser();
   if (error) return error;
@@ -66,6 +83,9 @@ export async function POST(request: NextRequest) {
   );
   if (invalid) return invalid;
 
+  const product = await linkedProduct(data.productId);
+  if (product instanceof NextResponse) return product;
+
   const item = await prisma.pantryItem.create({
     data: {
       userId: user.id,
@@ -80,5 +100,8 @@ export async function POST(request: NextRequest) {
     },
   });
 
-  return NextResponse.json(item, { status: 201 });
+  return NextResponse.json(
+    { ...item, imageUrl: product?.imageUrl ?? null },
+    { status: 201 },
+  );
 }
