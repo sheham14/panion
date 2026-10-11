@@ -1,3 +1,5 @@
+import type Anthropic from "@anthropic-ai/sdk";
+
 /**
  * Which model each feature runs on — the one place to change it.
  *
@@ -14,8 +16,14 @@
  * plus the reply, and read content blocks by `type`, never `content[0]`.
  */
 export const MODELS = {
-  /** Judgement calls through `complete()`: ingredient matching, pantry categories. */
-  reasoning: "claude-opus-5-5",
+  /**
+   * Judgement calls through `complete()`: ingredient matching, pantry
+   * categories. Haiku 5.5 at medium effort since 2026-10-11, on
+   * `scripts/eval-ingredient-matching.ts`: 146/146 matches the same as Opus
+   * 5.5 over every production recipe plus known traps, at about 1/30th the
+   * cost. At low effort it once matched chicken broth to beef broth.
+   */
+  judgement: "claude-haiku-5-5",
   /** Recipe suggestions from `/api/ai/ask`. */
   ask: "claude-sonnet-5-5",
   /** Clove chat, streamed. */
@@ -23,6 +31,20 @@ export const MODELS = {
   /** High-volume extraction and classification: recipe import, capture checks, groups. */
   fast: "claude-haiku-5-5",
 } as const;
+
+/**
+ * Server-side refusal fallback: a declined request is re-run on the model
+ * Anthropic recommends for that refusal category, inside the same call.
+ * Claude API only, and only Opus 5.5 / Sonnet 5.5 here — Haiku 5.5 has no
+ * server-side fallback, so its declines come back as refusals.
+ */
+export const SERVER_FALLBACK: Pick<
+  Anthropic.Beta.Messages.MessageCreateParamsNonStreaming,
+  "betas" | "fallbacks"
+> = {
+  betas: ["server-side-fallback-2026-07-01"],
+  fallbacks: "default",
+};
 
 /**
  * The text of a reply. A response can begin with `thinking` blocks now that

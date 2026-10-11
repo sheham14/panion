@@ -22,24 +22,24 @@ export type CompleteRequest = {
 export type Complete = (req: CompleteRequest) => Promise<string | null>;
 
 /**
- * The Opus tier, chosen on a side-by-side, not by default (2026-10-06): 16
- * recipe ingredients matched against production-like groups. Opus 5 and Haiku
- * 4.5 agreed on 15 and took the same ~3s; Haiku mapped "plain yogurt" to Greek
- * yogurt — the loose substitution the matcher's prompt forbids, and the kind of
- * wrong match this codebase ranks worse than no match. Now Opus 5.5, the same
- * tier's successor (2026-10-11). Re-run the comparison before switching to a
- * cheaper model.
+ * Chosen on a side-by-side, never by default. 2026-10-06: Opus 5 over Haiku
+ * 4.5, which mapped "plain yogurt" to Greek yogurt — the loose substitution
+ * the matcher's prompt forbids, and the kind of wrong match this codebase
+ * ranks worse than no match. 2026-10-11: Haiku 5.5 at medium effort matched
+ * Opus 5.5 on all 146 ingredients of every production recipe plus traps, at
+ * about 1/30th the cost (`scripts/eval-ingredient-matching.ts`). Re-run that
+ * script before changing the model or the effort.
  */
-const MODEL = MODELS.reasoning;
+const MODEL = MODELS.judgement;
 
 export const complete: Complete = async ({ system, prompt, maxTokens = 4096 }) => {
   const client = new Anthropic();
   const res = await client.messages.create({
     model: MODEL,
     max_tokens: maxTokens,
-    // Short classification and extraction: low effort keeps cost and latency
-    // down without hurting answers this simple.
-    output_config: { effort: "low" },
+    // Medium, not low: at low effort Haiku 5.5 once matched chicken broth to
+    // beef broth. Medium is also Haiku 5.5's default.
+    output_config: { effort: "medium" },
     system,
     messages: [{ role: "user", content: prompt }],
   });

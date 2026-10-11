@@ -6,7 +6,7 @@ import { z } from "zod";
 import { validateBody, boundedString } from "@/lib/validate";
 import { badRequest, tooManyRequests } from "@/lib/api-error";
 import Anthropic from "@anthropic-ai/sdk";
-import { MODELS, replyText } from "@/lib/ai/models";
+import { MODELS, SERVER_FALLBACK, replyText } from "@/lib/ai/models";
 import { getGuestPantryForClove } from "@/lib/guest-data";
 
 const DAILY_LIMIT = 10;
@@ -169,7 +169,9 @@ export async function POST(request: NextRequest) {
   let message;
 
   try {
-    message = await client.messages.create({
+    // Beta endpoint for the server-side refusal fallback (SERVER_FALLBACK).
+    message = await client.beta.messages.create({
+      ...SERVER_FALLBACK,
       model: MODELS.ask,
       // Room for thinking (on by default) as well as the reply; low effort,
       // as for chat.

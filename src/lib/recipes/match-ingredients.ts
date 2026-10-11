@@ -23,7 +23,7 @@ You get a numbered list of ingredients and a list of product group slugs. For ea
 
 Rules:
 - Use only slugs from the list, spelled exactly.
-- Pick the everyday form: "butter" is salted butter, "milk" is the most ordinary milk group available, "cheddar" is block cheddar unless the recipe says shredded or sliced.
+- Pick the everyday form: "butter" is salted butter, "milk" is 2% milk (the everyday kind) when that group exists, otherwise the most ordinary milk group, "cheddar" is block cheddar unless the recipe says shredded or sliced.
 - Respect stated forms and varieties: "shredded mozzarella" is a shredded group, "unsalted butter" is unsalted, "skim milk" is skim.
 - Use null for water, ice, and anything no group covers. Do not pick a group that only loosely relates (no "peanut butter" for "butter", no "milk chocolate" for "milk").
 
