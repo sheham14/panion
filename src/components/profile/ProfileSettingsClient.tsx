@@ -14,6 +14,8 @@ type Store = {
   chain: string;
   name: string;
   city: string | null;
+  /** False for a store we hold no prices for yet. */
+  hasPrices?: boolean;
 };
 
 type InitialData = {
@@ -505,11 +507,15 @@ export default function ProfileSettingsClient({
               ].join(" ")}
             >
               <div>
-                <p className="text-[14px] font-medium text-[#111] dark:text-[#e0e0e0]">
+                <p className="text-[14px] font-medium text-[#111] dark:text-[#e0e0e0] capitalize">
                   {store.chain}
                 </p>
-                {store.city && (
-                  <p className="text-[12px] text-[#aaa]">{store.city}</p>
+                {(store.city || store.hasPrices === false) && (
+                  <p className="text-[12px] text-[#aaa]">
+                    {[store.city, store.hasPrices === false && "No prices yet"]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </p>
                 )}
               </div>
               <div

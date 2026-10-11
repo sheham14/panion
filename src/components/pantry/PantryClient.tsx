@@ -65,7 +65,10 @@ export function relativeDate(iso: string): string {
   if (days < 7) return `${days} days ago`;
   if (days < 14) return "1 week ago";
   if (days < 30) return `${Math.floor(days / 7)} weeks ago`;
-  return `${Math.floor(days / 30)} months ago`;
+  if (days < 60) return "1 month ago";
+  if (days < 365) return `${Math.floor(days / 30)} months ago`;
+  const years = Math.floor(days / 365);
+  return years === 1 ? "1 year ago" : `${years} years ago`;
 }
 
 function expiryLabel(iso: string | null): string | null {

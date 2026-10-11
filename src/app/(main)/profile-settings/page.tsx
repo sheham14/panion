@@ -25,11 +25,25 @@ export default async function ProfileSettingsPage() {
         },
       },
     }),
-    prisma.store.findMany({
-      where: { isActive: true },
-      select: { id: true, chain: true, name: true, city: true },
-      orderBy: { chain: "asc" },
-    }),
+    prisma.store
+      .findMany({
+        where: { isActive: true },
+        select: {
+          id: true,
+          chain: true,
+          name: true,
+          city: true,
+          _count: {
+            select: { storeProducts: { where: { isActive: true, currentPrice: { not: null } } } },
+          },
+        },
+        orderBy: { chain: "asc" },
+      })
+      // Colemans, Costco and No Frills are listed but have no prices; say so
+      // rather than let a shopper pick a store that will price nothing.
+      .then((rows) =>
+        rows.map(({ _count, ...s }) => ({ ...s, hasPrices: _count.storeProducts > 0 })),
+      ),
   ]);
 
   if (!userData) redirect("/sign-in");

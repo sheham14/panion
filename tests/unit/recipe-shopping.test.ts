@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   label,
   listItemFor,
+  namedBrandMembers,
   packsFor,
   planRecipeShopping,
   type ShoppingIngredient,
@@ -174,6 +175,20 @@ describe("planRecipeShopping", () => {
     expect(walmart.total).toBeLessThan(pricing.baskets.find((b) => b.chain === "sobeys")!.total);
     expect(pricing.ranked[0].chain).toBe("sobeys");
     expect(walmart.missing.map((m) => m.itemId)).toEqual(["i2"]);
+  });
+});
+
+describe("namedBrandMembers", () => {
+  const philly = product("phil", "Philadelphia", "Original Cream Cheese", { qty: 250, measure: "g" }, [["walmart", 4.97]]);
+  const gv = product("gv", "Great Value", "Cream Cheese", { qty: 250, measure: "g" }, [["walmart", 2.98]]);
+
+  it("keeps to the brand an ingredient names, even when another is cheaper", () => {
+    expect(namedBrandMembers("Philadelphia Cream Cheese", [philly, gv]).map((p) => p.id)).toEqual(["phil"]);
+  });
+
+  it("offers every member when no brand is named, or the named one isn't in the group", () => {
+    expect(namedBrandMembers("cream cheese", [philly, gv])).toHaveLength(2);
+    expect(namedBrandMembers("Kraft cream cheese", [philly, gv])).toHaveLength(2);
   });
 });
 

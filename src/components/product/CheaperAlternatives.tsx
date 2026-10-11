@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { TrendingDown } from "lucide-react";
 import { productImageSrc } from "@/lib/product-image";
+import { displaySize } from "@/lib/display-size";
 
 /**
  * Cross-brand comparison: "is the store-brand version cheaper?"
@@ -120,7 +121,7 @@ export default function CheaperAlternatives({
                   {o.brand ?? o.name}
                 </p>
                 <p className="text-[11px] text-[#aaa] truncate">
-                  {[o.unitSize, o.store.name].filter(Boolean).join(" · ")}
+                  {[displaySize(o.unitSize), o.store.name].filter(Boolean).join(" · ")}
                 </p>
               </div>
 

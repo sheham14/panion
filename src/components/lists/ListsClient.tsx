@@ -1007,7 +1007,9 @@ export default function ListsClient({
               </button>
             </div>
           </div>
-        ) : (
+        ) : items.length > 0 ? (
+          // An empty list has its own "Add first item"; this row and the FAB
+          // appear once there is something on it, so it never offers three.
           <button
             onClick={() => {
               setNewItemName("");
@@ -1022,7 +1024,7 @@ export default function ListsClient({
               Add item
             </span>
           </button>
-        )}
+        ) : null}
 
         {/* Checked items */}
         {checked.length > 0 && (
@@ -1091,7 +1093,8 @@ export default function ListsClient({
         )}
       </div>
 
-      {/* FAB — add item */}
+      {/* FAB — add item (not on an empty list; see the add row above) */}
+      {items.length > 0 && (
       <button
         onClick={() => { setNewItemName(""); setAddingItem(true); }}
         className={[
@@ -1109,6 +1112,7 @@ export default function ListsClient({
       >
         <Plus size={22} className="text-[#004d40]" strokeWidth={2.5} />
       </button>
+      )}
 
       {/* Bottom panel — store totals */}
       {hasPanel && (

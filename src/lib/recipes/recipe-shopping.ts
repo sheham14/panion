@@ -254,6 +254,23 @@ function cheapestAt(
   return best;
 }
 
+/**
+ * Group members the ingredient names by brand, when it names one the group
+ * has: "Philadelphia Cream Cheese" means Philadelphia, and was being priced as
+ * Great Value because that was cheapest. With no named brand, every member.
+ */
+export function namedBrandMembers(
+  ingredientName: string,
+  members: ShoppingProduct[],
+): ShoppingProduct[] {
+  const name = ` ${ingredientName.toLowerCase().replace(/[^a-z0-9']+/g, " ")} `;
+  const named = members.filter((m) => {
+    const brand = m.brand?.toLowerCase().replace(/[^a-z0-9']+/g, " ").trim();
+    return !!brand && name.includes(` ${brand} `);
+  });
+  return named.length > 0 ? named : members;
+}
+
 export function planRecipeShopping(
   ingredients: ShoppingIngredient[],
   membersByGroup: Map<string, ShoppingProduct[]>,
@@ -268,7 +285,7 @@ export function planRecipeShopping(
     const candidates = ing.linked
       ? [ing.linked]
       : ing.groupSlug
-        ? (membersByGroup.get(ing.groupSlug) ?? [])
+        ? namedBrandMembers(ing.name, membersByGroup.get(ing.groupSlug) ?? [])
         : [];
 
     const chains = [

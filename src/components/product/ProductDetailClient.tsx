@@ -7,6 +7,7 @@ import { ArrowLeft, Bell, BellOff, Plus } from "lucide-react";
 import AddToListSheet from "@/components/search/AddToListSheet";
 import ReportPriceSheet from "@/components/product/ReportPriceSheet";
 import { useGuest } from "@/hooks/useGuest";
+import { displaySize } from "@/lib/display-size";
 import { productImageSrc } from "@/lib/product-image";
 import CheaperAlternatives from "@/components/product/CheaperAlternatives";
 
@@ -167,7 +168,7 @@ export default function ProductDetailClient({
   const metaParts = [
     product.category?.replace(/_/g, " "),
     product.brand,
-    product.unitSize,
+    displaySize(product.unitSize),
   ].filter(Boolean);
 
   return (
@@ -248,7 +249,7 @@ export default function ProductDetailClient({
               ${product.bestPrice.toFixed(2)}
             </span>
             <span className="text-[12px] text-[#aaa]">
-              best price · {product.bestStore}
+              best price · <span className="capitalize">{product.bestStore}</span>
             </span>
             {product.unitPrice && (
               <span className="text-[12px] text-[#bbb] ml-auto">
@@ -267,7 +268,13 @@ export default function ProductDetailClient({
             <StorePriceCard
               key={sp.storeId}
               sp={sp}
-              isBest={sp.chain === product.bestStore && sp.price !== null}
+              // "Best" needs something to beat: a product priced at one store
+              // wore the badge with nothing beside it.
+              isBest={
+                sp.chain === product.bestStore &&
+                sp.price !== null &&
+                product.storePrices.filter((p) => p.price !== null).length > 1
+              }
             />
           ))}
         </div>

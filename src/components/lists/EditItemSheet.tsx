@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Search, X } from "lucide-react";
 import { getAllowedUnits } from "@/lib/unit-convert";
 import type { ItemGroup } from "@/lib/list-groups";
+import { productImageSrc } from "@/lib/product-image";
 
 /** A product as the sheet shows it — the linked one, or a search result. */
 type ProductChoice = {
@@ -14,6 +15,8 @@ type ProductChoice = {
   unitSize: string | null;
   /** Search results don't carry it; units then come from `unitSize` alone. */
   unitMeasure?: string | null;
+  /** Whether the product has a photo; the sheet shows it through our proxy. */
+  imageUrl?: string | null;
   bestPrice: number | null;
   bestStore: string | null;
 };
@@ -365,8 +368,17 @@ export default function EditItemSheet({ item, onSave, onDelete, onClose }: Props
           </p>
           {shownProduct && !searchOpen ? (
             <div className="flex items-center gap-3 p-3 border border-[#ebebeb] dark:border-[#2e3538] rounded-xl">
-              <div className="w-9 h-9 rounded-[8px] bg-[#f7f7f7] dark:bg-[#242b2e] flex items-center justify-center text-[18px] flex-shrink-0">
-                🛒
+              <div className="w-9 h-9 rounded-[8px] bg-[#f7f7f7] dark:bg-[#242b2e] flex items-center justify-center text-[18px] flex-shrink-0 overflow-hidden">
+                {productImageSrc(shownProduct.id, shownProduct.imageUrl) ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={productImageSrc(shownProduct.id, shownProduct.imageUrl)!}
+                    alt=""
+                    className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal"
+                  />
+                ) : (
+                  "🛒"
+                )}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-[13px] font-medium text-[#111] dark:text-[#e0e0e0] truncate">

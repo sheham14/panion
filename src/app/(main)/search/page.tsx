@@ -15,6 +15,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import AddToListSheet from "@/components/search/AddToListSheet";
+import { displaySize } from "@/lib/display-size";
 import { getStoreColor } from "@/lib/store-meta";
 import { productImageSrc } from "@/lib/product-image";
 
@@ -222,7 +223,7 @@ function GroupCard({
               {displayName(best)}
             </p>
             <p className="text-[11px] text-[#888]">
-              {best.unitSize ?? ""}
+              {displaySize(best.unitSize) ?? ""}
               {best.unitSize ? " · " : ""}
               <span style={{ color: getStoreColor(best.store.chain) }}>
                 {best.store.name}
@@ -263,7 +264,7 @@ function GroupCard({
                 <span className="w-4 text-[#aaa] flex-shrink-0">{i + 1}</span>
                 <span className="min-w-0 flex-1 truncate text-[#111] dark:text-[#e0e0e0]">
                   {displayName(o)}
-                  {o.unitSize ? ` · ${o.unitSize}` : ""}
+                  {o.unitSize ? ` · ${displaySize(o.unitSize)}` : ""}
                 </span>
                 <span
                   className="flex-shrink-0"
@@ -340,7 +341,7 @@ function ResultCard({
             )}
             {result.unitSize && (
               <span className="text-[11px] text-[#aaa] dark:text-[#555]">
-                · {result.unitSize}
+                · {displaySize(result.unitSize)}
               </span>
             )}
           </div>

@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import { getStoreColor } from "@/lib/store-meta";
+import { displaySize } from "@/lib/display-size";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -273,7 +274,7 @@ function ProductRow({
           {product.name}
         </p>
         <p className="text-[11px] text-[#aaa] mt-0.5">
-          {[product.brand, product.unitSize].filter(Boolean).join(" · ")}
+          {[product.brand, displaySize(product.unitSize)].filter(Boolean).join(" · ")}
         </p>
       </div>
       <div className="flex flex-col items-end gap-1 flex-shrink-0">
@@ -283,7 +284,7 @@ function ProductRow({
           prices.slice(0, 3).map((sp, i) => (
             <div key={i} className="flex items-center gap-1.5">
               <span
-                className="text-[10px] font-medium"
+                className="text-[10px] font-medium capitalize"
                 style={{ color: getStoreColor(sp.store.chain) }}
               >
                 {sp.store.chain}

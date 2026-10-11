@@ -17,6 +17,10 @@ const ago = (days: number, hours = 0): string =>
 describe("relativeDate", () => {
   it("calls the last 24 hours today", () => {
     expect(relativeDate(ago(0))).toBe("today");
+    // Said "1 months ago" on every tile a month old.
+    expect(relativeDate(ago(35))).toBe("1 month ago");
+    expect(relativeDate(ago(70))).toBe("2 months ago");
+    expect(relativeDate(ago(400))).toBe("1 year ago");
     expect(relativeDate(ago(0, 5))).toBe("today");
   });
 
@@ -39,7 +43,7 @@ describe("relativeDate", () => {
   });
 
   it("switches to months at thirty days", () => {
-    expect(relativeDate(ago(30))).toBe("1 months ago");
+    expect(relativeDate(ago(30))).toBe("1 month ago");
     expect(relativeDate(ago(75))).toBe("2 months ago");
   });
 

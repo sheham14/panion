@@ -105,53 +105,74 @@ async function getProduct(id: string, userId: string | null) {
   };
 }
 
+/** Most similar products shown: one per related group. */
+const SIMILAR = 6;
+
+/**
+ * Products in groups related to this one: other milks for skim milk, other
+ * eggs for large eggs. Its own group is already on the page under "Compare
+ * brands". Related means sharing the group's last word, its noun ("milk" in
+ * `skim-milk`); the broad category alone used to offer condensed milk and
+ * almond milk for skim milk. Falls back to the category when the noun finds
+ * too few. One product per group, the cheapest, priced from current prices —
+ * this read `priceHistory`, which is empty for most products.
+ */
 async function getSimilarProducts(
   // Prisma already hands us the enum member here; widening it to `string` was
   // what forced the `as any` back.
   category: ProductCategory | null,
+  subcategory: string | null,
   excludeId: string,
 ) {
-  if (!category) return [];
-  const products = await prisma.product.findMany({
-    where: {
-      category,
-      isActive: true,
-      id: { not: excludeId },
-    },
-    take: 6,
-    include: {
-      storeProducts: {
-        where: { isActive: true },
-        include: {
-          store: { select: { chain: true } },
-          priceHistory: {
-            orderBy: { scrapedAt: "desc" },
-            take: 1,
-          },
-        },
-      },
-    },
-  });
+  if (!category && !subcategory) return [];
+  const noun = subcategory?.split("-").filter((w) => /^[a-z]{3,}$/.test(w)).pop() ?? null;
 
-  return products.map((p) => {
-    const prices = p.storeProducts
-      .filter((sp) => sp.priceHistory.length > 0)
-      .map((sp) => ({
-        chain: sp.store.chain,
-        price: Number(sp.priceHistory[0].price),
-      }))
-      .sort((a, b) => a.price - b.price);
-    const best = prices[0] ?? null;
-    return {
-      id: p.id,
-      name: p.name,
-      brand: p.brand,
-      unitSize: p.unitSize,
-      imageUrl: p.imageUrl,
-      bestPrice: best?.price ?? null,
-      bestStore: best?.chain ?? null,
-    };
-  });
+  const priced = {
+    where: { isActive: true, currentPrice: { not: null } },
+    select: { currentPrice: true, store: { select: { chain: true } } },
+  } as const;
+  const base = { isActive: true, id: { not: excludeId }, storeProducts: { some: { isActive: true, currentPrice: { not: null } } } };
+
+  const related = noun
+    ? await prisma.product.findMany({
+        where: { ...base, subcategory: { contains: noun, not: subcategory ?? undefined } },
+        include: { storeProducts: priced },
+        take: 60,
+      })
+    : [];
+  const fallback =
+    related.length < 3 && category
+      ? await prisma.product.findMany({
+          where: { ...base, category, subcategory: { not: subcategory ?? undefined } },
+          include: { storeProducts: priced },
+          take: 60,
+        })
+      : [];
+
+  const cheapest = (p: (typeof related)[number]) =>
+    p.storeProducts
+      .map((sp) => ({ chain: sp.store.chain, price: Number(sp.currentPrice) }))
+      .sort((a, b) => a.price - b.price)[0] ?? null;
+
+  const byGroup = new Map<string, { p: (typeof related)[number]; best: ReturnType<typeof cheapest> }>();
+  for (const p of [...related, ...fallback]) {
+    const key = p.subcategory ?? p.id;
+    const best = cheapest(p);
+    const current = byGroup.get(key);
+    if (!current || (best && current.best && best.price < current.best.price)) {
+      byGroup.set(key, { p, best });
+    }
+  }
+
+  return [...byGroup.values()].slice(0, SIMILAR).map(({ p, best }) => ({
+    id: p.id,
+    name: p.name,
+    brand: p.brand,
+    unitSize: p.unitSize,
+    imageUrl: p.imageUrl,
+    bestPrice: best?.price ?? null,
+    bestStore: best?.chain ?? null,
+  }));
 }
 
 // ── Page ───────────────────────────────────────
@@ -168,8 +189,8 @@ export default async function ProductDetailPage({
   const [product, similar] = await Promise.all([
     getProduct(id, userId),
     prisma.product
-      .findUnique({ where: { id }, select: { category: true } })
-      .then((p) => getSimilarProducts(p?.category ?? null, id)),
+      .findUnique({ where: { id }, select: { category: true, subcategory: true } })
+      .then((p) => getSimilarProducts(p?.category ?? null, p?.subcategory ?? null, id)),
   ]);
 
   if (!product) notFound();
