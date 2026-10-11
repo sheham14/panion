@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
+import { categorizePantry } from "@/lib/pantry/categorize";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
 
@@ -45,6 +46,9 @@ export async function POST(
       name: li.name,
       quantity: li.quantity,
       unit: li.unit ?? null,
+      // The catalogue's category when the item is linked; the rest are
+      // suggested after responding.
+      category: li.product?.category ?? null,
       addedFrom: "list_checkout",
       expiresAt: items.find(
         (i: { listItemId: string; expiresAt?: string }) =>
@@ -59,6 +63,8 @@ export async function POST(
         : null,
     })),
   });
+
+  after(() => categorizePantry(user.id).then(() => {}));
 
   return NextResponse.json({ created: pantryItems.count }, { status: 201 });
 }

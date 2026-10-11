@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
+import { categorizePantry } from "@/lib/pantry/categorize";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
@@ -99,6 +100,9 @@ export async function POST(request: NextRequest) {
       addedFrom: "manual",
     },
   });
+
+  // No category given: suggest one after responding (lib/pantry/categorize).
+  if (!item.category) after(() => categorizePantry(user.id).then(() => {}));
 
   return NextResponse.json(
     { ...item, imageUrl: product?.imageUrl ?? null },

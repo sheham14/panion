@@ -3,6 +3,8 @@ import { getAuthenticatedUser } from "@/lib/auth-utils";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { Suspense } from "react";
+import { after } from "next/server";
+import { categorizePantry } from "@/lib/pantry/categorize";
 import PantryClient from "@/components/pantry/PantryClient";
 import { getGuestPantry } from "@/lib/guest-data";
 
@@ -39,6 +41,12 @@ async function PantryData({ userId }: { userId: string }) {
     orderBy: { updatedAt: "desc" },
     include: { product: { select: { imageUrl: true } } },
   });
+
+  // Items without a category get one after the response, so they are sorted
+  // on the next visit. Covers items from before categories were suggested.
+  if (items.some((i) => !i.category)) {
+    after(() => categorizePantry(userId).then(() => {}));
+  }
 
   const serialized: SerializedPantryItem[] = items.map((item) => ({
     id: item.id,
