@@ -165,10 +165,19 @@ async function getSimilarProducts(
     }
   }
 
-  // Same department first (2% milk before condensed milk), cheapest next.
+  // Same department first, then the groups with the most products — the
+  // everyday ones: 2% milk has seven, evaporated milk one or two. Price last;
+  // ranking on it put the cheapest oddities (evaporated, condensed) on top.
+  const groupSize = new Map<string, number>();
+  for (const p of [...related, ...fallback]) {
+    const key = p.subcategory ?? p.id;
+    groupSize.set(key, (groupSize.get(key) ?? 0) + 1);
+  }
+  const sizeOf = (p: (typeof related)[number]) => groupSize.get(p.subcategory ?? p.id) ?? 0;
   const ranked = [...byGroup.values()].sort(
     (a, b) =>
       Number(b.p.category === category) - Number(a.p.category === category) ||
+      sizeOf(b.p) - sizeOf(a.p) ||
       (a.best?.price ?? Infinity) - (b.best?.price ?? Infinity),
   );
 
