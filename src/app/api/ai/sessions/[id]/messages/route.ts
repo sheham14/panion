@@ -5,6 +5,7 @@ import { getAuthenticatedUser } from "@/lib/auth-utils";
 import { hitRateLimit } from "@/lib/rate-limit";
 import { badRequest, notFound } from "@/lib/api-error";
 import Anthropic from "@anthropic-ai/sdk";
+import { getGuestPantryForClove } from "@/lib/guest-data";
 
 const GUEST_LIMIT = 5;
 const GUEST_IP_DAILY_LIMIT = 15; // hard ceiling per IP, survives cookie clears
@@ -19,15 +20,6 @@ function getClientIp(request: NextRequest): string {
   if (fwd) return fwd.split(",")[0].trim();
   return request.headers.get("x-real-ip") ?? "unknown";
 }
-
-const GUEST_PANTRY = [
-  { name: "Central Dairies 2% Milk", quantity: 1, unit: "L" },
-  { name: "Newfoundland Eggs Large", quantity: 4, unit: null },
-  { name: "Barilla Spaghetti", quantity: 500, unit: "g" },
-  { name: "Hunt's Tomato Sauce", quantity: 2, unit: null },
-  { name: "Uncle Ben's White Rice", quantity: 1, unit: "kg" },
-  { name: "Bertolli Olive Oil", quantity: 250, unit: "ml" },
-];
 
 const DAILY_LIMIT = 100;
 const MAX_QUERY_LENGTH = 500;
@@ -275,7 +267,8 @@ export async function POST(
     });
 
     const systemPrompt = buildSystemPrompt({
-      pantryItems: guestBody.usePantry !== false ? GUEST_PANTRY : [],
+      // The same pantry the guest sees on the pantry page.
+      pantryItems: guestBody.usePantry !== false ? await getGuestPantryForClove() : [],
       storeProducts,
       budget: null,
       usePantry: guestBody.usePantry !== false,

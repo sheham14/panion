@@ -6,6 +6,7 @@ import { z } from "zod";
 import { validateBody, boundedString } from "@/lib/validate";
 import { badRequest, tooManyRequests } from "@/lib/api-error";
 import Anthropic from "@anthropic-ai/sdk";
+import { getGuestPantryForClove } from "@/lib/guest-data";
 
 const DAILY_LIMIT = 10;
 const GUEST_LIMIT = 5;
@@ -110,16 +111,10 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // Fetch pantry for context — guest gets mock pantry, real users get DB pantry
+  // Fetch pantry for context — a guest gets the preview pantry they see on
+  // the pantry page, real users their own
   const pantryItems = isGuest
-    ? [
-        { name: "Central Dairies 2% Milk", quantity: 1, unit: "L" },
-        { name: "Eggs", quantity: 4, unit: null },
-        { name: "Barilla Spaghetti", quantity: 500, unit: "g" },
-        { name: "Hunt's Tomato Sauce", quantity: 2, unit: null },
-        { name: "Uncle Ben's White Rice", quantity: 1, unit: "kg" },
-        { name: "Bertolli Olive Oil", quantity: 250, unit: "ml" },
-      ]
+    ? await getGuestPantryForClove()
     : await prisma.pantryItem.findMany({
         where: { userId: user!.id },
         select: { name: true, quantity: true, unit: true },

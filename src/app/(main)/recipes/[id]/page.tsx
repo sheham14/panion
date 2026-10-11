@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { Suspense } from "react";
 import RecipeDetailClient from "@/components/recipes/RecipeDetailClient";
-import { GUEST_RECIPE_DETAILS } from "@/lib/guest-data";
 import { ensureIngredientGroups } from "@/lib/recipes/match-ingredients";
 import type { IngredientPick } from "@/lib/recipes/recipe-shopping";
 import {
@@ -28,7 +27,7 @@ export type SerializedIngredient = {
   productUnitQuantity: number | null;
   productUnitMeasure: string | null;
   productUnitSize: string | null;
-  /** The cheapest way to buy it at the shopper's stores. Absent for guests. */
+  /** The cheapest way to buy it at the shopper's stores. */
   pick?: IngredientPick | null;
 };
 
@@ -81,14 +80,13 @@ async function RecipeDetail({ id }: { id: string }) {
   const cookieStore = await cookies();
   const isGuest = cookieStore.get("panion-guest")?.value === "1";
 
-  if (isGuest) {
-    const guestRecipe = GUEST_RECIPE_DETAILS[id];
-    if (!guestRecipe) redirect("/recipes");
-    return <RecipeDetailClient recipe={guestRecipe} isOwner={false} />;
+  // Guests read the built-in recipes, priced at the preview's stores.
+  let userId: string | null = null;
+  if (!isGuest) {
+    const { user } = await getAuthenticatedUser();
+    if (!user) redirect("/signin");
+    userId = user.id;
   }
-
-  const { user } = await getAuthenticatedUser();
-  if (!user) redirect("/signin");
 
   // Recipes saved before ingredient matching existed are matched on first
   // view, once. Every later view reads the stored groups.
@@ -100,7 +98,7 @@ async function RecipeDetail({ id }: { id: string }) {
   // The owner's recipes and the built-in ones only, as `GET /api/recipes/[id]`
   // already enforces. The page didn't, so anyone with a link could read
   // someone else's recipe.
-  if (head.userId !== null && head.userId !== user.id) redirect("/recipes");
+  if (head.userId !== null && head.userId !== userId) redirect("/recipes");
   if (!head.ingredientsMatchedAt) await ensureIngredientGroups(id);
 
   const recipe = await prisma.recipe.findUnique({
@@ -115,7 +113,7 @@ async function RecipeDetail({ id }: { id: string }) {
 
   if (!recipe || !recipe.isActive) redirect("/lists");
 
-  const plan = (await planRecipesForUser(user.id, [recipe])).get(recipe.id)!;
+  const plan = (await planRecipesForUser(userId, [recipe])).get(recipe.id)!;
   const { picks, pricing, inPantry: inPantryById } = plan;
 
   const ingredients: SerializedIngredient[] = recipe.ingredients.map((ing) => {
@@ -169,7 +167,7 @@ async function RecipeDetail({ id }: { id: string }) {
     shopping,
   };
 
-  const isOwner = recipe.userId === user.id;
+  const isOwner = userId !== null && recipe.userId === userId;
 
   return <RecipeDetailClient recipe={data} isOwner={isOwner} />;
 }

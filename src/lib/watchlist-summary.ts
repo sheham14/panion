@@ -3,6 +3,35 @@ import { getStoreMeta } from "@/lib/store-meta";
 import { computeListPricing, type PricingItem } from "@/lib/list-pricing";
 
 
+/** A watched product, as `summarizeWatchlist` reads it. */
+export type WatchedRow = {
+  id: string;
+  notifyOnDrop: boolean;
+  notifyOnRise: boolean;
+  product: {
+    id: string;
+    name: string;
+    brand: string | null;
+    category: string | null;
+    imageUrl: string | null;
+    unitSize: string | null;
+    unitMeasure: string | null;
+    unitQuantity: unknown;
+    storeProducts: {
+      storeId: string;
+      currentPrice: unknown;
+      isSale: boolean;
+      lastScrapedAt: Date | null;
+      store: { id: string; chain: string; name: string };
+    }[];
+  };
+};
+
+export type PreferredStoreRow = {
+  storeId: string;
+  store: { chain: string; name: string };
+};
+
 export async function getWatchlistSummary(userId: string) {
   const [preferredStores, watchlist] = await Promise.all([
     prisma.userPreferredStore.findMany({
@@ -33,6 +62,18 @@ export async function getWatchlistSummary(userId: string) {
     }),
   ]);
 
+  return summarizeWatchlist(watchlist, preferredStores);
+}
+
+/**
+ * Per-product prices and per-store totals for a set of watched products. The
+ * pure half of `getWatchlistSummary`, so the logged-out preview summarises
+ * real products through the same code instead of a hand-written copy.
+ */
+export function summarizeWatchlist(
+  watchlist: WatchedRow[],
+  preferredStores: PreferredStoreRow[],
+) {
   const preferredStoreIds = new Set(preferredStores.map((ps) => ps.storeId));
 
   const items = watchlist.map((w) => {

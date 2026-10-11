@@ -5,7 +5,7 @@ import { auth } from "../../../auth";
 import HomeClient from "@/components/home/HomeClient";
 import HomePageSkeleton from "@/components/home/HomePageSkeleton";
 import { getWatchlistSummary } from "@/lib/watchlist-summary";
-import { GUEST_WATCHLIST_SUMMARY } from "@/lib/guest-data";
+import { getGuestHome } from "@/lib/guest-data";
 import { prisma } from "@/lib/prisma";
 
 async function HomeData() {
@@ -15,8 +15,7 @@ async function HomeData() {
   if (isGuest) {
     return (
       <HomeClient
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        data={GUEST_WATCHLIST_SUMMARY as any}
+        data={await getGuestHome()}
         userName="Guest"
         userImage={null}
         hasUnreadAlerts={false}

@@ -13,7 +13,6 @@ import {
   cheapestElsewhere,
   type PricingItem,
 } from "@/lib/list-pricing";
-import { GUEST_LIST, GUEST_PREFERRED_STORES } from "@/lib/guest-data";
 
 // ── Fixtures ───────────────────────────────────
 
@@ -311,35 +310,5 @@ describe("computeListPricing — cheapestSplit", () => {
     // One real chain used, so no split — the flowers cost the same anywhere.
     expect(computeListPricing(items, ["walmart", "sobeys"]).cheapestSplit)
       .toBeNull();
-  });
-});
-
-// ── The guest preview ──────────────────────────
-
-describe("the guest list demonstrates the defect it was built to fix", () => {
-  // The logged-out preview used to price every item at every store, which is
-  // both unlike the real catalogue (Sobeys holds 187 of 701 products) and the
-  // one shape in which none of this UI appears. Filling those prices back in
-  // would quietly return the preview to showing a list where nothing is ever
-  // excluded, so the gaps are asserted here.
-  const pricing = computeListPricing(
-    GUEST_LIST.items as unknown as PricingItem[],
-    GUEST_PREFERRED_STORES.map((s) => s.chain),
-  );
-
-  it("has a store whose raw total is lowest and whose coverage is worst", () => {
-    const cheapest = [...pricing.baskets].sort((a, b) => a.total - b.total)[0];
-    expect(cheapest.missing.length).toBeGreaterThan(0);
-    // ...and that store is not the one presented as best.
-    expect(pricing.ranked[0].chain).not.toBe(cheapest.chain);
-  });
-
-  it("carries an item no store can price", () => {
-    expect(pricing.unlinkedItemIds.length).toBeGreaterThan(0);
-  });
-
-  it("keeps a shared basket to rank on", () => {
-    expect(pricing.commonItemIds.length).toBeGreaterThan(0);
-    expect(pricing.commonItemIds.length).toBeLessThan(pricing.itemCount);
   });
 });

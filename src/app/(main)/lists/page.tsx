@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import ListsClient from "@/components/lists/ListsClient";
-import { GUEST_LIST, GUEST_ALL_LISTS, GUEST_PREFERRED_STORES } from "@/lib/guest-data";
+import { getGuestList } from "@/lib/guest-data";
 import type { ComponentProps } from "react";
 
 async function getLists(userId: string) {
@@ -42,16 +42,51 @@ async function getListDetail(listId: string, userId: string) {
   });
 }
 
+type ListDetail = NonNullable<Awaited<ReturnType<typeof getListDetail>>>;
+type InitialList = ComponentProps<typeof ListsClient>["initialList"];
+
+/** Decimals to numbers and dates to strings, for the client. */
+function serializeList(list: ListDetail) {
+  return {
+    ...list,
+    items: list.items.map((item) => ({
+      ...item,
+      quantity:
+        item.quantity !== null && item.quantity !== undefined
+          ? Number(item.quantity)
+          : null,
+      customPrice: item.customPrice ? Number(item.customPrice) : null,
+      createdAt: item.createdAt.toISOString(),
+      updatedAt: item.updatedAt.toISOString(),
+      product: item.product
+        ? {
+            ...item.product,
+            unitQuantity: item.product.unitQuantity
+              ? Number(item.product.unitQuantity)
+              : null,
+            storeProducts: item.product.storeProducts.map((sp) => ({
+              ...sp,
+              currentPrice: sp.currentPrice ? Number(sp.currentPrice) : null,
+            })),
+          }
+        : null,
+    })),
+  } as InitialList;
+}
+
 export default async function ListsPage() {
   const cookieStore = await cookies();
   const isGuest = cookieStore.get("panion-guest")?.value === "1";
 
   if (isGuest) {
+    const { list, preferredStores } = await getGuestList();
     return (
       <ListsClient
-        initialList={GUEST_LIST as ComponentProps<typeof ListsClient>["initialList"]}
-        allLists={GUEST_ALL_LISTS}
-        preferredStores={GUEST_PREFERRED_STORES}
+        // The guest list mirrors a real one field for field, built from real
+        // catalogue rows; only its ids are not database ids.
+        initialList={serializeList(list as unknown as ListDetail)}
+        allLists={[{ id: list.id, name: list.name, itemCount: list.items.length }]}
+        preferredStores={preferredStores}
       />
     );
   }
@@ -81,41 +116,9 @@ export default async function ListsPage() {
     ? await getListDetail(firstList.id, userId)
     : null;
 
-  const serializedList = initialList
-    ? {
-        ...initialList,
-        items: initialList.items.map((item) => ({
-          ...item,
-          quantity:
-            item.quantity !== null && item.quantity !== undefined
-              ? Number(item.quantity)
-              : null,
-          customPrice: item.customPrice ? Number(item.customPrice) : null,
-          createdAt: item.createdAt.toISOString(),
-          updatedAt: item.updatedAt.toISOString(),
-          product: item.product
-            ? {
-                ...item.product,
-                unitQuantity: item.product.unitQuantity
-                  ? Number(item.product.unitQuantity)
-                  : null,
-                storeProducts: item.product.storeProducts.map((sp) => ({
-                  ...sp,
-                  currentPrice: sp.currentPrice
-                    ? Number(sp.currentPrice)
-                    : null,
-                })),
-              }
-            : null,
-        })),
-      }
-    : null;
-
   return (
     <ListsClient
-      initialList={
-        serializedList as ComponentProps<typeof ListsClient>["initialList"]
-      }
+      initialList={initialList ? serializeList(initialList) : null}
       allLists={allLists}
       preferredStores={preferredStores.map((ps) => ({
         chain: ps.store.chain,

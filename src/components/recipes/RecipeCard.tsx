@@ -26,8 +26,8 @@ export type Recipe = {
   }[];
   /**
    * What "Add to list" adds: the ingredients not already in the pantry, as
-   * the products the recipe page picks for them. Absent in guest mode, which
-   * falls back to `ingredients`.
+   * the products the recipe page picks for them. Absent falls back to
+   * `ingredients`.
    */
   toBuy?: RecipeListItem[];
 };

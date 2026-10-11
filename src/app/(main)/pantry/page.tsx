@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { Suspense } from "react";
 import PantryClient from "@/components/pantry/PantryClient";
-import { GUEST_PANTRY_ITEMS } from "@/lib/guest-data";
+import { getGuestPantry } from "@/lib/guest-data";
 
 export type SerializedPantryItem = {
   id: string;
@@ -81,7 +81,7 @@ export default async function PantryPage() {
   if (isGuest) {
     return (
       <div className="bg-white dark:bg-[#0f1416] min-h-screen">
-        <PantryClient initialItems={GUEST_PANTRY_ITEMS} />
+        <PantryClient initialItems={await getGuestPantry()} />
       </div>
     );
   }

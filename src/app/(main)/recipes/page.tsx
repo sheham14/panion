@@ -4,7 +4,6 @@ import { cookies } from "next/headers";
 import { after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import RecipesClient from "@/components/recipes/RecipesClient";
-import { GUEST_RECIPES } from "@/lib/guest-data";
 import { ensureIngredientGroups } from "@/lib/recipes/match-ingredients";
 import {
   planRecipesForUser,
@@ -15,13 +14,14 @@ import { listItemFor } from "@/lib/recipes/recipe-shopping";
 /** Model calls per page view for recipes whose ingredients aren't matched yet. */
 const MATCH_PER_VIEW = 3;
 
-async function getRecipes(userId: string) {
+/** The user's recipes and the built-in ones; built-in only when logged out. */
+async function getRecipes(userId: string | null) {
   return prisma.recipe.findMany({
     where: {
       // Delete is soft. Without this a deleted recipe came back on reload,
       // and opening it bounced to /lists.
       isActive: true,
-      OR: [{ userId }, { userId: null }],
+      OR: userId ? [{ userId }, { userId: null }] : [{ userId: null }],
     },
     include: {
       ingredients: {
@@ -45,16 +45,14 @@ export default async function RecipesPage() {
   const cookieStore = await cookies();
   const isGuest = cookieStore.get("panion-guest")?.value === "1";
 
-  if (isGuest) {
-    return (
-      <RecipesClient initialRecipes={GUEST_RECIPES} currentUserId="" />
-    );
+  // Guests see the built-in recipes, priced at the preview's stores.
+  let userId: string | null = null;
+  if (!isGuest) {
+    const session = await auth();
+    if (!session?.user?.id) redirect("/signin");
+    userId = session.user.id;
   }
 
-  const session = await auth();
-  if (!session?.user?.id) redirect("/signin");
-
-  const userId = session.user.id;
   const recipes = await getRecipes(userId);
   const plans = await planRecipesForUser(userId, recipes);
 
@@ -112,6 +110,6 @@ export default async function RecipesPage() {
   });
 
   return (
-    <RecipesClient initialRecipes={shapedRecipes} currentUserId={userId} />
+    <RecipesClient initialRecipes={shapedRecipes} currentUserId={userId ?? ""} />
   );
 }

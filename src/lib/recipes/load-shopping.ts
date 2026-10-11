@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { SHOWCASE_CHAINS } from "@/lib/showcase";
 import {
   planRecipeShopping,
   type RecipeShopping,
@@ -86,18 +87,23 @@ function toShoppingProduct(p: PricedProduct): ShoppingProduct {
   };
 }
 
-/** Plans every recipe given, with one query each for pantry, groups and stores. */
+/**
+ * Plans every recipe given, with one query each for pantry, groups and stores.
+ * `userId` null is the logged-out preview: no pantry, and the preview's stores.
+ */
 export async function planRecipesForUser(
-  userId: string,
+  userId: string | null,
   recipes: PlannableRecipe[],
 ): Promise<Map<string, RecipePlan>> {
   const plans = new Map<string, RecipePlan>();
   if (recipes.length === 0) return plans;
 
-  const pantryItems = await prisma.pantryItem.findMany({
-    where: { userId },
-    select: { name: true },
-  });
+  const pantryItems = userId
+    ? await prisma.pantryItem.findMany({
+        where: { userId },
+        select: { name: true },
+      })
+    : [];
   const pantryNames = pantryItems.map((p) => p.name.toLowerCase());
   const isInPantry = (name: string) => {
     const nameLower = name.toLowerCase();
@@ -128,10 +134,12 @@ export async function planRecipesForUser(
 
   // The shopper's stores, as the list page uses them. With none chosen, price
   // at every active store rather than show nothing.
-  const preferred = await prisma.userPreferredStore.findMany({
-    where: { userId },
-    select: { store: { select: { chain: true } } },
-  });
+  const preferred = userId
+    ? await prisma.userPreferredStore.findMany({
+        where: { userId },
+        select: { store: { select: { chain: true } } },
+      })
+    : SHOWCASE_CHAINS.map((chain) => ({ store: { chain } }));
   const chains = preferred.length
     ? preferred.map((p) => p.store.chain.toLowerCase())
     : (

@@ -616,7 +616,7 @@ export default function RecipeDetailClient({
                   {ing.notes ? ` · ${ing.notes}` : ""}
                 </p>
                 {/* What to buy, and where it is cheapest among the shopper's
-                    stores. Guests have no pricing, so nothing is shown. */}
+                    stores. */}
                 {ing.pick ? (
                   <p className="text-[11px] text-[#666] dark:text-[#999] mt-0.5 truncate">
                     <span className="font-medium text-[#0a7a62] dark:text-[#6ee7c7]">
