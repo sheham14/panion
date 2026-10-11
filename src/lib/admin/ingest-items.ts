@@ -404,7 +404,11 @@ export async function resolveAndIngest(opts: {
   // Create the new catalogue entries, then price them alongside the matches.
   let created = 0;
   for (const c of creations) {
-    const parsed = parseSize(c.size ?? c.name);
+    // Voilà states counts as "12 per pack". Stored as-is, the "per" made the
+    // list price it as sold by weight and search couldn't read it at all,
+    // and parseSize found no size, so the carton had none.
+    const size = c.size?.replace(/^\s*(\d+)\s*per\s+pack\s*$/i, "$1 ea") ?? null;
+    const parsed = parseSize(size ?? c.name);
     const product = await prisma.product.create({
       data: {
         name: c.name,
@@ -412,7 +416,7 @@ export async function resolveAndIngest(opts: {
         // Captures carry no barcode, so identity here is the name and group.
         category: c.category as never,
         subcategory: c.group,
-        unitSize: c.size,
+        unitSize: size,
         unitQuantity: parsed ? parsed.qty : null,
         unitMeasure: parsed ? parsed.unit : null,
         imageUrl: c.imageUrl,

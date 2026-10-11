@@ -7,6 +7,10 @@ import {
 } from "@/lib/unit-price";
 
 describe("parseQuantity", () => {
+  it('reads Voilà\'s "12 per pack" as a count, not a per-unit price', () => {
+    expect(parseQuantity("12 per pack")).toEqual({ qty: 12, basis: "unit" });
+  });
+
   it("normalizes weight to grams", () => {
     expect(parseQuantity("454 g")).toEqual({ qty: 454, basis: "g" });
     expect(parseQuantity("1.36 kg")).toEqual({ qty: 1360, basis: "g" });

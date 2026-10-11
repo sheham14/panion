@@ -65,6 +65,11 @@ export function parseQuantity(
     if (unit) return { qty: amount * unit.factor, basis: unit.basis };
   }
 
+  // Voilà's count format: "12 per pack" is twelve eggs, not a per-unit price.
+  // Unread, every Sobeys carton dropped out of search's "Cheapest" ranking.
+  const perPack = s.match(/^(\d+)\s*per\s+pack$/);
+  if (perPack) return { qty: parseFloat(perPack[1]), basis: "unit" };
+
   // Multipack: "12x355 ml", "4 x 113 g"
   const multi = s.match(/(\d+(?:\.\d+)?)\s*[x×]\s*(\d+(?:\.\d+)?)\s*([a-z]+)/);
   if (multi) {
