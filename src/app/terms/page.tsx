@@ -1,5 +1,10 @@
 import BackButton from "./back-button";
 
+/*
+ * Keep these terms true to the product: checked with every feature or
+ * change, alongside the privacy policy (CLAUDE.md rule 15).
+ */
+
 export default function TermsPage() {
   return (
     <div className="min-h-screen bg-white dark:bg-[#0f1416]">
@@ -12,7 +17,7 @@ export default function TermsPage() {
           <h1 className="text-[26px] font-semibold text-[#111] dark:text-[#e0e0e0] mb-1">
             Terms of Service
           </h1>
-          <p className="text-[13px] text-[#aaa]">Last updated: May 2026</p>
+          <p className="text-[13px] text-[#aaa]">Last updated: October 11, 2026</p>
         </div>
 
         {/* Acceptance */}
@@ -39,13 +44,19 @@ export default function TermsPage() {
           information and user reports, and may not always reflect current
           in-store prices — always verify at the shelf.
         </p>
+        <p className="text-[14px] text-[#555] dark:text-[#aaa] leading-relaxed mt-2">
+          You can try Panion as a guest without an account. Guest mode shows
+          sample data, nothing you do in it is saved, and Clove is limited to a
+          few messages.
+        </p>
 
         {/* Your Account */}
         <h2 className="text-[15px] font-semibold text-[#111] dark:text-[#e0e0e0] mt-8 mb-2">
           Your Account
         </h2>
         <p className="text-[14px] text-[#555] dark:text-[#aaa] leading-relaxed">
-          You sign in via Google OAuth. You are responsible for keeping your
+          You sign in with Google or with a sign-in link sent to your email.
+          You are responsible for keeping your
           account secure. You must be 13 or older to use Panion. We reserve the
           right to suspend accounts that abuse the service.
         </p>
@@ -82,15 +93,18 @@ export default function TermsPage() {
 
         {/* Clove */}
         <h2 className="text-[15px] font-semibold text-[#111] dark:text-[#e0e0e0] mt-8 mb-2">
-          AI Assistant — Clove
+          AI Features
         </h2>
         <p className="text-[14px] text-[#555] dark:text-[#aaa] leading-relaxed">
-          Clove is powered by Anthropic&apos;s Claude API. Clove&apos;s
-          responses are AI-generated and may contain errors — always use your
-          own judgment, especially regarding dietary information, allergens, and
-          nutritional content. Clove is not a substitute for professional
-          dietary or medical advice. We are not liable for decisions made based
-          on Clove&apos;s suggestions.
+          Clove and some other features use a third-party AI model, currently
+          from Anthropic: it sorts pantry items into categories, matches recipe
+          ingredients to products, and reads recipes you import. AI output is
+          generated and may contain errors, so check it — you can change any
+          category or product match it suggests. Always use your own judgment,
+          especially regarding dietary information, allergens, and nutritional
+          content. Clove is not a substitute for professional dietary or
+          medical advice. We are not liable for decisions made based on AI
+          suggestions.
         </p>
 
         {/* Intellectual Property */}
@@ -100,7 +114,9 @@ export default function TermsPage() {
         <p className="text-[14px] text-[#555] dark:text-[#aaa] leading-relaxed">
           Panion and its original content are owned by Sheham Mohammed. Recipe
           content you create belongs to you. System recipes provided by Panion
-          are for personal use only.
+          are for personal use only. Product names, brands, logos and product
+          images belong to their respective owners and are shown only to
+          identify products.
         </p>
 
         {/* Privacy */}

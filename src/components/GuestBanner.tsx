@@ -10,7 +10,9 @@ export default function GuestBanner() {
   if (!isGuest) return null;
 
   async function handleSignIn() {
-    await fetch("/api/guest/exit", { method: "POST" });
+    // Navigate even if clearing fails: middleware drops the guest cookie
+    // once a session exists, so a leftover one can't outlive sign-in.
+    await fetch("/api/guest/exit", { method: "POST" }).catch(() => {});
     router.push("/signin");
   }
 

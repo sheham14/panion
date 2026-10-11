@@ -1,5 +1,48 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import type { ReactNode } from "react";
+
+/*
+ * Keep this page true to the product. Every feature, processor or data flow
+ * that changes is checked against it in the same piece of work (CLAUDE.md
+ * rule 15), and the date below moves with it.
+ */
+
+function H2({ children }: { children: ReactNode }) {
+  return (
+    <h2 className="text-[15px] font-semibold text-[#111] dark:text-[#e0e0e0] mt-8 mb-2">
+      {children}
+    </h2>
+  );
+}
+
+function List({ children }: { children: ReactNode }) {
+  return (
+    <ul className="text-[14px] text-[#555] dark:text-[#aaa] leading-relaxed list-disc pl-5 space-y-1.5">
+      {children}
+    </ul>
+  );
+}
+
+function P({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return (
+    <p className={`text-[14px] text-[#555] dark:text-[#aaa] leading-relaxed ${className}`}>
+      {children}
+    </p>
+  );
+}
+
+function Term({ children }: { children: ReactNode }) {
+  return <span className="font-medium text-[#333] dark:text-[#ccc]">{children}</span>;
+}
+
+function Ext({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <a href={href} target="_blank" rel="noopener noreferrer" className="text-[#00b89e]">
+      {children}
+    </a>
+  );
+}
 
 export default function PrivacyPage() {
   return (
@@ -20,14 +63,11 @@ export default function PrivacyPage() {
           <h1 className="text-[26px] font-semibold text-[#111] dark:text-[#e0e0e0] mb-1">
             Privacy Policy
           </h1>
-          <p className="text-[13px] text-[#aaa]">Last updated: May 13, 2026</p>
+          <p className="text-[13px] text-[#aaa]">Last updated: October 11, 2026</p>
         </div>
 
-        {/* Who we are */}
-        <h2 className="text-[15px] font-semibold text-[#111] dark:text-[#e0e0e0] mt-8 mb-2">
-          Who we are
-        </h2>
-        <p className="text-[14px] text-[#555] dark:text-[#aaa] leading-relaxed">
+        <H2>Who we are</H2>
+        <P>
           Panion is a grocery price intelligence app operated by Sheham Mohammed.
           We help users in St. John&apos;s, Newfoundland find the best grocery prices
           at local stores. You can reach us at{" "}
@@ -38,196 +78,174 @@ export default function PrivacyPage() {
             privacy@panion.dev
           </a>{" "}
           for any privacy-related questions.
-        </p>
+        </P>
 
-        {/* What we collect */}
-        <h2 className="text-[15px] font-semibold text-[#111] dark:text-[#e0e0e0] mt-8 mb-2">
-          What we collect
-        </h2>
-        <ul className="text-[14px] text-[#555] dark:text-[#aaa] leading-relaxed list-disc pl-5 space-y-1.5">
+        <H2>What we collect</H2>
+        <List>
           <li>
-            <span className="font-medium text-[#333] dark:text-[#ccc]">
-              Account information:
-            </span>{" "}
-            your name and email address via Google Sign-In
+            <Term>Account information:</Term> your name and email address, from
+            Google Sign-In or the email address you use for a sign-in link
           </li>
           <li>
-            <span className="font-medium text-[#333] dark:text-[#ccc]">
-              Preferences:
-            </span>{" "}
-            dietary restrictions, allergies, preferred stores, notification
-            settings
+            <Term>Preferences:</Term> dietary restrictions, allergies, preferred
+            stores, notification settings
           </li>
-          <li>Grocery lists and pantry items you create</li>
-          <li>Price reports you submit</li>
+          <li>Grocery lists, pantry items and recipes you create or import</li>
+          <li>Products you watch, and price reports you submit</li>
           <li>
             Clove conversations, including your messages and the responses
             generated
           </li>
           <li>
-            <span className="font-medium text-[#333] dark:text-[#ccc]">
-              Usage data:
-            </span>{" "}
-            which features you use and when, to improve the app
+            <Term>Usage data:</Term> which features you use and when, to improve
+            the app and enforce fair-use limits
           </li>
-        </ul>
+          <li>
+            <Term>Push notifications:</Term> if you turn them on, the
+            subscription your browser gives us so we can deliver them
+          </li>
+          <li>
+            <Term>Technical data:</Term> your IP address, kept briefly to apply
+            rate limits; and, when something breaks, an error report with your
+            browser, device type and the page you were on
+          </li>
+          <li>
+            <Term>Guest mode:</Term> a random identifier in a cookie, so the
+            free Clove allowance can be counted. Nothing you do as a guest is
+            saved to an account.
+          </li>
+        </List>
 
-        {/* What we don't collect */}
-        <h2 className="text-[15px] font-semibold text-[#111] dark:text-[#e0e0e0] mt-8 mb-2">
-          What we don&apos;t collect
-        </h2>
-        <ul className="text-[14px] text-[#555] dark:text-[#aaa] leading-relaxed list-disc pl-5 space-y-1.5">
+        <H2>What we don&apos;t collect</H2>
+        <List>
           <li>Your precise location</li>
+          <li>Payment details</li>
           <li>
             Any data from third-party apps or services beyond what you provide
             directly
           </li>
-        </ul>
+        </List>
 
-        {/* How we use your data */}
-        <h2 className="text-[15px] font-semibold text-[#111] dark:text-[#e0e0e0] mt-8 mb-2">
-          How we use your data
-        </h2>
-        <ul className="text-[14px] text-[#555] dark:text-[#aaa] leading-relaxed list-disc pl-5 space-y-1.5">
+        <H2>How we use your data</H2>
+        <List>
           <li>
             To provide the app&apos;s core features: price comparisons, grocery
-            lists, pantry tracking
+            lists, pantry tracking, recipes
           </li>
           <li>
             To personalise Clove responses with your pantry, preferred stores,
             dietary restrictions, and budget
           </li>
           <li>
-            To send price drop alerts for products you watch (if enabled)
+            To organise your data with AI: sorting pantry items into categories,
+            matching recipe ingredients to products, and reading recipes you
+            import. You can change any category or match it makes.
           </li>
-        </ul>
+          <li>To send price drop alerts for products you watch (if enabled)</li>
+          <li>To keep the service working: preventing abuse and fixing errors</li>
+        </List>
 
-        {/* Third parties */}
-        <h2 className="text-[15px] font-semibold text-[#111] dark:text-[#e0e0e0] mt-8 mb-2">
-          Third parties we share data with
-        </h2>
-        <ul className="text-[14px] text-[#555] dark:text-[#aaa] leading-relaxed list-disc pl-5 space-y-1.5">
+        <H2>Third parties we share data with</H2>
+        <P className="mb-2">
+          Only what each service needs to do its job, and only to run Panion:
+        </P>
+        <List>
           <li>
-            <span className="font-medium text-[#333] dark:text-[#ccc]">
-              Anthropic:
-            </span>{" "}
-            your Clove messages are sent to Anthropic&apos;s API to generate
-            responses.{" "}
-            <a
-              href="https://www.anthropic.com/privacy"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[#00b89e]"
-            >
-              anthropic.com/privacy
-            </a>
+            <Term>AI model provider (currently Anthropic):</Term> your Clove
+            messages, with the pantry and preferences Clove uses; the text of
+            recipes you import or save; and the names of your pantry items, to
+            suggest a category.{" "}
+            <Ext href="https://www.anthropic.com/privacy">anthropic.com/privacy</Ext>
           </li>
           <li>
-            <span className="font-medium text-[#333] dark:text-[#ccc]">
-              Vercel:
-            </span>{" "}
-            our hosting provider. Your data passes through Vercel&apos;s
-            infrastructure.{" "}
-            <a
-              href="https://vercel.com/legal/privacy-policy"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[#00b89e]"
-            >
+            <Term>Vercel:</Term> our hosting provider, through which all
+            requests pass. We also use Vercel Web Analytics, which counts page
+            views without cookies and without identifying you.{" "}
+            <Ext href="https://vercel.com/legal/privacy-policy">
               vercel.com/legal/privacy-policy
-            </a>
+            </Ext>
           </li>
           <li>
-            <span className="font-medium text-[#333] dark:text-[#ccc]">
-              Google:
-            </span>{" "}
-            authentication via Google Sign-In.{" "}
-            <a
-              href="https://policies.google.com/privacy"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[#00b89e]"
-            >
+            <Term>Neon:</Term> our database host, where your account data is
+            stored.{" "}
+            <Ext href="https://neon.com/privacy-policy">neon.com/privacy-policy</Ext>
+          </li>
+          <li>
+            <Term>Sentry:</Term> receives error reports when something breaks,
+            with technical details as described above. We strip personal data
+            we can identify before sending.{" "}
+            <Ext href="https://sentry.io/privacy/">sentry.io/privacy</Ext>
+          </li>
+          <li>
+            <Term>SendGrid (Twilio):</Term> sends sign-in link emails to the
+            address you enter.{" "}
+            <Ext href="https://www.twilio.com/en-us/legal/privacy">
+              twilio.com/legal/privacy
+            </Ext>
+          </li>
+          <li>
+            <Term>Google:</Term> authentication via Google Sign-In.{" "}
+            <Ext href="https://policies.google.com/privacy">
               policies.google.com/privacy
-            </a>
+            </Ext>
           </li>
-        </ul>
-        <p className="text-[14px] text-[#555] dark:text-[#aaa] leading-relaxed mt-3">
-          We do not sell your data. We do not share your data with advertisers.
-        </p>
-
-        {/* How long */}
-        <h2 className="text-[15px] font-semibold text-[#111] dark:text-[#e0e0e0] mt-8 mb-2">
-          How long we keep your data
-        </h2>
-        <ul className="text-[14px] text-[#555] dark:text-[#aaa] leading-relaxed list-disc pl-5 space-y-1.5">
           <li>
-            Active account data is kept for as long as your account exists
+            <Term>Your browser&apos;s push service</Term> (for example Google or
+            Apple) delivers push notifications, if you turn them on.
           </li>
+        </List>
+        <P className="mt-3">
+          We do not sell your data. We do not share your data with advertisers.
+        </P>
+
+        <H2>How long we keep your data</H2>
+        <List>
+          <li>Active account data is kept for as long as your account exists</li>
           <li>
             If you request deletion, your account is anonymised within 30 days
           </li>
-          <li>
-            Clove conversations are kept indefinitely until you delete them
-          </li>
+          <li>Clove conversations are kept until you delete them</li>
           <li>Price reports are kept to improve data accuracy</li>
-        </ul>
-
-        {/* PIPEDA */}
-        <h2 className="text-[15px] font-semibold text-[#111] dark:text-[#e0e0e0] mt-8 mb-2">
-          Your rights under PIPEDA
-        </h2>
-        <p className="text-[14px] text-[#555] dark:text-[#aaa] leading-relaxed mb-2">
-          As a Canadian user you have the right to:
-        </p>
-        <ul className="text-[14px] text-[#555] dark:text-[#aaa] leading-relaxed list-disc pl-5 space-y-1.5">
           <li>
-            Access the data we hold about you. Use the{" "}
-            <span className="font-medium text-[#333] dark:text-[#ccc]">
-              Export my data
-            </span>{" "}
+            Rate-limit records containing your IP address expire after a day
+            and are deleted soon after
+          </li>
+          <li>Error reports are kept by Sentry for a limited period</li>
+        </List>
+
+        <H2>Your rights under PIPEDA</H2>
+        <P className="mb-2">As a Canadian user you have the right to:</P>
+        <List>
+          <li>
+            Access the data we hold about you. Use the <Term>Export my data</Term>{" "}
             option in Profile Settings
           </li>
-          <li>
-            Correct inaccurate data, updated directly in Profile Settings
-          </li>
+          <li>Correct inaccurate data, updated directly in Profile Settings</li>
           <li>
             Request deletion of your account and data. Use{" "}
-            <span className="font-medium text-[#333] dark:text-[#ccc]">
-              Delete account
-            </span>{" "}
-            in Profile Settings
+            <Term>Delete account</Term> in Profile Settings
           </li>
           <li>Withdraw consent at any time by deleting your account</li>
-        </ul>
+        </List>
 
-        {/* Cookies */}
-        <h2 className="text-[15px] font-semibold text-[#111] dark:text-[#e0e0e0] mt-8 mb-2">
-          Cookies
-        </h2>
-        <p className="text-[14px] text-[#555] dark:text-[#aaa] leading-relaxed">
-          We use session cookies for authentication only. We do not use tracking
-          or advertising cookies. We do not use third-party analytics.
-        </p>
+        <H2>Cookies and local storage</H2>
+        <P>
+          We use a session cookie to keep you signed in, and two short-lived
+          cookies (24 hours) for guest mode. Your browser also stores a few
+          conveniences on your device only, such as recent searches and the
+          last list you opened. We do not use tracking or advertising cookies,
+          and our analytics use no cookies at all.
+        </P>
 
-        {/* Changes */}
-        <h2 className="text-[15px] font-semibold text-[#111] dark:text-[#e0e0e0] mt-8 mb-2">
-          Changes to this policy
-        </h2>
-        <p className="text-[14px] text-[#555] dark:text-[#aaa] leading-relaxed">
-          We may update this policy as the app evolves. Significant changes will
-          be communicated via email. The date at the top of this page always
+        <H2>Changes to this policy</H2>
+        <P>
+          We update this policy as the app evolves. Significant changes will be
+          communicated via email. The date at the top of this page always
           reflects the latest version.
-        </p>
+        </P>
 
-        {/* Contact */}
-        <h2 className="text-[15px] font-semibold text-[#111] dark:text-[#e0e0e0] mt-8 mb-2">
-          Contact
-        </h2>
-        <a
-          href="mailto:privacy@panion.dev"
-          className="text-[14px] text-[#00b89e]"
-        >
+        <H2>Contact</H2>
+        <a href="mailto:privacy@panion.dev" className="text-[14px] text-[#00b89e]">
           privacy@panion.dev
         </a>
       </div>
