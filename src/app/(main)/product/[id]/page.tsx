@@ -112,8 +112,9 @@ const SIMILAR = 6;
  * Products in groups related to this one: other milks for skim milk, other
  * eggs for large eggs. Its own group is already on the page under "Compare
  * brands". Related means sharing the group's last word, its noun ("milk" in
- * `skim-milk`); the broad category alone used to offer condensed milk and
- * almond milk for skim milk. Falls back to the category when the noun finds
+ * `skim-milk`), with groups in the same department first — the noun alone
+ * also finds condensed and almond milk, and the broad category alone offered
+ * only those. Falls back to the category when the noun finds
  * too few. One product per group, the cheapest, priced from current prices —
  * this read `priceHistory`, which is empty for most products.
  */
@@ -137,7 +138,7 @@ async function getSimilarProducts(
     ? await prisma.product.findMany({
         where: { ...base, subcategory: { contains: noun, not: subcategory ?? undefined } },
         include: { storeProducts: priced },
-        take: 60,
+        take: 200,
       })
     : [];
   const fallback =
@@ -145,7 +146,7 @@ async function getSimilarProducts(
       ? await prisma.product.findMany({
           where: { ...base, category, subcategory: { not: subcategory ?? undefined } },
           include: { storeProducts: priced },
-          take: 60,
+          take: 200,
         })
       : [];
 
@@ -164,7 +165,14 @@ async function getSimilarProducts(
     }
   }
 
-  return [...byGroup.values()].slice(0, SIMILAR).map(({ p, best }) => ({
+  // Same department first (2% milk before condensed milk), cheapest next.
+  const ranked = [...byGroup.values()].sort(
+    (a, b) =>
+      Number(b.p.category === category) - Number(a.p.category === category) ||
+      (a.best?.price ?? Infinity) - (b.best?.price ?? Infinity),
+  );
+
+  return ranked.slice(0, SIMILAR).map(({ p, best }) => ({
     id: p.id,
     name: p.name,
     brand: p.brand,
