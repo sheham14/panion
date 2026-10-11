@@ -62,6 +62,8 @@ export type IngredientPick = {
   isSale: boolean;
   /** Chosen from the ingredient's group rather than a linked product. */
   viaGroup: boolean;
+  /** That group, when `viaGroup`: what the list buys the ingredient as. */
+  groupSlug: string | null;
 };
 
 export type RecipeShopping = {
@@ -140,6 +142,8 @@ export type RecipeListItem = {
   id: string;
   name: string;
   productId: string | null;
+  /** Bought as "any of" this group rather than one product. */
+  groupSlug?: string | null;
   quantity: number | null;
   unit: string | null;
   productUnitQuantity: number | null;
@@ -150,10 +154,11 @@ export type RecipeListItem = {
 /**
  * One ingredient as a list item, at `quantity` (already scaled for servings).
  *
- * A priced ingredient goes on the list as whole packages of the product picked
- * for it. Sent as "2 cups", the list cannot convert cups and would price two
- * cartons of milk. Shared by the recipe page and the recipes index so the two
- * add the same thing.
+ * A priced ingredient goes on the list as whole packages. Sent as "2 cups",
+ * the list cannot convert cups and would price two cartons of milk. One matched
+ * to a group goes on as that group, so every store prices its own best buy —
+ * as the product picked here it priced only where that brand is sold. Shared
+ * by the recipe page and the recipes index so the two add the same thing.
  */
 export function listItemFor(
   ing: {
@@ -168,6 +173,19 @@ export function listItemFor(
   quantity: number | null,
   pick: IngredientPick | null | undefined,
 ): RecipeListItem {
+  if (pick?.viaGroup && pick.groupSlug) {
+    return {
+      id: ing.id,
+      name: ing.name,
+      productId: null,
+      groupSlug: pick.groupSlug,
+      quantity: packsFor(quantity, ing.unit, pick),
+      unit: null,
+      productUnitQuantity: null,
+      productUnitMeasure: null,
+      productUnitSize: null,
+    };
+  }
   if (pick) {
     return {
       id: ing.id,
@@ -229,6 +247,7 @@ function cheapestAt(
         chain,
         isSale: row.isSale,
         viaGroup,
+        groupSlug: viaGroup ? ing.groupSlug : null,
       };
     }
   }

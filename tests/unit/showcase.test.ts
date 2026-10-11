@@ -11,6 +11,7 @@ import { describe, it, expect } from "vitest";
 import { pickShowcaseProduct, type ShowcaseProduct } from "@/lib/showcase";
 import { buildGuestHome, buildGuestList, buildGuestPantry } from "@/lib/guest-data";
 import { computeListPricing, type PricingItem } from "@/lib/list-pricing";
+import { groupProduct } from "@/lib/list-groups";
 
 // ── Fixtures ───────────────────────────────────
 
@@ -89,14 +90,25 @@ const products = [
 
 describe("the guest list", () => {
   const list = buildGuestList(products, NOW);
+  // What `getGuestList` does through `withGroups`: price "any of" a group.
+  const resolved = list.items.map((i) =>
+    i.groupSlug && !i.productId
+      ? { ...i, product: groupProduct(i.groupSlug, products.filter((p) => p.subcategory === i.groupSlug)) }
+      : i,
+  );
   const pricing = computeListPricing(
-    list.items as unknown as PricingItem[],
+    resolved as unknown as PricingItem[],
     STORES.map((s) => s.chain),
   );
 
   it("lists every showcase product, linked to its real id", () => {
-    expect(list.items.filter((i) => i.product).map((i) => i.productId))
-      .toEqual(["milk", "eggs", "butter"]);
+    expect(list.items.filter((i) => i.productId).map((i) => i.productId))
+      .toEqual(["milk", "butter"]);
+  });
+
+  it('lists eggs as "any large eggs", for each store to price its own best buy', () => {
+    const eggs = list.items.find((i) => i.groupSlug === "large-eggs")!;
+    expect(eggs).toMatchObject({ productId: null, name: "Large eggs", product: null });
   });
 
   it("carries a typed-in item no store can price", () => {
@@ -106,6 +118,10 @@ describe("the guest list", () => {
   it("shows stores missing items rather than pricing everything everywhere", () => {
     expect(pricing.baskets.some((b) => b.missing.length > 0)).toBe(true);
     expect(pricing.commonItemIds.length).toBeLessThan(pricing.itemCount);
+  });
+
+  it("keeps each item's group, so a pick can be switched", () => {
+    expect(list.items.find((i) => i.productId === "milk")?.groupSlug).toBe("2-percent-milk");
   });
 });
 

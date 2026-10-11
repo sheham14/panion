@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Search, X } from "lucide-react";
 import { getAllowedUnits } from "@/lib/unit-convert";
+import type { ItemGroup } from "@/lib/list-groups";
 
 /** A product as the sheet shows it — the linked one, or a search result. */
 type ProductChoice = {
@@ -27,8 +28,13 @@ export type EditItemChanges = {
   unit: string;
   notes: string;
   customPrice: number | null;
-  /** Present only when the link changed: a product id, or null to unlink. */
+  /**
+   * Present only when the link changed: a product id, or null. On a group
+   * item, null means "any of the group".
+   */
   productId?: string | null;
+  /** Present only when unlinking a group item into plain text: null. */
+  groupSlug?: null;
 };
 
 type ListItem = {
@@ -39,6 +45,9 @@ type ListItem = {
   notes: string | null;
   customPrice: number | null;
   product: Product | null;
+  /** The picked product on a group item; null for "any". */
+  productId?: string | null;
+  group?: ItemGroup | null;
 };
 
 type Props = {
@@ -48,6 +57,118 @@ type Props = {
   onDelete: (id: string) => Promise<boolean>;
   onClose: () => void;
 };
+
+/**
+ * "Which one?" for an item bought as a group: any member (each store's best
+ * buy) or one picked product, best value first.
+ */
+function GroupPicker({
+  group,
+  picked,
+  pickedProduct,
+  onPick,
+  onSearch,
+  onUnlink,
+}: {
+  group: ItemGroup;
+  picked: string | null;
+  /** The current pick when it isn't among the top choices. */
+  pickedProduct: ProductChoice | null;
+  onPick: (id: string | null) => void;
+  onSearch: () => void;
+  onUnlink: () => void;
+}) {
+  type Option = { id: string | null; title: string; detail: string; price: number | null };
+  const options: Option[] = [
+    {
+      id: null,
+      title: "Any — best buy at each store",
+      detail: group.reference
+        ? `Every store priced for ${group.reference}`
+        : "Cheapest at each store",
+      price: null,
+    },
+    ...(pickedProduct && !group.choices.some((c) => c.id === pickedProduct.id)
+      ? [
+          {
+            id: pickedProduct.id,
+            title: pickedProduct.name,
+            detail: [pickedProduct.brand, pickedProduct.unitSize].filter(Boolean).join(" · "),
+            price: pickedProduct.bestPrice,
+          },
+        ]
+      : []),
+    ...group.choices.map((c) => ({
+      id: c.id,
+      title: c.name,
+      detail: [c.unitSize, c.bestStore && `cheapest at ${c.bestStore}`]
+        .filter(Boolean)
+        .join(" · "),
+      price: c.bestPrice,
+    })),
+  ];
+
+  return (
+    <div className="px-5 pt-4">
+      <p className="text-[11px] font-medium text-[#aaa] uppercase tracking-[0.6px] mb-2">
+        Which one?
+      </p>
+      <div
+        role="radiogroup"
+        aria-label={`Which ${group.label.toLowerCase()}`}
+        className="border border-[#ebebeb] dark:border-[#2e3538] rounded-xl overflow-hidden"
+      >
+        {options.map((option) => {
+          const selected = picked === option.id;
+          return (
+            <button
+              key={option.id ?? "any"}
+              role="radio"
+              aria-checked={selected}
+              onClick={() => onPick(option.id)}
+              className={[
+                "w-full flex items-center gap-3 px-3 py-2.5 text-left border-b border-[#f5f5f5] dark:border-[#2e3538] last:border-0",
+                selected ? "bg-[#f0fdf9] dark:bg-[#1a2e2a]" : "",
+              ].join(" ")}
+            >
+              <span
+                className={[
+                  "w-4 h-4 rounded-full flex-shrink-0",
+                  selected
+                    ? "border-[5px] border-[#00b89e]"
+                    : "border border-[#ccc] dark:border-[#444]",
+                ].join(" ")}
+              />
+              <span className="flex-1 min-w-0">
+                <span className="block text-[13px] text-[#111] dark:text-[#e0e0e0] truncate">
+                  {option.title}
+                </span>
+                {option.detail && (
+                  <span className="block text-[11px] text-[#aaa] truncate">
+                    {option.detail}
+                  </span>
+                )}
+              </span>
+              {option.price !== null && (
+                <span className="text-[12px] font-medium text-[#00b89e] flex-shrink-0">
+                  ${option.price.toFixed(2)}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+      <div className="flex gap-3 mt-2">
+        <button onClick={onSearch} className="text-[11px] font-medium text-[#00b89e]">
+          Search for something else
+        </button>
+        <button onClick={onUnlink} className="text-[11px] font-medium text-[#aaa]">
+          Unlink
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export default function EditItemSheet({ item, onSave, onDelete, onClose }: Props) {
   const [customPrice, setCustomPrice] = useState<string>(
@@ -68,7 +189,15 @@ export default function EditItemSheet({ item, onSave, onDelete, onClose }: Props
   const [linkTo, setLinkTo] = useState<ProductChoice | null | undefined>(undefined);
   const shownProduct: ProductChoice | null =
     linkTo === undefined ? item.product : linkTo;
-  const [searchOpen, setSearchOpen] = useState(!item.product);
+  const [searchOpen, setSearchOpen] = useState(!item.product && !item.group);
+
+  // A group item is "any of" the group or one picked member. undefined =
+  // unchanged, null = any, an id = that product.
+  const currentPick = item.group ? (item.productId ?? null) : null;
+  const [pick, setPick] = useState<string | null | undefined>(undefined);
+  const shownPick = pick === undefined ? currentPick : pick;
+  // Shown until the item is unlinked or replaced from search.
+  const showGroup = !!item.group && linkTo === undefined && !searchOpen;
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<ProductChoice[]>([]);
   const [searching, setSearching] = useState(false);
@@ -158,6 +287,11 @@ export default function EditItemSheet({ item, onSave, onDelete, onClose }: Props
       // an item with no product.
       customPrice: shownProduct ? null : customPrice ? parseFloat(customPrice) : null,
       ...(linkTo !== undefined && { productId: linkTo?.id ?? null }),
+      // Unlinking a group item makes it plain text, not "any of" the group.
+      ...(linkTo === null && item.group && { groupSlug: null }),
+      ...(linkTo === undefined &&
+        pick !== undefined &&
+        pick !== currentPick && { productId: pick }),
     });
     setSaving(false);
     if (ok) onClose();
@@ -183,7 +317,11 @@ export default function EditItemSheet({ item, onSave, onDelete, onClose }: Props
         role="dialog"
         aria-modal="true"
         aria-label={`Edit ${item.name}`}
-        className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-sm max-h-[90dvh] overflow-y-auto bg-white dark:bg-[#1e2528] rounded-t-[20px] z-30 pb-8"
+        // Inline because Tailwind never emitted `max-h-[90dvh]`: the class was
+        // there and the rule wasn't, so a tall sheet ran off the top of a
+        // short screen with no way to scroll to its first section.
+        style={{ maxHeight: "90dvh" }}
+        className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-sm overflow-y-auto bg-white dark:bg-[#1e2528] rounded-t-[20px] z-30 pb-8"
       >
         {/* Handle */}
         <div className="flex justify-center pt-3 pb-1">
@@ -207,7 +345,20 @@ export default function EditItemSheet({ item, onSave, onDelete, onClose }: Props
           </button>
         </div>
 
+        {/* Group: any member, or a picked one */}
+        {showGroup && item.group && (
+          <GroupPicker
+            group={item.group}
+            picked={shownPick}
+            pickedProduct={currentPick ? item.product : null}
+            onPick={setPick}
+            onSearch={() => setSearchOpen(true)}
+            onUnlink={unlink}
+          />
+        )}
+
         {/* Linked product, or the search to link one */}
+        {!showGroup && (
         <div className="px-5 pt-4">
           <p className="text-[11px] font-medium text-[#aaa] uppercase tracking-[0.6px] mb-2">
             {shownProduct && !searchOpen ? "Linked product" : "Link a product"}
@@ -312,6 +463,7 @@ export default function EditItemSheet({ item, onSave, onDelete, onClose }: Props
             </div>
           )}
         </div>
+        )}
 
         {/* Quantity */}
         <div className="px-5 pt-4">

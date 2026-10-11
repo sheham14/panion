@@ -14,6 +14,8 @@ type IngredientItem = {
   id: string;
   name: string;
   productId?: string | null;
+  /** "Any of" this group; used when there is no productId. */
+  groupSlug?: string | null;
   quantity?: number | null;
   unit?: string | null;
   productUnitQuantity?: number | null;
@@ -94,6 +96,7 @@ export default function AddToListSheet(props: Props) {
               if (!ing.productId) {
                 return {
                   name: ing.name,
+                  ...(ing.groupSlug && { groupSlug: ing.groupSlug }),
                   quantity: ing.quantity,
                   unit: ing.unit,
                 };

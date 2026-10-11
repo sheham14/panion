@@ -20,6 +20,7 @@ import {
   type PreferredStoreRow,
 } from "@/lib/watchlist-summary";
 import type { SerializedPantryItem } from "@/app/(main)/pantry/page";
+import { groupLabel, withGroups } from "@/lib/list-groups";
 
 type StoreRow = { id: string; chain: string; name: string };
 
@@ -50,20 +51,30 @@ export function buildGuestHome(products: ShowcaseProduct[], stores: StoreRow[]) 
 const GUEST_LIST_ID = "guest-list-1";
 
 /**
+ * Groups the preview lists as "any of" rather than one product, so it shows
+ * each store's own best buy — the way a recipe adds them.
+ */
+const ANY_OF_GROUPS = new Set(["large-eggs"]);
+
+/**
  * Every showcase product, plus one typed-in item with no product behind it.
  * Real lists grow those, and they are why the list total has a "not counted"
- * bucket, so the preview carries one.
+ * bucket, so the preview carries one. Each item keeps its group; the ones in
+ * `ANY_OF_GROUPS` are "any of" it, and `getGuestList` prices them.
  */
 export function buildGuestList(products: ShowcaseProduct[], now: Date) {
   const timestamps = {
     createdAt: daysFromNow(now, -3),
     updatedAt: daysFromNow(now, -1),
   };
-  const linked = products.map((product, i) => ({
+  const linked = products.map((product, i) => {
+    const anyOf = !!product.subcategory && ANY_OF_GROUPS.has(product.subcategory);
+    return {
     id: `guest-item-${i + 1}`,
     listId: GUEST_LIST_ID,
-    productId: product.id,
-    name: product.name,
+    productId: anyOf ? null : product.id,
+    groupSlug: product.subcategory,
+    name: anyOf ? groupLabel(product.subcategory!) : product.name,
     quantity: 1,
     unit: null,
     notes: null,
@@ -71,12 +82,14 @@ export function buildGuestList(products: ShowcaseProduct[], now: Date) {
     isChecked: false,
     sortOrder: i,
     ...timestamps,
-    product,
-  }));
+    product: anyOf ? null : product,
+    };
+  });
   const unlinked = {
     id: "guest-item-unlinked",
     listId: GUEST_LIST_ID,
     productId: null,
+    groupSlug: null,
     name: "Birthday candles",
     quantity: 1,
     unit: null,
@@ -149,8 +162,9 @@ export async function getGuestHome() {
 
 export async function getGuestList() {
   const [products, stores] = await Promise.all([loadShowcase(), loadShowcaseStores()]);
+  const list = buildGuestList(products, new Date());
   return {
-    list: buildGuestList(products, new Date()),
+    list: { ...list, items: await withGroups(list.items) },
     preferredStores: stores.map((s) => ({ chain: s.chain, name: s.name })),
   };
 }

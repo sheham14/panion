@@ -570,6 +570,11 @@ model ListItem {
     id          String   @id @default(cuid())
     listId      String   @map("list_id")
     productId   String?  @map("product_id") // null if free-text entry
+    /// Equivalence group (`Product.subcategory`) the item is bought as. With
+    /// no `productId` the item is "any of these", priced from the best buy in
+    /// the group at each store; with one, the shopper picked that product and
+    /// the group is kept so they can switch back.
+    groupSlug   String?  @map("group_slug")
     name        String // display name (from product or user-typed)
     quantity    Decimal  @default(1) @db.Decimal(10, 3)
     unit        String? // "kg", "lbs", "pack", "bunch", or null

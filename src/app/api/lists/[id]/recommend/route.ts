@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
 import { computeListPricing } from "@/lib/list-pricing";
+import { withGroups } from "@/lib/list-groups";
 
 /**
  * Which of the shopper's stores to buy this list at — the same answer the
@@ -57,7 +58,9 @@ export async function GET(
   if (!list)
     return NextResponse.json({ error: "List not found" }, { status: 404 });
 
-  const items = list.items.map((item) => ({
+  // An item bought as "any of" its group is priced from each store's best buy.
+  const resolved = await withGroups(list.items);
+  const items = resolved.map((item) => ({
     id: item.id,
     isChecked: item.isChecked,
     quantity: item.quantity !== null ? Number(item.quantity) : null,

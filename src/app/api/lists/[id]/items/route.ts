@@ -3,9 +3,15 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
 import type { ListItemGetPayload } from "../../../../../../prisma/generated/models/ListItem";
+import { groupExists, groupLabel, withGroups } from "@/lib/list-groups";
+
+/** An equivalence group slug, as `Product.subcategory` stores it. */
+const groupSlugSchema = z.string().trim().min(1).max(120);
 
 const createSchema = z.object({
   productId: z.string().min(1).nullish(),
+  /** Add "any of this group", priced from each store's best buy in it. */
+  groupSlug: groupSlugSchema.nullish(),
   name: z.string().trim().min(1).max(200).optional(),
   quantity: z.number().finite().nonnegative().nullish(),
   unit: z.string().max(50).nullish(),
@@ -21,8 +27,13 @@ const patchSchema = z.object({
   unit: z.string().max(50).optional(),
   notes: z.string().max(1000).optional(),
   customPrice: z.number().finite().nonnegative().max(100_000).nullable().optional(),
-  /** Link a typed-in item to a catalogue product, change it, or unlink (null). */
+  /**
+   * Pick a specific product, change it, or clear the pick (null). Clearing
+   * keeps the item's group, so it goes back to "any of" the group.
+   */
   productId: z.string().min(1).nullable().optional(),
+  /** Set the group the item is bought as, or null to make it plain text. */
+  groupSlug: groupSlugSchema.nullable().optional(),
 });
 
 /** What every write returns: the item with its product's live store rows. */
@@ -41,6 +52,12 @@ const itemInclude = {
 } as const;
 
 type ItemWithProduct = ListItemGetPayload<{ include: typeof itemInclude }>;
+
+/** The item for the client, with its group resolved (`withGroups`). */
+async function respondWith(item: ItemWithProduct, status = 200) {
+  const [resolved] = await withGroups([serializeItem(item)]);
+  return NextResponse.json(resolved, { status });
+}
 
 function serializeItem(item: ItemWithProduct) {
   return {
@@ -96,6 +113,7 @@ export async function POST(
     return NextResponse.json({ error: "Invalid body" }, { status: 400 });
   }
   const { productId, quantity, unit, notes } = parsed.data;
+  let groupSlug = parsed.data.groupSlug ?? null;
 
   // A product-linked add may arrive without a name. Add to list from search,
   // home and the product page sent only { productId, quantity } and every one
@@ -107,12 +125,20 @@ export async function POST(
   if (productId) {
     const product = await prisma.product.findUnique({
       where: { id: productId },
-      select: { name: true },
+      select: { name: true, subcategory: true },
     });
     if (!product) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
     name ??= product.name;
+    // A picked product keeps its group, so the shopper can switch to another
+    // member or to "any" without searching again.
+    groupSlug ??= product.subcategory;
+  } else if (groupSlug) {
+    if (!(await groupExists(groupSlug))) {
+      return NextResponse.json({ error: "Group not found" }, { status: 404 });
+    }
+    name ??= groupLabel(groupSlug);
   }
 
   if (!name)
@@ -124,7 +150,7 @@ export async function POST(
   });
 
   let lastCustomPrice: number | null = null;
-  if (!productId && name) {
+  if (!productId && !groupSlug && name) {
     const lastItem = await prisma.listItem.findFirst({
       where: {
         list: { userId: user.id },
@@ -145,7 +171,9 @@ export async function POST(
       listId: id,
       ...(productId
         ? { productId }
-        : { name: { equals: name, mode: "insensitive" }, productId: null }),
+        : groupSlug
+          ? { groupSlug, productId: null }
+          : { name: { equals: name, mode: "insensitive" }, productId: null, groupSlug: null }),
     },
   });
 
@@ -160,7 +188,7 @@ export async function POST(
       },
       include: itemInclude,
     });
-    return NextResponse.json(serializeItem(item), { status: 200 });
+    return respondWith(item, 200);
   }
 
   // No duplicate — proceed with create as before
@@ -168,6 +196,7 @@ export async function POST(
     data: {
       listId: id,
       productId: productId ?? null,
+      groupSlug,
       name,
       quantity: quantity ?? 1,
       unit: unit ?? null,
@@ -177,7 +206,7 @@ export async function POST(
     },
     include: itemInclude,
   });
-  return NextResponse.json(serializeItem(item), { status: 201 });
+  return respondWith(item, 201);
 }
 
 export async function PATCH(
@@ -212,14 +241,19 @@ export async function PATCH(
 
   // Linking is checked like POST: an unknown id would otherwise reach Prisma
   // as a foreign-key violation and come back a 500.
+  let pickedGroup: string | null = null;
   if (data.productId) {
     const product = await prisma.product.findUnique({
       where: { id: data.productId },
-      select: { id: true },
+      select: { id: true, subcategory: true },
     });
     if (!product) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
+    pickedGroup = product.subcategory;
+  }
+  if (data.groupSlug && !(await groupExists(data.groupSlug))) {
+    return NextResponse.json({ error: "Group not found" }, { status: 404 });
   }
 
   // Only update fields that were provided
@@ -233,7 +267,15 @@ export async function PATCH(
     updateData.productId = data.productId;
     // Store prices replace a hand-entered one once the item is linked; left
     // behind, it would come back as the price if the item were unlinked.
-    if (data.productId) updateData.customPrice = null;
+    if (data.productId) {
+      updateData.customPrice = null;
+      // The group follows the product picked, unless the caller set one.
+      if (data.groupSlug === undefined) updateData.groupSlug = pickedGroup;
+    }
+  }
+  if (data.groupSlug !== undefined) {
+    updateData.groupSlug = data.groupSlug;
+    if (data.groupSlug) updateData.customPrice = null;
   }
 
   const updated = await prisma.listItem.update({
@@ -248,7 +290,7 @@ export async function PATCH(
     data: { updatedAt: new Date() },
   });
 
-  return NextResponse.json(serializeItem(updated));
+  return respondWith(updated);
 }
 
 export async function DELETE(

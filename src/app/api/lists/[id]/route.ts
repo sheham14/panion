@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
+import { withGroups } from "@/lib/list-groups";
 
 export async function GET(
   request: NextRequest,
@@ -60,7 +61,7 @@ export async function GET(
     })),
   };
 
-  return NextResponse.json(serialized);
+  return NextResponse.json({ ...serialized, items: await withGroups(serialized.items) });
 }
 
 export async function PATCH(

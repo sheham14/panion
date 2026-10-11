@@ -185,7 +185,9 @@ describe("listItemFor", () => {
     unit: "g",
   };
 
-  it("adds a picked ingredient as whole packages of the pick", () => {
+  it("adds a group-matched ingredient as its group, in whole packages", () => {
+    // As the one product picked here, the list priced it only where that brand
+    // is sold; as the group, every store prices its own best buy.
     const mozz = product("p1", "Great Value", "Mozzarella", { qty: 320, measure: "g" }, [
       ["walmart", 5],
     ]);
@@ -197,6 +199,25 @@ describe("listItemFor", () => {
       ).picks,
     );
     expect(listItemFor(base, 600, pick)).toMatchObject({
+      productId: null,
+      groupSlug: "mozz",
+      quantity: 2,
+      unit: null,
+    });
+  });
+
+  it("adds an ingredient linked to a product as that product", () => {
+    const mozz = product("p1", "Great Value", "Mozzarella", { qty: 320, measure: "g" }, [
+      ["walmart", 5],
+    ]);
+    const [pick] = Object.values(
+      planRecipeShopping(
+        [ingredient("i1", "Shredded mozzarella", { quantity: 600, unit: "g", linked: mozz })],
+        new Map(),
+        ["walmart"],
+      ).picks,
+    );
+    expect(listItemFor({ ...base, productId: "p1" }, 600, pick)).toMatchObject({
       productId: "p1",
       quantity: 2,
       unit: null,

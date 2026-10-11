@@ -16,6 +16,7 @@ import {
   cheapestElsewhere,
   type StoreBasket,
 } from "@/lib/list-pricing";
+import type { ItemGroup } from "@/lib/list-groups";
 
 // ── Types ──────────────────────────────────────
 
@@ -35,6 +36,8 @@ type StoreProduct = {
     chain: string;
     name: string;
   };
+  /** On a group item's row: the product that is that store's best buy. */
+  pick?: { productId: string; label: string; packs: number; unitSize: string | null };
 };
 
 type Product = {
@@ -66,6 +69,10 @@ type ListItem = {
   sortOrder: number;
   customPrice: number | null;
   product: Product | null;
+  /** The product the shopper picked; null for "any of" the group. */
+  productId?: string | null;
+  groupSlug?: string | null;
+  group?: ItemGroup | null;
 };
 
 type GroceryList = {
@@ -208,6 +215,14 @@ function ListItemRow({
   const isUnlinked =
     !item.isChecked && item.product === null && item.customPrice === null;
 
+  // "Any of" a group: say which product is the buy at the selected store, or
+  // what amount every store is priced for.
+  const isAnyOfGroup = !!item.group && !item.productId;
+  const pickHere =
+    isAnyOfGroup && priceHere !== null
+      ? (cheapestRow(item.product, activeChain)?.pick ?? null)
+      : null;
+
   // Whether the figure actually on screen is a sale price — the selected
   // store's cheapest row, or the cheapest anywhere when showing the range.
   const onSale =
@@ -313,6 +328,17 @@ function ListItemRow({
             >
               {item.name}
             </button>
+          )}
+
+          {/* Group: the best buy here, or "any" and the amount priced */}
+          {isAnyOfGroup && !item.isChecked && (
+            <p className="text-[11px] text-[#999] dark:text-[#777] truncate mt-0.5">
+              {pickHere
+                ? `${pickHere.packs > 1 ? `${pickHere.packs} × ` : ""}${pickHere.label}${
+                    pickHere.unitSize ? ` · ${pickHere.unitSize}` : ""
+                  }`
+                : `Any brand${item.group?.reference ? ` · priced for ${item.group.reference}` : ""}`}
+            </p>
           )}
 
           {/* Notes */}
@@ -690,9 +716,10 @@ export default function ListsClient({
     if (!res?.ok) return false;
     // The server returns the item with its product's store rows, which is
     // what a newly linked item needs to be priced without a reload.
-    const saved: Pick<ListItem, "product" | "customPrice"> | null = await res
-      .json()
-      .catch(() => null);
+    const saved: Pick<
+      ListItem,
+      "product" | "customPrice" | "productId" | "groupSlug" | "group"
+    > | null = await res.json().catch(() => null);
     setItems((prev) =>
       prev.map((i) =>
         i.id === itemId
@@ -703,6 +730,11 @@ export default function ListsClient({
               notes: data.notes,
               customPrice: saved ? saved.customPrice : data.customPrice,
               product: saved ? saved.product : i.product,
+              ...(saved && {
+                productId: saved.productId,
+                groupSlug: saved.groupSlug,
+                group: saved.group,
+              }),
             }
           : i,
       ),

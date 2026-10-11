@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import ListsClient from "@/components/lists/ListsClient";
 import { getGuestList } from "@/lib/guest-data";
+import { withGroups } from "@/lib/list-groups";
 import type { ComponentProps } from "react";
 
 async function getLists(userId: string) {
@@ -67,6 +68,11 @@ function serializeList(list: ListDetail) {
             storeProducts: item.product.storeProducts.map((sp) => ({
               ...sp,
               currentPrice: sp.currentPrice ? Number(sp.currentPrice) : null,
+              // A Decimal can't cross into a client component. Only sale rows
+              // carry a was-price, so this broke exactly the lists that had a
+              // sale on them: the page rendered and never became interactive.
+              regularPrice:
+                "regularPrice" in sp && sp.regularPrice ? Number(sp.regularPrice) : null,
             })),
           }
         : null,
@@ -118,7 +124,15 @@ export default async function ListsPage() {
 
   return (
     <ListsClient
-      initialList={initialList ? serializeList(initialList) : null}
+      initialList={
+        initialList
+          ? serializeList({
+              ...initialList,
+              // Group items priced from each store's best buy; see list-groups.
+              items: await withGroups(initialList.items),
+            } as unknown as ListDetail)
+          : null
+      }
       allLists={allLists}
       preferredStores={preferredStores.map((ps) => ({
         chain: ps.store.chain,
