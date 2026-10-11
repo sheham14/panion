@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { MODELS } from "@/lib/ai/models";
 
 /**
  * One prompt in, text out — the place new AI calls go through.
@@ -21,15 +22,15 @@ export type CompleteRequest = {
 export type Complete = (req: CompleteRequest) => Promise<string | null>;
 
 /**
- * Chosen on a side-by-side, not by default (2026-10-06): 16 recipe
- * ingredients matched against production-like groups. Opus 5 and Haiku 4.5
- * agreed on 15 and took the same ~3s; Haiku mapped "plain yogurt" to Greek
+ * The Opus tier, chosen on a side-by-side, not by default (2026-10-06): 16
+ * recipe ingredients matched against production-like groups. Opus 5 and Haiku
+ * 4.5 agreed on 15 and took the same ~3s; Haiku mapped "plain yogurt" to Greek
  * yogurt — the loose substitution the matcher's prompt forbids, and the kind of
- * wrong match this codebase ranks worse than no match. Matching runs once per
- * recipe, so the cost gap is about a cent each. Re-run the comparison before
- * switching to a cheaper model.
+ * wrong match this codebase ranks worse than no match. Now Opus 5.5, the same
+ * tier's successor (2026-10-11). Re-run the comparison before switching to a
+ * cheaper model.
  */
-const MODEL = "claude-opus-5";
+const MODEL = MODELS.reasoning;
 
 export const complete: Complete = async ({ system, prompt, maxTokens = 4096 }) => {
   const client = new Anthropic();

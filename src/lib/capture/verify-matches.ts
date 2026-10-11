@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { MODELS } from "@/lib/ai/models";
 
 /**
  * Second-opinion pass over the matcher's proposals.
@@ -26,7 +27,7 @@ import Anthropic from "@anthropic-ai/sdk";
  * gate intact and makes this a strictly additional filter.
  */
 
-const MODEL = "claude-haiku-4-5";
+const MODEL = MODELS.fast;
 const BATCH_SIZE = 25;
 
 export type VerifyInput = {
@@ -135,6 +136,8 @@ export async function verifyMatches(
       const res = await client.messages.create({
         model: MODEL,
         max_tokens: 4096,
+        // A same/different judgement on every row: Haiku 5.5's default.
+        output_config: { effort: "medium" },
         system: SYSTEM_PROMPT,
         messages: [{ role: "user", content: list }],
       });

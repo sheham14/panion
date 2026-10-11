@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth-utils";
+import { MODELS } from "@/lib/ai/models";
 
 const GUEST_SESSION = {
   id: "guest-session",
@@ -53,7 +54,7 @@ export async function POST(request: NextRequest) {
       userId: user.id,
       title: null, // set after first message
       isTemp: body.isTemp ?? false,
-      model: "claude-haiku-4-5-20251001",
+      model: MODELS.chat,
       tokenCount: 0,
     },
   });

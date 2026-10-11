@@ -5,6 +5,7 @@ import { getAuthenticatedUser } from "@/lib/auth-utils";
 import { hitRateLimit } from "@/lib/rate-limit";
 import { badRequest, notFound } from "@/lib/api-error";
 import Anthropic from "@anthropic-ai/sdk";
+import { MODELS } from "@/lib/ai/models";
 import { getGuestPantryForClove } from "@/lib/guest-data";
 
 const GUEST_LIMIT = 5;
@@ -286,8 +287,11 @@ export async function POST(
         };
         try {
           const anthropicStream = client.messages.stream({
-            model: "claude-haiku-4-5-20251001",
-            max_tokens: 1500,
+            model: MODELS.chat,
+            // Room for thinking (on by default) plus the reply; low effort
+            // is the recommendation for chat.
+            max_tokens: 4000,
+            output_config: { effort: "low" },
             system: systemPrompt,
             messages: [...clientHistory, { role: "user", content: guestContent }],
           });
@@ -490,8 +494,11 @@ export async function POST(
         for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
           try {
             anthropicStream = client.messages.stream({
-              model: session.model ?? "claude-haiku-4-5-20251001",
-              max_tokens: 1500,
+              // Always the current chat model. Sessions store the model they
+              // were created with, which kept old chats on a retired one.
+              model: MODELS.chat,
+              max_tokens: 4000,
+              output_config: { effort: "low" },
               system: systemPrompt,
               messages: history.map((m) => ({
                 role: m.role as "user" | "assistant",
@@ -527,6 +534,16 @@ export async function POST(
         const finalMessage = await anthropicStream.finalMessage();
         const inputTokens = finalMessage.usage.input_tokens;
         const outputTokens = finalMessage.usage.output_tokens;
+
+        // A declined or empty reply is not saved: an empty assistant turn in
+        // the history makes every later request in the session fail.
+        if (!fullText.trim()) {
+          send({
+            type: "error",
+            message: "Clove couldn't answer that one. Try asking another way.",
+          });
+          return;
+        }
 
         // Persist assistant message
         await prisma.aiChatMessage.create({

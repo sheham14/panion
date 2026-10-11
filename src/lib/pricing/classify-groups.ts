@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { MODELS } from "@/lib/ai/models";
 
 /**
  * Assign products to **equivalence groups** — the unit of cross-brand comparison.
@@ -22,7 +23,7 @@ import Anthropic from "@anthropic-ai/sdk";
  * is not in any request path.
  */
 
-const MODEL = "claude-haiku-4-5";
+const MODEL = MODELS.fast;
 
 /** Batch size per request — large enough to be cheap, small enough to stay reliable. */
 const BATCH_SIZE = 40;
@@ -81,6 +82,7 @@ async function classifyBatch(
   const res = await client.messages.create({
     model: MODEL,
     max_tokens: 4096,
+    output_config: { effort: "low" },
     system: SYSTEM_PROMPT + knownGroupsBlock(known),
     messages: [{ role: "user", content: list }],
   });

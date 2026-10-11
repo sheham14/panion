@@ -8,6 +8,7 @@ import {
   tooManyRequests,
 } from "@/lib/api-error";
 import Anthropic from "@anthropic-ai/sdk";
+import { MODELS, replyText } from "@/lib/ai/models";
 import { ensureIngredientGroups } from "@/lib/recipes/match-ingredients";
 
 const DAILY_LIMIT = 20;
@@ -82,8 +83,10 @@ export async function POST(request: NextRequest) {
   let extraction;
   try {
     extraction = await client.messages.create({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 1024,
+      model: MODELS.fast,
+      // Room for thinking (on by default) plus the JSON.
+      max_tokens: 4096,
+      output_config: { effort: "low" },
       system: [
         "Extract the recipe from the provided text and return ONLY a valid JSON object.",
         "No markdown, no backticks, no explanation — raw JSON only.",
@@ -103,8 +106,8 @@ export async function POST(request: NextRequest) {
     return apiError("Failed to extract recipe", 502, { code: "upstream_error" });
   }
 
-  const raw =
-    extraction.content[0].type === "text" ? extraction.content[0].text : "{}";
+  // By type: the reply can open with a thinking block.
+  const raw = replyText(extraction.content) || "{}";
 
   let recipeData: ExtractedRecipe;
   try {

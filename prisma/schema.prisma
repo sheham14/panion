@@ -685,7 +685,7 @@ model AiChatSession {
     userId     String   @map("user_id")
     title      String? // auto-generated from first message
     isTemp     Boolean  @default(false) @map("is_temp")
-    model      String   @default("claude-haiku-4-5-20251001")
+    model      String   @default("claude-haiku-5-5") // informational: the chat always uses MODELS.chat
     tokenCount Int      @default(0) @map("token_count")
     createdAt  DateTime @default(now()) @map("created_at")
     updatedAt  DateTime @updatedAt @map("updated_at")
