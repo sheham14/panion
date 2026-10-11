@@ -10,13 +10,14 @@ import { getStoreMeta } from "@/lib/store-meta";
 
 export type StoreRow = { id: string; chain: string; name: string };
 
-const WATCHLIST_DEFAULTS = [
-  { id: "prod_milk_natrel",       emoji: "🥛", name: "Whole milk — 4L",      price: "From $5.47 at Walmart" },
-  { id: "prod_eggs_burnbrae",     emoji: "🥚", name: "Eggs — 12 pack",       price: "From $3.97 at Walmart" },
-  { id: "prod_bread_dempsters",   emoji: "🍞", name: "Whole wheat bread 675g",price: "From $4.47 at Walmart" },
-  { id: "prod_butter_lactantia",  emoji: "🧈", name: "Butter — 454g",        price: "From $5.97 at Walmart" },
-  { id: "prod_chicken_maple_leaf",emoji: "🍗", name: "Chicken breast — per kg",price: "From $10.97 at Walmart" },
-];
+/** A product onboarding offers to watch: a real catalogue row. */
+export type WatchSuggestion = {
+  id: string;
+  name: string;
+  imageSrc: string | null;
+  /** "From $4.78 at Dominion", or null when no store prices it. */
+  price: string | null;
+};
 
 const FEATURE_PILLS = [
   "Compare prices",
@@ -50,7 +51,13 @@ function ProgressDots({ step, total }: { step: number; total: number }) {
   );
 }
 
-export default function OnboardingClient({ stores }: { stores: StoreRow[] }) {
+export default function OnboardingClient({
+  stores,
+  suggestions,
+}: {
+  stores: StoreRow[];
+  suggestions: WatchSuggestion[];
+}) {
   const router = useRouter();
   const { update } = useSession();
   const [step, setStep] = useState(1);
@@ -69,7 +76,7 @@ export default function OnboardingClient({ stores }: { stores: StoreRow[] }) {
     ...getStoreMeta(s.chain),
   }));
 
-  const activeWatchlist = WATCHLIST_DEFAULTS.filter(
+  const activeWatchlist = suggestions.filter(
     (p) => !removedItems.has(p.id),
   );
 
@@ -195,7 +202,7 @@ export default function OnboardingClient({ stores }: { stores: StoreRow[] }) {
             Your watchlist is ready
           </h1>
           <p className="text-[14px] text-[#aaa] leading-relaxed">
-            We added 5 everyday essentials. Tap × to remove any.
+            We added {suggestions.length} everyday essentials. Tap × to remove any.
           </p>
         </div>
 
@@ -210,14 +217,23 @@ export default function OnboardingClient({ stores }: { stores: StoreRow[] }) {
                 key={item.id}
                 className="flex items-center gap-3 py-3 border-b border-[#f5f5f5] dark:border-[#1e2528]"
               >
-                <div className="w-11 h-11 rounded-xl bg-[#f7f7f7] dark:bg-[#242b2e] flex items-center justify-center text-[20px] flex-shrink-0">
-                  {item.emoji}
+                <div className="w-11 h-11 rounded-xl bg-[#f7f7f7] dark:bg-[#242b2e] flex items-center justify-center flex-shrink-0 overflow-hidden">
+                  {item.imageSrc && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={item.imageSrc}
+                      alt=""
+                      className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal"
+                    />
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[13px] font-medium text-[#111] dark:text-[#e0e0e0] truncate">
                     {item.name}
                   </p>
-                  <p className="text-[12px] text-[#00b89e]">{item.price}</p>
+                  {item.price && (
+                    <p className="text-[12px] text-[#00b89e]">{item.price}</p>
+                  )}
                 </div>
                 <button
                   onClick={() => removeWatchlistItem(item.id)}
