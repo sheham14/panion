@@ -88,41 +88,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }).catch((err) => console.error("[createUser] Failed to send admin notification:", err));
       }
 
-      try {
-        const systemRecipes = await prisma.recipe.findMany({
-          where: { userId: null, isActive: true },
-          include: { ingredients: { orderBy: { sortOrder: "asc" } } },
-        });
-
-        await Promise.all(
-          systemRecipes.map((recipe) =>
-            prisma.recipe.create({
-              data: {
-                userId: user.id,
-                title: recipe.title,
-                description: recipe.description,
-                imageUrl: recipe.imageUrl,
-                prepTime: recipe.prepTime,
-                cookTime: recipe.cookTime,
-                servings: recipe.servings,
-                instructions: recipe.instructions ?? undefined,
-                ingredients: {
-                  create: recipe.ingredients.map((ing) => ({
-                    name: ing.name,
-                    quantity: ing.quantity,
-                    unit: ing.unit,
-                    notes: ing.notes,
-                    isOptional: ing.isOptional,
-                    sortOrder: ing.sortOrder,
-                  })),
-                },
-              },
-            }),
-          ),
-        );
-      } catch (err) {
-        console.error("Failed to copy system recipes:", err);
-      }
+      // Built-in recipes are not copied to the new account. The recipes pages
+      // already show every built-in recipe (userId null) to everyone, so a
+      // copy put each one on screen twice; 16 such copies were removed from
+      // production on 2026-10-11.
     },
   },
 });
