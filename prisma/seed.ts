@@ -45,7 +45,7 @@ async function main() {
   // Costco: removed deliberately — wholesale pack sizes don't compare
   //   like-for-like to a household shelf price, and costco.ca bakes shipping
   //   into grocery prices (8-49% above warehouse), so there is no honest
-  //   automated source. See PRICING-PIPELINE.md §6.4.
+  //   automated source. See docs/archive/PRICING-PIPELINE.md §6.4.
   const stores = await Promise.all([
     prisma.store.upsert({
       where: { id: "store_walmart" },
@@ -102,14 +102,14 @@ async function main() {
   //
   // `chain` holds Flipp's merchant_name lowercased — the join key the Flipp
   // adapter maps on. Address is null because Colemans is multi-location and we
-  // serve chain-level pricing (PRICING-PIPELINE.md §12.1).
+  // serve chain-level pricing (docs/archive/PRICING-PIPELINE.md §12.1).
   const localStores = await Promise.all(
     (
       [
         { id: "store_colemans", chain: "colemans", name: "Colemans" },
         // Loblaw's discount banner. Flyer-only for now like Colemans; it runs
         // on the same PC Express platform as Dominion, so it can move to full
-        // catalogue mapping once that adapter exists (PRICING-PIPELINE.md §6.1).
+        // catalogue mapping once that adapter exists (docs/archive/PRICING-PIPELINE.md §6.1).
         { id: "store_nofrills", chain: "no frills", name: "No Frills" },
       ] as const
     ).map((s) =>

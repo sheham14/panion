@@ -1,3 +1,12 @@
+> **Archived 2026-10-12 — historical plan.** Written August 2026 and frozen at
+> its 2026-08-19 status. The catalogue size, adapter file names, Inngest job
+> names, Costco lane and phase status below are no longer true; `STATUS.md`
+> (local) and the code are current. Kept because §3 (etiquette,
+> `SCRAPERS_ENABLED`), §7 (price precedence — implemented as
+> `shouldReplaceCurrent` in `src/lib/pricing/ingest.ts`) and §6.7 (partner lane)
+> are still the only prose record of that design, and source comments cite
+> them by section. §7.4 (price reports promoted into history) was never built.
+
 # Panion — Pricing Data Pipeline Plan
 
 How Panion gets real, fresh grocery prices — the strategy, the verified facts behind it, the architecture, and a phased build plan.

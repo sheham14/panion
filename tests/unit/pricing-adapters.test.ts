@@ -17,7 +17,7 @@ import {
 
 /**
  * Adapters are tested against **real captured responses**, per
- * PRICING-PIPELINE.md §10. Both endpoints are unofficial and can change shape
+ * docs/archive/PRICING-PIPELINE.md §10. Both endpoints are unofficial and can change shape
  * without notice, so the contract these fixtures encode is the early warning.
  */
 const fixture = (name: string) =>

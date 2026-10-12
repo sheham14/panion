@@ -3,7 +3,7 @@ import { runFlippCycle } from "@/lib/pricing/run-flipp";
 import { runPcExpressCycle } from "@/lib/pricing/run-pcexpress";
 
 /**
- * Weekly price refresh, staggered per PRICING-PIPELINE.md §9.
+ * Weekly price refresh, staggered per docs/archive/PRICING-PIPELINE.md §9.
  *
  * NL flyers flip on Thursdays, so both jobs run Thursday morning — flyers
  * first, then the catalogue an hour later so the two never contend for the

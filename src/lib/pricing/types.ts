@@ -1,7 +1,7 @@
 /**
  * Shared types for the pricing pipeline.
  *
- * The design rule (PRICING-PIPELINE.md §4): **adapters are dumb, the ingestion
+ * The design rule (docs/archive/PRICING-PIPELINE.md §4): **adapters are dumb, the ingestion
  * writer is smart.** An adapter's only job is to produce `PriceObservation[]`.
  * All validation, precedence and DB writing lives in `ingest.ts`, so adding a
  * store means adding one adapter and nothing else.
@@ -84,7 +84,7 @@ export type AdapterResult = {
   errors: string[];
 };
 
-// ── Validation bounds (PRICING-PIPELINE.md §7) ──────────────────────────────
+// ── Validation bounds (docs/archive/PRICING-PIPELINE.md §7) ──────────────────────────────
 
 /** Below this, it's a parse error, not a grocery price. */
 export const MIN_PRICE = 0.1;

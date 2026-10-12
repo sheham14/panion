@@ -21,7 +21,7 @@ import type { PriceObservation } from "@/lib/pricing/types";
  * fetched. Now the store's data defines the catalogue and barcodes join it
  * across stores, which is exact rather than fuzzy for anything branded.
  *
- * Deliberately bounded (see `targetSize`): PRICING-PIPELINE.md §1 argues for the
+ * Deliberately bounded (see `targetSize`): docs/archive/PRICING-PIPELINE.md §1 argues for the
  * basket that matters over the whole catalogue, and a product only one store
  * carries has no comparison value anyway.
  */

@@ -29,7 +29,7 @@ This codebase doesn't chase coverage. The test suite is small and deliberate, fo
 | [tests/components/MarkdownText.test.tsx](tests/components/MarkdownText.test.tsx) | Clove's reply renderer keeps a numbered list as one list — blank lines and description lines used to split it, so every recipe option rendered as "1." |
 | [tests/components/GuestBanner.test.tsx](tests/components/GuestBanner.test.tsx) | GuestBanner renders conditionally based on session state |
 
-S1–S4 reference the findings in [OPUS_AUDIT.md](OPUS_AUDIT.md). Each test corresponds to a real security concern that was identified and fixed.
+S1–S4 reference the findings in [OPUS_AUDIT.md](docs/archive/OPUS_AUDIT.md) (local only, gitignored). Each test corresponds to a real security concern that was identified and fixed.
 
 The security boundary is not the only thing worth a test. The pricing tests
 exist for a different reason: a wrong number is quiet. Nothing throws when a

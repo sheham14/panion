@@ -15,7 +15,7 @@ import {
  *
  * Every source — scrapers, flyers, the admin bulk-entry tool, verified user
  * reports, partner feeds — goes through here, so validation and precedence are
- * defined once rather than re-implemented per adapter (PRICING-PIPELINE.md §4).
+ * defined once rather than re-implemented per adapter (docs/archive/PRICING-PIPELINE.md §4).
  *
  * Two invariants:
  *

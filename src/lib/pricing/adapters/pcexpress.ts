@@ -4,7 +4,7 @@ import type { PriceObservation } from "@/lib/pricing/types";
  * PC Express adapter — Loblaw's platform, which serves Dominion and No Frills.
  *
  * Unlike Flipp (sale prices only), this returns **regular shelf prices** plus
- * UPCs, package sizes and product photography — see PRICING-PIPELINE.md §6.1,
+ * UPCs, package sizes and product photography — see docs/archive/PRICING-PIPELINE.md §6.1,
  * which nominates it as the first scraper to build for exactly these reasons.
  *
  * Two things verified against the live API before this was written:

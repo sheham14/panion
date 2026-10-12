@@ -65,7 +65,7 @@ enum ProductCategory {
 // NOTE: there is deliberately no PriceSource enum.
 //
 // `PriceHistory.source` is a String so new provenance values can be added as
-// convention rather than as a migration — see PRICING-PIPELINE.md §5.1. Current
+// convention rather than as a migration — see docs/archive/PRICING-PIPELINE.md §5.1. Current
 // allowed values: "manual" | "scraper" | "flyer" | "crowdsourced" | "partner".
 // They are enforced in code by PRICE_SOURCES in src/lib/pricing/types.ts.
 

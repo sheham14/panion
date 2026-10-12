@@ -1,7 +1,7 @@
 /**
  * Match store/flyer item names to canonical products.
  *
- * PRICING-PIPELINE.md §8 is emphatic that **a wrong match is worse than a
+ * docs/archive/PRICING-PIPELINE.md §8 is emphatic that **a wrong match is worse than a
  * missing one** — comparing 400g of one brand against 750g of another destroys
  * trust in a way an absent product doesn't. So this is deliberately
  * conservative: deterministic scoring, a high threshold, and a hard unit-size

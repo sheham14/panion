@@ -7,7 +7,7 @@ import type { AdapterResult, PriceObservation } from "@/lib/pricing/types";
  * backend. One adapter covers Walmart, Dominion, Sobeys *and* the NL
  * independents (Powell's, Colemans, Value Grocer, BidGood's, Clover Farm,
  * Marie's Mini Mart), which is why it's the cheapest source of real data we
- * have — see PRICING-PIPELINE.md §6.5.
+ * have — see docs/archive/PRICING-PIPELINE.md §6.5.
  *
  * Caveats that shape the design:
  *  - The endpoint is **unofficial** and can change without notice. Everything

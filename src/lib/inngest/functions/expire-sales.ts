@@ -4,7 +4,7 @@ import { expireFinishedSales } from "@/lib/pricing/ingest";
 /**
  * Clear sale flags whose end date has passed.
  *
- * PRICING-PIPELINE.md §7.3 singles this out as the bug class to be most careful
+ * docs/archive/PRICING-PIPELINE.md §7.3 singles this out as the bug class to be most careful
  * about: a sale price still showing after the flyer expired is the fastest way
  * to lose user trust. Flyers flip Thursdays in NL, so this runs daily to catch
  * the boundary regardless of when a given flyer ends.
