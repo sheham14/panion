@@ -448,8 +448,8 @@ export default function SearchPage() {
       // Two answers to two different questions, fetched together: which brand
       // of this thing is best value, and where is a given product cheapest.
       const [productRes, groupRes] = await Promise.all([
-        accountFetch(`/api/products?q=${encodeURIComponent(q)}&limit=20`),
-        accountFetch(`/api/groups?q=${encodeURIComponent(q)}`),
+        fetch(`/api/products?q=${encodeURIComponent(q)}&limit=20`),
+        fetch(`/api/groups?q=${encodeURIComponent(q)}`),
       ]);
       setResults(productRes.ok ? await productRes.json() : []);
       setGroups(groupRes.ok ? ((await groupRes.json()).groups ?? []) : []);

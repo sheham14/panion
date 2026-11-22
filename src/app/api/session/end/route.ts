@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "../../../../../auth";
+import { expireSessionCookies } from "@/lib/session-cookies";
 
 /**
  * Where a page sends a request whose session cookie no longer holds a session,
@@ -22,11 +23,6 @@ export async function GET(request: NextRequest) {
   }
 
   const res = NextResponse.redirect(new URL("/signin", request.url));
-  for (const { name } of request.cookies.getAll()) {
-    // authjs.session-token, __Secure-authjs.session-token, and their .0/.1 chunks.
-    if (name.includes("authjs.session-token")) {
-      res.cookies.set(name, "", { maxAge: 0, path: "/" });
-    }
-  }
+  expireSessionCookies(request, res);
   return res;
 }

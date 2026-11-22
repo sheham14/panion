@@ -99,7 +99,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // clear it, so they send such a request through /api/session/end.
       const checkedAt = Number(token.accountCheckedAt ?? 0);
       if (token.sub && Date.now() - checkedAt > ACCOUNT_RECHECK_MS) {
-        if (!(await accountIsLive(token.sub))) return null;
+        // A failed read keeps the session and retries next time. Throwing
+        // here would make Auth.js clear the cookie, signing everyone out on a
+        // database blip.
+        const live = await accountIsLive(token.sub).catch((err) => {
+          console.error("[auth] account check failed; keeping the session:", err);
+          return true;
+        });
+        if (!live) return null;
         token.accountCheckedAt = Date.now();
       }
       return token;

@@ -137,7 +137,7 @@ export default function PantryEditSheet({ item, onClose, onSaved }: Props) {
     searchTimer.current = setTimeout(async () => {
       let found: ProductResult[] = [];
       try {
-        const res = await accountFetch(
+        const res = await fetch(
           `/api/products?q=${encodeURIComponent(q.trim())}&limit=5`,
         );
         if (res.ok) found = await res.json();

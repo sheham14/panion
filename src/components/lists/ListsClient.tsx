@@ -490,7 +490,7 @@ export default function ListsClient({
     }
     setSuggestionsLoading(true);
     try {
-      const res = await accountFetch(
+      const res = await fetch(
         `/api/products?q=${encodeURIComponent(q)}&limit=5`,
       );
       const data = res.ok ? await res.json() : [];
