@@ -183,3 +183,37 @@ describe("getWatchlistSummary — ranking", () => {
     expect(summary.stores[0].covered).toBe(0);
   });
 });
+
+describe("getWatchlistSummary — freshness", () => {
+  beforeEach(async () => {
+    await resetDb();
+  });
+
+  // A row with no scrape date was stamped `new Date()`, so home said
+  // "Updated today" for a price nobody knew the age of (audit 2026-10-12).
+  it("reports an unknown scrape date as unknown, not as today", async () => {
+    const user = await createTestUser();
+    await preferStore(user.id, "walmart");
+    const milk = await priceProduct("t_milk_fresh", "Milk", { walmart: 4.5 });
+    await prisma.watchlist.create({ data: { userId: user.id, productId: milk.id } });
+
+    const summary = await getWatchlistSummary(user.id);
+    expect(summary.items[0].prices.walmart?.price).toBe(4.5);
+    expect(summary.items[0].prices.walmart?.scrapedAt).toBeNull();
+  });
+
+  it("passes a real scrape date through", async () => {
+    const user = await createTestUser();
+    await preferStore(user.id, "walmart");
+    const milk = await priceProduct("t_milk_dated", "Milk", { walmart: 4.5 });
+    const seen = new Date("2026-08-26T12:00:00Z");
+    await prisma.storeProduct.update({
+      where: { id: "t_milk_dated_walmart" },
+      data: { lastScrapedAt: seen },
+    });
+    await prisma.watchlist.create({ data: { userId: user.id, productId: milk.id } });
+
+    const summary = await getWatchlistSummary(user.id);
+    expect(summary.items[0].prices.walmart?.scrapedAt).toBe(seen.toISOString());
+  });
+});

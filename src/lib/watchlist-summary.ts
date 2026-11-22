@@ -77,7 +77,7 @@ export function summarizeWatchlist(
   const preferredStoreIds = new Set(preferredStores.map((ps) => ps.storeId));
 
   const items = watchlist.map((w) => {
-    const prices: Record<string, { price: number; scrapedAt: string } | null> =
+    const prices: Record<string, { price: number; scrapedAt: string | null } | null> =
       {};
     let bestPrice: number | null = null;
     let bestStore: string | null = null;
@@ -89,7 +89,8 @@ export function summarizeWatchlist(
         const price = Number(sp.currentPrice);
         prices[chain] = {
           price,
-          scrapedAt: (sp.lastScrapedAt ?? new Date()).toISOString(),
+          // No scrape date means unknown, not today ("Unable to verify").
+          scrapedAt: sp.lastScrapedAt?.toISOString() ?? null,
         };
         if (bestPrice === null || price < bestPrice) {
           bestPrice = price;

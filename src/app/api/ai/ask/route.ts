@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error: "Daily limit reached",
-          message: `You've used your ${DAILY_LIMIT} free recipe queries for today. Upgrade to Pro for unlimited queries.`,
+          message: `You've used your ${DAILY_LIMIT} recipe questions for today. They reset tomorrow.`,
           resetsAt: new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000),
         },
         { status: 429 },

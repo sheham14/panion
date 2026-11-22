@@ -546,10 +546,10 @@ export default function ProfileSettingsClient({
       {/* ── Notifications ── */}
       <SectionHeader title="Notifications" />
       <SettingsCard>
-        <SettingsRow label="Price alert emails">
+        <SettingsRow label="Price-drop emails · coming soon">
           <Toggle value={emailNotifications} onChange={setEmailNotifications} />
         </SettingsRow>
-        <SettingsRow label="Push notifications" last>
+        <SettingsRow label="Push notifications · coming soon" last>
           {permission === "denied" ? (
             <span className="text-[12px] text-[#aaa]">Blocked in browser</span>
           ) : subscribed ? (

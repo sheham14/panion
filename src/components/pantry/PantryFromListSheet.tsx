@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { accountFetch } from "@/lib/account-fetch";
 import { X } from "lucide-react";
 
 type ListItem = {
@@ -70,7 +71,7 @@ export default function PantryFromListSheet({
     if (itemIds.length === 0) return;
     setSaving(true);
     try {
-      await fetch(`/api/pantry/from-list/${listId}`, {
+      await accountFetch(`/api/pantry/from-list/${listId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

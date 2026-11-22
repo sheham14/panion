@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { accountFetch } from "@/lib/account-fetch";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Plus, Trash2, Pencil, MoreHorizontal } from "lucide-react";
@@ -153,7 +154,7 @@ export function RecipeCard({
   async function handleDelete() {
     setDeleting(true);
     try {
-      const res = await fetch(`/api/recipes/${recipe.id}`, {
+      const res = await accountFetch(`/api/recipes/${recipe.id}`, {
         method: "DELETE",
       });
       if (res.ok) {

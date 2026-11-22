@@ -63,7 +63,7 @@ export default function PrivacyPage() {
           <h1 className="text-[26px] font-semibold text-[#111] dark:text-[#e0e0e0] mb-1">
             Privacy Policy
           </h1>
-          <p className="text-[13px] text-[#aaa]">Last updated: October 11, 2026</p>
+          <p className="text-[13px] text-[#aaa]">Last updated: November 21, 2026</p>
         </div>
 
         <H2>Who we are</H2>
@@ -105,8 +105,9 @@ export default function PrivacyPage() {
             subscription your browser gives us so we can deliver them
           </li>
           <li>
-            <Term>Technical data:</Term> your IP address, kept briefly to apply
-            rate limits; and, when something breaks, an error report with your
+            <Term>Technical data:</Term> your IP address, and a one-way hash of
+            any email address a sign-in link is requested for, kept briefly to
+            apply rate limits; and, when something breaks, an error report with your
             browser, device type and the page you were on
           </li>
           <li>
@@ -141,7 +142,11 @@ export default function PrivacyPage() {
             matching recipe ingredients to products, and reading recipes you
             import. You can change any category or match it makes.
           </li>
-          <li>To send price drop alerts for products you watch (if enabled)</li>
+          <li>
+            Price-drop alerts for products you watch are coming soon. The
+            alert settings you choose are saved for them; no alerts are sent
+            yet.
+          </li>
           <li>To keep the service working: preventing abuse and fixing errors</li>
         </List>
 
@@ -207,8 +212,8 @@ export default function PrivacyPage() {
           <li>Clove conversations are kept until you delete them</li>
           <li>Price reports are kept to improve data accuracy</li>
           <li>
-            Rate-limit records containing your IP address expire after a day
-            and are deleted soon after
+            Rate-limit records (your IP address, or a hashed email address)
+            expire within a day and are deleted soon after
           </li>
           <li>Error reports are kept by Sentry for a limited period</li>
         </List>

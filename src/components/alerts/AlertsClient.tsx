@@ -250,7 +250,8 @@ export default function AlertsClient({
             No notifications yet
           </p>
           <p className="text-[13px] text-[#aaa] leading-relaxed">
-            We&apos;ll let you know when prices drop on your saved products
+            Price-drop alerts are coming soon. The bell on each watched
+            product saves what you want to hear about, ready for launch.
           </p>
         </div>
       ) : (

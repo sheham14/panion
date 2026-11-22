@@ -14,13 +14,7 @@ async function getProduct(id: string, userId: string | null) {
       include: {
         storeProducts: {
           where: { isActive: true },
-          include: {
-            store: true,
-            priceHistory: {
-              orderBy: { scrapedAt: "desc" },
-              take: 1,
-            },
-          },
+          include: { store: true },
         },
       },
     }),
@@ -31,33 +25,23 @@ async function getProduct(id: string, userId: string | null) {
 
   if (!product) return null;
 
-  const STORE_META: Record<
-    string,
-    { color: string; bg: string; letter: string }
-  > = {
-    walmart: { color: "#0071ce", bg: "#0071ce18", letter: "W" },
-    loblaws: { color: "#c8102e", bg: "#c8102e18", letter: "L" },
-    metro: { color: "#e30000", bg: "#e3000018", letter: "M" },
-    sobeys: { color: "#d62b2b", bg: "#d62b2b18", letter: "S" },
-    dollarama: { color: "#00853e", bg: "#00853e18", letter: "D" },
-  };
-
+  // Priced from the store row, as search and home are. It read the newest
+  // `priceHistory` row before, which keeps a sale's price and badge after
+  // `expireFinishedSales` has reverted the store row (audit 2026-10-12).
   const storePrices = product.storeProducts
     .map((sp) => {
-      const latest = sp.priceHistory[0] ?? null;
-      const days = latest
-        ? Math.floor(
-            (Date.now() - new Date(latest.scrapedAt).getTime()) / 86400000,
-          )
+      const scrapedAt = sp.currentPrice !== null ? sp.lastScrapedAt : null;
+      const days = scrapedAt
+        ? Math.floor((Date.now() - scrapedAt.getTime()) / 86400000)
         : null;
 
       return {
         storeId: sp.storeId,
         chain: sp.store.chain,
         storeName: sp.store.name,
-        price: latest ? Number(latest.price) : null,
-        isSale: latest?.isSale ?? false,
-        scrapedAt: latest?.scrapedAt.toISOString() ?? null,
+        price: sp.currentPrice !== null ? Number(sp.currentPrice) : null,
+        isSale: sp.currentPrice !== null && sp.isSale,
+        scrapedAt: scrapedAt?.toISOString() ?? null,
         daysAgo: days,
         ...getStoreMeta(sp.store.chain),
       };

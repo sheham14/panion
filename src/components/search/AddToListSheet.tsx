@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { accountFetch } from "@/lib/account-fetch";
 import { X, Plus, Check } from "lucide-react";
 import { getMeasureType, getUnitType, TO_BASE } from "@/lib/unit-convert";
 
@@ -54,7 +55,7 @@ export default function AddToListSheet(props: Props) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/lists")
+    accountFetch("/api/lists")
       .then((r) => r.json())
       .then((data: { id: string; name: string; _count?: { items: number } }[]) => {
         // The route returns Prisma's `_count`, not `itemCount`; reading the
@@ -141,7 +142,7 @@ export default function AddToListSheet(props: Props) {
               };
             })();
 
-            return fetch(`/api/lists/${listId}/items`, {
+            return accountFetch(`/api/lists/${listId}/items`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(body),
@@ -161,7 +162,7 @@ export default function AddToListSheet(props: Props) {
         // Close after brief confirmation in recipe mode
         setTimeout(onClose, 700);
       } else {
-        const res = await fetch(`/api/lists/${listId}/items`, {
+        const res = await accountFetch(`/api/lists/${listId}/items`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -189,7 +190,7 @@ export default function AddToListSheet(props: Props) {
     if (!newListName.trim() || isPending) return;
     setIsPending(true);
     try {
-      const res = await fetch("/api/lists", {
+      const res = await accountFetch("/api/lists", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: newListName.trim() }),

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { accountFetch } from "@/lib/account-fetch";
 import { X, Search } from "lucide-react";
 import type { SerializedPantryItem } from "@/app/(main)/pantry/page";
 
@@ -136,7 +137,7 @@ export default function PantryEditSheet({ item, onClose, onSaved }: Props) {
     searchTimer.current = setTimeout(async () => {
       let found: ProductResult[] = [];
       try {
-        const res = await fetch(
+        const res = await accountFetch(
           `/api/products?q=${encodeURIComponent(q.trim())}&limit=5`,
         );
         if (res.ok) found = await res.json();
@@ -186,7 +187,7 @@ export default function PantryEditSheet({ item, onClose, onSaved }: Props) {
     };
 
     try {
-      const res = await fetch(
+      const res = await accountFetch(
         isEdit ? `/api/pantry/${item!.id}` : "/api/pantry",
         {
           method: isEdit ? "PATCH" : "POST",

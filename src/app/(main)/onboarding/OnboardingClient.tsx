@@ -8,7 +8,15 @@ import { Check, X, ChevronRight } from "lucide-react";
 import { getStoreMeta } from "@/lib/store-meta";
 
 
-export type StoreRow = { id: string; chain: string; name: string };
+export type StoreRow = {
+  id: string;
+  chain: string;
+  name: string;
+  /** False for a store we hold no prices for yet. */
+  hasPrices: boolean;
+  /** Selected to start with: the store prices enough to compare a list. */
+  preselect: boolean;
+};
 
 /** A product onboarding offers to watch: a real catalogue row. */
 export type WatchSuggestion = {
@@ -22,7 +30,7 @@ export type WatchSuggestion = {
 const FEATURE_PILLS = [
   "Compare prices",
   "Build grocery lists",
-  "Get price alerts",
+  "Watch products",
   "AI meal planning",
   "Pantry tracker",
 ];
@@ -62,7 +70,11 @@ export default function OnboardingClient({
   const { update } = useSession();
   const [step, setStep] = useState(1);
   const [selectedStores, setSelectedStores] = useState<Set<string>>(
-    () => new Set(stores.map((s) => s.id)),
+    () => {
+      const preselected = stores.filter((s) => s.preselect).map((s) => s.id);
+      // Never start with nothing selected; Continue needs at least one.
+      return new Set(preselected.length ? preselected : stores.map((s) => s.id));
+    },
   );
   const [removedItems, setRemovedItems] = useState<Set<string>>(new Set());
   const [isPending, startTransition] = useTransition();
@@ -71,6 +83,7 @@ export default function OnboardingClient({
   const storeItems = stores.map((s) => ({
     id: s.id,
     name: s.name,
+    hasPrices: s.hasPrices,
     // `letter` comes from getStoreMeta — it was previously derived from the
     // store name here and then silently overwritten by the spread anyway.
     ...getStoreMeta(s.chain),
@@ -134,7 +147,7 @@ export default function OnboardingClient({
             Which stores do you shop at?
           </h1>
           <p className="text-[14px] text-[#aaa] leading-relaxed">
-            We&apos;ll track prices and flyer deals at your chosen stores.
+            We&apos;ll compare prices at the stores you choose.
           </p>
         </div>
 
@@ -161,6 +174,9 @@ export default function OnboardingClient({
                 <span className="text-[12px] font-medium text-[#111] dark:text-[#e0e0e0]">
                   {store.name}
                 </span>
+                {!store.hasPrices && (
+                  <span className="text-[11px] text-[#888] -mt-1">No prices yet</span>
+                )}
                 <div
                   className={[
                     "w-4 h-4 rounded-full border flex items-center justify-center transition-all",
@@ -247,7 +263,8 @@ export default function OnboardingClient({
 
           <div className="mt-3 p-3.5 bg-[#f0fdf9] dark:bg-[#1a2e2a] border border-[#b2f0e4] dark:border-[#1e4a3a] rounded-xl flex items-center gap-3">
             <p className="flex-1 text-[12px] text-[#0a7a62] dark:text-[#4db89e] leading-relaxed">
-              You&apos;ll get notified when any of these drop in price
+              Their prices stay on your home screen. Price-drop alerts are
+              coming soon.
             </p>
             <ChevronRight size={14} className="text-[#00b89e] flex-shrink-0" />
           </div>
@@ -285,7 +302,7 @@ export default function OnboardingClient({
           You&apos;re all set
         </h1>
         <p className="text-[14px] text-[#888] leading-relaxed mb-8 max-w-[260px]">
-          Panion is tracking prices across your stores. Here&apos;s what you can do:
+          Your stores and watchlist are set. Here&apos;s what you can do:
         </p>
 
         <div className="flex flex-wrap gap-2 justify-center mb-8">

@@ -213,7 +213,7 @@ export async function POST(
       const enc = new TextEncoder();
       const stream = new ReadableStream({
         start(controller) {
-          controller.enqueue(enc.encode(`data: ${JSON.stringify({ type: "error", message: "Guest AI quota exceeded for today. Sign in for unlimited access.", isGuestLimit: true })}\n\n`));
+          controller.enqueue(enc.encode(`data: ${JSON.stringify({ type: "error", message: "You've used today's guest Clove questions. Sign in to keep going.", isGuestLimit: true })}\n\n`));
           controller.close();
         },
       });
@@ -226,7 +226,7 @@ export async function POST(
       const enc = new TextEncoder();
       const stream = new ReadableStream({
         start(controller) {
-          controller.enqueue(enc.encode(`data: ${JSON.stringify({ type: "error", message: "You've used your 5 free Clove queries. Sign in for unlimited access.", isGuestLimit: true })}\n\n`));
+          controller.enqueue(enc.encode(`data: ${JSON.stringify({ type: "error", message: "You've used your 5 free Clove questions. Sign in to keep going.", isGuestLimit: true })}\n\n`));
           controller.close();
         },
       });
@@ -371,7 +371,7 @@ export async function POST(
     return NextResponse.json(
       {
         error: "Daily limit reached",
-        message: `You've used your ${DAILY_LIMIT} free queries today. Upgrade to Pro for unlimited access.`,
+        message: `You've used your ${DAILY_LIMIT} Clove questions for today. They reset tomorrow.`,
         resetsAt: new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000),
       },
       { status: 429 },

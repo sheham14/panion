@@ -9,6 +9,9 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 
+/** An error whose message is written for the person reading the chat. */
+class CloveNotice extends Error {}
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 type ChatSession = {
@@ -519,8 +522,10 @@ export default function AIChatClient() {
         });
 
         if (!response.ok) {
-          const err = await response.json();
-          throw new Error(err.message ?? err.error ?? "Request failed");
+          const err = await response.json().catch(() => ({}));
+          // A limit or sign-in message is written for the reader; show it.
+          if (typeof err.message === "string") throw new CloveNotice(err.message);
+          throw new Error(err.error ?? "Request failed");
         }
 
         if (!response.body) throw new Error("No response body");
@@ -543,42 +548,47 @@ export default function AIChatClient() {
           for (const part of parts) {
             const line = part.trim();
             if (!line.startsWith("data: ")) continue;
+            let data;
             try {
-              const data = JSON.parse(line.slice(6));
-
-              if (data.type === "text") {
-                accRef.current += data.text;
-                setStreamingText(accRef.current);
-              } else if (data.type === "done") {
-                // Snapshot before clearing — updater runs at render time
-                const finalContent = accRef.current;
-                accRef.current = "";
-                setMessages((prev) => [
-                  ...prev,
-                  {
-                    id: `ai-${Date.now()}`,
-                    role: "assistant",
-                    content: finalContent,
-                    createdAt: new Date().toISOString(),
-                  },
-                ]);
-                setStreamingText("");
-                if (typeof data.remainingToday === "number") {
-                  setRemainingToday(data.remainingToday);
-                }
-                // Refresh sidebar to show updated title and session list
-                refreshSessions();
-              } else if (data.type === "error") {
-                throw new Error(data.message ?? "Stream error");
-              }
+              data = JSON.parse(line.slice(6));
             } catch {
-              /* skip malformed SSE events */
+              continue; // skip malformed SSE events
+            }
+            // Thrown outside the parse guard: inside it, the guest-limit
+            // message was swallowed as if it were a malformed event.
+            if (data.type === "error") {
+              throw new CloveNotice(data.message ?? "Something went wrong. Please try again.");
+            }
+            if (data.type === "text") {
+              accRef.current += data.text;
+              setStreamingText(accRef.current);
+            } else if (data.type === "done") {
+              // Snapshot before clearing — updater runs at render time
+              const finalContent = accRef.current;
+              accRef.current = "";
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: `ai-${Date.now()}`,
+                  role: "assistant",
+                  content: finalContent,
+                  createdAt: new Date().toISOString(),
+                },
+              ]);
+              setStreamingText("");
+              if (typeof data.remainingToday === "number") {
+                setRemainingToday(data.remainingToday);
+              }
+              // Refresh sidebar to show updated title and session list
+              refreshSessions();
             }
           }
         }
       } catch (err: unknown) {
         const raw = err instanceof Error ? err.message : "";
-        const msg = raw.toLowerCase().includes("overloaded")
+        const msg = err instanceof CloveNotice
+          ? err.message
+          : raw.toLowerCase().includes("overloaded")
           ? "Clove is busy right now — please try again in a moment."
           : "Something went wrong. Please try again.";
         setMessages((prev) => [

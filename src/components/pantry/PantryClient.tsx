@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { accountFetch } from "@/lib/account-fetch";
 import {
   Plus,
   Search,
@@ -399,7 +400,7 @@ export default function PantryClient({
     setDeleting(true);
     await Promise.all(
       [...selectedIds].map((id) =>
-        fetch(`/api/pantry/${id}`, { method: "DELETE" }),
+        accountFetch(`/api/pantry/${id}`, { method: "DELETE" }),
       ),
     );
     setItems((prev) => prev.filter((i) => !selectedIds.has(i.id)));

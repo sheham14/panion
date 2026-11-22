@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { accountFetch } from "@/lib/account-fetch";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -447,8 +448,8 @@ export default function SearchPage() {
       // Two answers to two different questions, fetched together: which brand
       // of this thing is best value, and where is a given product cheapest.
       const [productRes, groupRes] = await Promise.all([
-        fetch(`/api/products?q=${encodeURIComponent(q)}&limit=20`),
-        fetch(`/api/groups?q=${encodeURIComponent(q)}`),
+        accountFetch(`/api/products?q=${encodeURIComponent(q)}&limit=20`),
+        accountFetch(`/api/groups?q=${encodeURIComponent(q)}`),
       ]);
       setResults(productRes.ok ? await productRes.json() : []);
       setGroups(groupRes.ok ? ((await groupRes.json()).groups ?? []) : []);
@@ -493,7 +494,7 @@ export default function SearchPage() {
 
   async function handleToggleWatch(productId: string, isWatched: boolean) {
     const method = isWatched ? "DELETE" : "POST";
-    const res = await fetch("/api/watchlist", {
+    const res = await accountFetch("/api/watchlist", {
       method,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ productId }),

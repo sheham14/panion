@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { accountFetch } from "@/lib/account-fetch";
 import Link from "next/link";
 import {
   Search,
@@ -17,7 +18,7 @@ import { productImageSrc } from "@/lib/product-image";
 
 // ── Types ──────────────────────────────────────
 
-type StorePrice = { price: number; scrapedAt: string } | null;
+type StorePrice = { price: number; scrapedAt: string | null } | null;
 
 type WatchlistItem = {
   watchlistId: string;
@@ -143,7 +144,7 @@ function BellIcon({ state }: { state: NotifState }) {
 
 // ── Freshness helper ───────────────────────────
 
-function getFreshness(scrapedAt: string | undefined) {
+function getFreshness(scrapedAt: string | null | undefined) {
   if (!scrapedAt) return { label: "Unable to verify", color: "bg-[#9ca3af]" };
   const days = Math.floor(
     (Date.now() - new Date(scrapedAt).getTime()) / 86400000,
@@ -476,7 +477,7 @@ export default function HomeClient({
   // ── Actions ──────────────────────────────────
 
   async function handleSwipeDelete(productId: string) {
-    const res = await fetch(`/api/watchlist/${productId}`, {
+    const res = await accountFetch(`/api/watchlist/${productId}`, {
       method: "DELETE",
     });
     if (res.ok)
@@ -486,7 +487,7 @@ export default function HomeClient({
   async function handleBulkDelete() {
     await Promise.all(
       [...selectedIds].map((id) =>
-        fetch(`/api/watchlist/${id}`, { method: "DELETE" }),
+        accountFetch(`/api/watchlist/${id}`, { method: "DELETE" }),
       ),
     );
     setItems((prev) => prev.filter((i) => !selectedIds.has(i.productId)));
@@ -497,7 +498,7 @@ export default function HomeClient({
   async function handleBellCycle(productId: string, current: NotifState) {
     const next = nextNotifState(current);
     const fields = notifStateToFields(next);
-    const res = await fetch(`/api/watchlist/${productId}`, {
+    const res = await accountFetch(`/api/watchlist/${productId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(fields),
@@ -520,7 +521,7 @@ export default function HomeClient({
     const fields = notifStateToFields(next);
     await Promise.all(
       [...selectedIds].map((id) =>
-        fetch(`/api/watchlist/${id}`, {
+        accountFetch(`/api/watchlist/${id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(fields),

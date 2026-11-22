@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { accountFetch } from "@/lib/account-fetch";
 import { Plus, Check, Trash2, Pencil, ChevronDown } from "lucide-react";
 import EditItemSheet, {
   type EditItemChanges,
@@ -489,7 +490,7 @@ export default function ListsClient({
     }
     setSuggestionsLoading(true);
     try {
-      const res = await fetch(
+      const res = await accountFetch(
         `/api/products?q=${encodeURIComponent(q)}&limit=5`,
       );
       const data = res.ok ? await res.json() : [];
@@ -561,7 +562,7 @@ export default function ListsClient({
   // ── Switch list ────────────────────────────
 
   async function handleSwitchList(list: ListMeta) {
-    const res = await fetch(`/api/lists/${list.id}`);
+    const res = await accountFetch(`/api/lists/${list.id}`);
     if (!res.ok) return;
     const data = await res.json();
     setActiveList(data);
@@ -571,7 +572,7 @@ export default function ListsClient({
   // ── Create list ────────────────────────────
 
   async function handleCreateList(name: string) {
-    const res = await fetch("/api/lists", {
+    const res = await accountFetch("/api/lists", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name }),
@@ -592,7 +593,7 @@ export default function ListsClient({
     const name = productName ?? newItemName.trim();
     if (!name || !activeList) return;
 
-    const res = await fetch(`/api/lists/${activeList.id}/items`, {
+    const res = await accountFetch(`/api/lists/${activeList.id}/items`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -627,7 +628,7 @@ export default function ListsClient({
     setChecked(newChecked);
     // Optimistic, so a failed save has to be undone — otherwise the tick
     // silently reverts on the next load.
-    const res = await fetch(`/api/lists/${activeList.id}/items`, {
+    const res = await accountFetch(`/api/lists/${activeList.id}/items`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ itemId, isChecked: newChecked }),
@@ -642,7 +643,7 @@ export default function ListsClient({
     );
     clearTimeout(quantityDebounceRefs.current[itemId]);
     quantityDebounceRefs.current[itemId] = setTimeout(async () => {
-      await fetch(`/api/lists/${activeList.id}/items`, {
+      await accountFetch(`/api/lists/${activeList.id}/items`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ itemId, quantity }),
@@ -661,7 +662,7 @@ export default function ListsClient({
   async function executeClearCompleted() {
     if (!activeList) return;
     setItems((prev) => prev.filter((i) => !i.isChecked));
-    await fetch(`/api/lists/${activeList.id}/items`, {
+    await accountFetch(`/api/lists/${activeList.id}/items`, {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ clearCompleted: true }),
@@ -678,7 +679,7 @@ export default function ListsClient({
   async function handleClearAll() {
     if (!activeList) return;
     setItems([]);
-    await fetch(`/api/lists/${activeList.id}/items`, {
+    await accountFetch(`/api/lists/${activeList.id}/items`, {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ clearAll: true }),
@@ -690,7 +691,7 @@ export default function ListsClient({
 
   async function handleDeleteList() {
     if (!activeList) return;
-    await fetch(`/api/lists/${activeList.id}`, { method: "DELETE" });
+    await accountFetch(`/api/lists/${activeList.id}`, { method: "DELETE" });
     const remaining = lists.filter((l) => l.id !== activeList.id);
     setLists(remaining);
     if (remaining.length > 0) {
@@ -708,7 +709,7 @@ export default function ListsClient({
     data: EditItemChanges,
   ): Promise<boolean> {
     if (!activeList) return false;
-    const res = await fetch(`/api/lists/${activeList.id}/items`, {
+    const res = await accountFetch(`/api/lists/${activeList.id}/items`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ itemId, ...data }),
@@ -760,7 +761,7 @@ export default function ListsClient({
       );
     setItems((prev) => prev.filter((i) => i.id !== itemId));
     bumpCount(-1);
-    const res = await fetch(`/api/lists/${listId}/items`, {
+    const res = await accountFetch(`/api/lists/${listId}/items`, {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ itemId }),

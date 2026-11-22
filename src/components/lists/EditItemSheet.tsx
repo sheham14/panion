@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { accountFetch } from "@/lib/account-fetch";
 import Link from "next/link";
 import { Search, X } from "lucide-react";
 import { getAllowedUnits } from "@/lib/unit-convert";
@@ -223,7 +224,7 @@ export default function EditItemSheet({ item, onSave, onDelete, onClose }: Props
     searchTimer.current = setTimeout(async () => {
       let found: ProductChoice[] = [];
       try {
-        const res = await fetch(
+        const res = await accountFetch(
           `/api/products?q=${encodeURIComponent(q.trim())}&limit=5`,
         );
         if (res.ok) found = await res.json();
