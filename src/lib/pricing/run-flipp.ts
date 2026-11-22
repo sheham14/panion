@@ -42,6 +42,11 @@ export type FlippRunOptions = {
   delayMs?: { min: number; max: number };
   /** Log progress to stdout. */
   verbose?: boolean;
+  /**
+   * Items already fetched, e.g. by the weekly job, which fetches in batches
+   * (one Inngest step each). Skips the fetch.
+   */
+  fetched?: { items: NormalizedFlyerItem[]; errors: string[] };
 };
 
 export type FlippRunSummary = {
@@ -108,13 +113,15 @@ export async function runFlippCycle(
   log(`Catalogue: ${products.length} products across ${stores.length} stores`);
   log(`Fetching Flipp for ${opts.terms?.length ?? DEFAULT_SEARCH_TERMS.length} terms…`);
 
-  const { items, errors } = await fetchFlyerItems({
-    postalCode: opts.postalCode ?? ST_JOHNS_POSTAL_CODE,
-    terms: opts.terms ?? DEFAULT_SEARCH_TERMS,
-    chains: [...storeByChain.keys()],
-    fetchImpl: opts.fetchImpl,
-    delayMs: opts.delayMs,
-  });
+  const { items, errors } =
+    opts.fetched ??
+    (await fetchFlyerItems({
+      postalCode: opts.postalCode ?? ST_JOHNS_POSTAL_CODE,
+      terms: opts.terms ?? DEFAULT_SEARCH_TERMS,
+      chains: [...storeByChain.keys()],
+      fetchImpl: opts.fetchImpl,
+      delayMs: opts.delayMs,
+    }));
 
   log(`Fetched ${items.length} flyer items (${errors.length} errors)`);
 

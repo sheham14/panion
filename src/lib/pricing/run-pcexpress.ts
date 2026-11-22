@@ -51,6 +51,12 @@ export type PcExpressRunOptions = {
    * until this has run once.
    */
   backfillCatalogue?: boolean;
+  /**
+   * Products already fetched, e.g. by the weekly job, which fetches in
+   * batches (one Inngest step each) so no single request outlives a function
+   * timeout. Skips the fetch; the API key is then not needed.
+   */
+  fetched?: { products: NormalizedPcProduct[]; errors: string[] };
 };
 
 export type PcExpressRunSummary = {
@@ -74,7 +80,7 @@ export async function runPcExpressCycle(
   const observedAt = new Date();
 
   const apiKey = opts.apiKey ?? process.env.PC_EXPRESS_API_KEY;
-  if (!apiKey) {
+  if (!apiKey && !opts.fetched) {
     throw new Error(
       "PC_EXPRESS_API_KEY is not set. It's the public client key from the " +
         "storefront's own JS — see .env.example.",
@@ -112,13 +118,15 @@ export async function runPcExpressCycle(
   const terms = opts.terms ?? DEFAULT_SEARCH_TERMS;
   log(`Fetching ${banner} (store ${PC_EXPRESS_BANNERS[banner].storeId}) — ${terms.length} terms…`);
 
-  const { products: fetched, errors } = await fetchPcExpressProducts({
-    banner,
-    terms,
-    apiKey,
-    fetchImpl: opts.fetchImpl,
-    delayMs: opts.delayMs,
-  });
+  const { products: fetched, errors } =
+    opts.fetched ??
+    (await fetchPcExpressProducts({
+      banner,
+      terms,
+      apiKey: apiKey!,
+      fetchImpl: opts.fetchImpl,
+      delayMs: opts.delayMs,
+    }));
 
   log(`Fetched ${fetched.length} products (${errors.length} errors)`);
 

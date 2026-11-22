@@ -36,6 +36,11 @@ export type VoilaRunOptions = {
    * de-scoped session writes another province's prices into a St. John's store.
    */
   skipRegionCheck?: boolean;
+  /**
+   * Products already fetched, e.g. by the weekly job, which fetches in
+   * batches (one Inngest step each). Skips the fetch, not the region check.
+   */
+  fetched?: { products: NormalizedVoilaProduct[]; errors: string[] };
 };
 
 export type VoilaRunSummary = {
@@ -55,7 +60,7 @@ export async function runVoilaCycle(
   const observedAt = new Date();
 
   const sessionCookie = opts.sessionCookie ?? process.env.VOILA_SESSION_COOKIE;
-  if (!sessionCookie) {
+  if (!sessionCookie && !opts.fetched) {
     throw new Error(
       "VOILA_SESSION_COOKIE is not set. Voilà scopes prices to the session, " +
         "not to a query parameter — without a St. John's session this returns " +
@@ -99,12 +104,14 @@ export async function runVoilaCycle(
   const terms = opts.terms ?? ALL_CATALOGUE_TERMS;
   log(`Fetching Voilà (Sobeys) — ${terms.length} terms…`);
 
-  const { products: fetched, errors } = await fetchVoilaProducts({
-    terms,
-    sessionCookie,
-    fetchImpl: opts.fetchImpl,
-    delayMs: opts.delayMs,
-  });
+  const { products: fetched, errors } =
+    opts.fetched ??
+    (await fetchVoilaProducts({
+      terms,
+      sessionCookie: sessionCookie!,
+      fetchImpl: opts.fetchImpl,
+      delayMs: opts.delayMs,
+    }));
 
   log(`Fetched ${fetched.length} products (${errors.length} errors)`);
 
