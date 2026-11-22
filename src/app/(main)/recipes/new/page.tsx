@@ -1,11 +1,10 @@
-import { getAuthenticatedUser } from "@/lib/auth-utils";
-import { redirect } from "next/navigation";
+import { getAuthenticatedUser, redirectToSignIn } from "@/lib/auth-utils";
 import RecipeForm from "@/components/recipes/RecipeForm";
 import type { RecipeFormData } from "@/components/recipes/RecipeForm";
 
 export default async function NewRecipePage() {
   const { error } = await getAuthenticatedUser();
-  if (error) redirect("/signin");
+  if (error) redirectToSignIn();
 
   const initial: RecipeFormData = {
     title: "",

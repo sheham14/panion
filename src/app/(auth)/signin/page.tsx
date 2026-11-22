@@ -64,7 +64,17 @@ export default function SignInPage() {
     setSending(true);
     setError(null);
     try {
-      await signIn("email", { email: trimmed, callbackUrl: "/", redirect: false });
+      // "Check your email" only when a link actually went out. A throttled or
+      // failed send comes back as an `error`, not a throw.
+      const result = await signIn("email", { email: trimmed, callbackUrl: "/", redirect: false });
+      if (result?.error) {
+        setError(
+          result.error === "RateLimited"
+            ? "Too many sign-in links requested. Try again in an hour, or continue with Google."
+            : "We couldn't send a sign-in link. Check the address and try again.",
+        );
+        return;
+      }
       setSentTo(trimmed);
     } catch {
       setError("Something went wrong. Please try again.");
@@ -116,8 +126,8 @@ export default function SignInPage() {
             Welcome to Panion
           </h1>
           <p className="text-[14px] text-[#aaa] text-center leading-relaxed max-w-[260px]">
-            Track grocery prices, get alerts, and plan smarter trips across St.
-            John&apos;s stores.
+            Compare grocery prices, build lists, and plan smarter trips across
+            St. John&apos;s stores.
           </p>
         </div>
 

@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { getAuthenticatedUser } from "@/lib/auth-utils";
+import { getAuthenticatedUser, redirectToSignIn } from "@/lib/auth-utils";
 import { redirect } from "next/navigation";
 import RecipeForm from "@/components/recipes/RecipeForm";
 import type { RecipeFormData } from "@/components/recipes/RecipeForm";
@@ -11,7 +11,7 @@ export default async function EditRecipePage({
 }) {
   const { id } = await params;
   const { user, error } = await getAuthenticatedUser();
-  if (error) redirect("/signin");
+  if (error) redirectToSignIn();
 
   const recipe = await prisma.recipe.findUnique({
     where: { id },

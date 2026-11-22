@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { getAuthenticatedUser } from "@/lib/auth-utils";
-import { redirect } from "next/navigation";
+import { getAuthenticatedUser, redirectToSignIn } from "@/lib/auth-utils";
 import { cookies } from "next/headers";
 import { Suspense } from "react";
 import { after } from "next/server";
@@ -95,7 +94,7 @@ export default async function PantryPage() {
   }
 
   const { user, error } = await getAuthenticatedUser();
-  if (error) redirect("/signin");
+  if (error) redirectToSignIn();
 
   return (
     <div className="bg-white dark:bg-[#0f1416] min-h-screen">

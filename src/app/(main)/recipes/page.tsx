@@ -1,5 +1,5 @@
 import { auth } from "../../../../auth";
-import { redirect } from "next/navigation";
+import { redirectToSignIn } from "@/lib/auth-utils";
 import { cookies } from "next/headers";
 import { after } from "next/server";
 import { prisma } from "@/lib/prisma";
@@ -49,7 +49,7 @@ export default async function RecipesPage() {
   let userId: string | null = null;
   if (!isGuest) {
     const session = await auth();
-    if (!session?.user?.id) redirect("/signin");
+    if (!session?.user?.id) redirectToSignIn();
     userId = session.user.id;
   }
 

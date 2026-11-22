@@ -1,5 +1,16 @@
 import { auth } from "../../auth";
 import { NextResponse } from "next/server";
+import { redirect } from "next/navigation";
+
+/**
+ * Send a page request that has no session to sign in. Goes through
+ * /api/session/end rather than straight to /signin, because a cookie whose
+ * account was deleted still looks signed in to middleware and would bounce
+ * between /signin and / (see that route).
+ */
+export function redirectToSignIn(): never {
+  redirect("/api/session/end");
+}
 
 export type AuthenticatedUser = {
   id: string;

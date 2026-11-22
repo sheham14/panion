@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { getAuthenticatedUser } from "@/lib/auth-utils";
+import { getAuthenticatedUser, redirectToSignIn } from "@/lib/auth-utils";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { Suspense } from "react";
@@ -84,7 +84,7 @@ async function RecipeDetail({ id }: { id: string }) {
   let userId: string | null = null;
   if (!isGuest) {
     const { user } = await getAuthenticatedUser();
-    if (!user) redirect("/signin");
+    if (!user) redirectToSignIn();
     userId = user.id;
   }
 

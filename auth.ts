@@ -3,7 +3,10 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import type { Adapter } from "next-auth/adapters";
 import Email from "next-auth/providers/email";
 import sgMail from "@sendgrid/mail";
+import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
+import { clientIp } from "@/lib/client-ip";
+import { accountIsLive, magicLinkThrottled } from "@/lib/auth-guards";
 import { authConfig } from "./auth.config";
 
 async function sendVerificationRequest({
@@ -45,6 +48,12 @@ async function sendVerificationRequest({
   }
 }
 
+/**
+ * How often a live session re-reads its user row, so a deleted account's
+ * session ends within this long (see `accountIsLive`).
+ */
+const ACCOUNT_RECHECK_MS = 5 * 60 * 1000;
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   providers: [
@@ -58,6 +67,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma) as Adapter,
   callbacks: {
     ...authConfig.callbacks,
+    async signIn({ user, email }) {
+      // Only the "send me a link" step is throttled. Clicking the link and
+      // Google sign-in pass straight through.
+      if (!email?.verificationRequest) return true;
+      if (await magicLinkThrottled(user.email ?? "", clientIp(await headers()))) {
+        // A string is a redirect; the sign-in page reads `error` from it.
+        return "/signin?error=RateLimited";
+      }
+      return true;
+    },
     async jwt({ token, trigger, session: sessionData }) {
       if (trigger === "signIn" || trigger === "signUp") {
         const dbUser = await prisma.user.findUnique({
@@ -65,6 +84,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           select: { onboardingCompleted: true },
         });
         token.onboardingCompleted = dbUser?.onboardingCompleted ?? false;
+        token.accountCheckedAt = Date.now();
       }
       if (trigger === "update") {
         const s = sessionData as { onboardingCompleted?: boolean } | undefined;
@@ -72,19 +92,30 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.onboardingCompleted = s.onboardingCompleted;
         }
       }
+
+      // A deleted or anonymised account keeps no session. Returning null makes
+      // `auth()` report no session; where a response can set cookies (route
+      // handlers, /api/auth/session) the cookie is cleared too. Pages can't
+      // clear it, so they send such a request through /api/session/end.
+      const checkedAt = Number(token.accountCheckedAt ?? 0);
+      if (token.sub && Date.now() - checkedAt > ACCOUNT_RECHECK_MS) {
+        if (!(await accountIsLive(token.sub))) return null;
+        token.accountCheckedAt = Date.now();
+      }
       return token;
     },
   },
   events: {
     async createUser({ user }) {
-      // Notify admin of new signup
+      // Tell the owner someone joined. The id only, so no one's name or email
+      // leaves the database for an inbox (privacy policy, audit Low).
       if (process.env.SENDGRID_API_KEY && process.env.EMAIL_FROM && process.env.ADMIN_EMAIL) {
         sgMail.setApiKey(process.env.SENDGRID_API_KEY);
         sgMail.send({
           to: process.env.ADMIN_EMAIL,
           from: { email: process.env.EMAIL_FROM, name: "Panion" },
-          subject: `New signup: ${user.email ?? "unknown"}`,
-          text: `New user signed up on Panion.\n\nEmail: ${user.email ?? "—"}\nName: ${user.name ?? "—"}\nID: ${user.id}\nTime: ${new Date().toUTCString()}`,
+          subject: "New Panion signup",
+          text: `A new account was created on Panion.\n\nUser id: ${user.id}\nTime: ${new Date().toUTCString()}`,
         }).catch((err) => console.error("[createUser] Failed to send admin notification:", err));
       }
 

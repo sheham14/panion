@@ -1,5 +1,5 @@
 import { auth } from "../../../../auth";
-import { redirect } from "next/navigation";
+import { redirectToSignIn } from "@/lib/auth-utils";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import ListsClient from "@/components/lists/ListsClient";
@@ -98,7 +98,7 @@ export default async function ListsPage() {
   }
 
   const session = await auth();
-  if (!session?.user?.id) redirect("/signin");
+  if (!session?.user?.id) redirectToSignIn();
 
   const userId = session.user.id;
 

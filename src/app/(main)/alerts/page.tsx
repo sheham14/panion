@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { getAuthenticatedUser } from "@/lib/auth-utils";
-import { redirect } from "next/navigation";
+import { getAuthenticatedUser, redirectToSignIn } from "@/lib/auth-utils";
 import { Suspense } from "react";
 import AlertsClient from "@/components/alerts/AlertsClient";
 
@@ -55,7 +54,7 @@ function AlertsSkeleton() {
 
 export default async function AlertsPage() {
   const { user, error } = await getAuthenticatedUser();
-  if (error) redirect("/signin");
+  if (error) redirectToSignIn();
 
   return (
     <div className="bg-[#f7f7f7] dark:bg-[#161b1e] min-h-screen">

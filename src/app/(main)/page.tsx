@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+import { redirectToSignIn } from "@/lib/auth-utils";
 import { auth } from "../../../auth";
 import HomeClient from "@/components/home/HomeClient";
 import HomePageSkeleton from "@/components/home/HomePageSkeleton";
@@ -24,7 +24,7 @@ async function HomeData() {
   }
 
   const session = await auth();
-  if (!session?.user?.id) redirect("/signin");
+  if (!session?.user?.id) redirectToSignIn();
   const userId = session.user.id;
 
   const [data, hasUnreadAlerts] = await Promise.all([
